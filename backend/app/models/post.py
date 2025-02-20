@@ -1,0 +1,37 @@
+from datetime import datetime
+from bson import ObjectId
+from app import mongo
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt_identity
+)
+
+class Post:
+    """Post model for handling post-related operations in MongoDB."""
+
+    @staticmethod
+    def create_post(author_id, title, content):
+        """Insert a new post into the database."""
+        post_data = {
+            "author_id": ObjectId(author_id),
+            "title": title,
+            "content": content,
+            "created_at": datetime.utcnow(),
+            "upvotes": 0,
+            "downvotes": 0,
+            "comments": 0
+        }
+        print("here 3")
+        post_id = mongo.db.posts.insert_one(post_data).inserted_id
+        return str(post_id)
+
+    @staticmethod
+    def get_feed(skip=0, limit=10, sort_by="new"):
+        """Fetch posts for the user feed with pagination and sorting."""
+        sort_options = {
+            "new": [("created_at", -1)],  # Newest posts first
+            "top": [("upvotes", -1)],  # Most upvoted posts first
+            "hot": [("comments", -1), ("upvotes", -1)],  # Most discussed posts
+        }
+        posts = mongo.db.posts.find().sort(sort_options.get(sort_by, [("created_at", -1)])).skip(skip).limit(limit)
+        return [{"_id": str(post["_id"]), **post} for post in posts]
