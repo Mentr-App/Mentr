@@ -1,8 +1,11 @@
 import React from 'react'
 
-const ForumPost = () => {
+const ForumPost = ({index, post}) => {
   return (
-    <div>ForumPost</div>
+    <div key={index} className="post">
+        <h2>{post.title}</h2>
+        <p>{post.content}</p>
+    </div>
   )
 }
 
