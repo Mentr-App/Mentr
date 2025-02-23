@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo_img from '@/assets/logo.png';
 import profile_img from '@/assets/user.png';
 import search_img from '@/assets/search.png';
 import chat_img from '@/assets/chat.png';
 import create_img from '@/assets/create2.png';
 import people_img from '@/assets/people.png';
+import LoginPopup from '@/components/LoginPopup/LoginPopup';
 
 const Navbar: React.FC = () => {
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+
   return (
     <div className="w-full flex items-center justify-between bg-[#262d34] px-[7%] py-4">
       {/* Logo */}
@@ -56,7 +59,11 @@ const Navbar: React.FC = () => {
         src={profile_img.src}
         alt="User"
         className="w-8 cursor-pointer ml-10 opacity-60 hover:opacity-100 transition-opacity duration-200"
+        onClick={() => setIsPopupVisible(true)}
       />
+
+      {/* Login Popup */}
+      {isPopupVisible && <LoginPopup onClose={() => setIsPopupVisible(false)} />}
     </div>
   );
 };
