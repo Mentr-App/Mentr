@@ -18,6 +18,16 @@
 **/.env.production.local
 **/dotenv
 
+# Python
+**/.venv
+**/venv
+**/__pycache__
+**/*.py[cod]
+**/*.so
+**/.Python
+**/pip-log.txt
+**/.pytest_cache
+
 # Logs
 **/logs
 **/*.log
