@@ -15,18 +15,19 @@ const Forum: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Track which layout is active (grid or list)
+    const [isGridView, setIsGridView] = useState(true);
+
     useEffect(() => {
         const loadFeed = async () => {
             try {
                 const data = await FeedService.fetchFeed();
-                console.log("Feed data:", data);
                 setFeed(data);
             } catch (error) {
                 const errorMessage =
                     error instanceof Error
                         ? error.message
                         : "An unknown error occurred";
-                console.error("Error loading feed:", errorMessage);
                 setError(errorMessage);
             } finally {
                 setLoading(false);
@@ -56,11 +57,66 @@ const Forum: React.FC = () => {
 
     return (
         <div className='flex-1 p-6'>
-            <div className='max-w-3xl mx-auto space-y-6'>
-                {feed.map((post) => (
-                    <ForumPost key={post.id} post={post} />
-                ))}
+            {/* Segmented Toggle */}
+            <div className='flex justify-end mb-4'>
+                <div className='toggle-container'>
+                    {/* Grid Button */}
+                    <button
+                        onClick={() => setIsGridView(true)}
+                        className={`toggle-button ${
+                            isGridView
+                                ? "toggle-button-active"
+                                : "toggle-button-inactive"
+                        }`}>
+                        <svg
+                            className='toggle-icon'
+                            fill='currentColor'
+                            viewBox='0 0 20 20'>
+                            <path d='M3 3h4v4H3V3zm0 10h4v4H3v-4zm10-10h4v4h-4V3zm0 10h4v4h-4v-4z' />
+                        </svg>
+                        <span className='toggle-text'>Grid</span>
+                    </button>
+
+                    {/* List Button */}
+                    <button
+                        onClick={() => setIsGridView(false)}
+                        className={`toggle-button ${
+                            !isGridView
+                                ? "toggle-button-active"
+                                : "toggle-button-inactive"
+                        }`}>
+                        <svg
+                            className='toggle-icon'
+                            fill='currentColor'
+                            viewBox='0 0 20 20'>
+                            <path
+                                fillRule='evenodd'
+                                d='M4 5h12v2H4V5zm0 4h12v2H4V9zm0 4h12v2H4v-2z'
+                                clipRule='evenodd'
+                            />
+                        </svg>
+                        <span className='toggle-text'>List</span>
+                    </button>
+                </div>
             </div>
+
+            {isGridView ? (
+                // Grid View
+                <div className='max-w-7xl mx-auto'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                        {feed.map((post) => (
+                            <ForumPost key={post.id} post={post} />
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                // List View
+                <div className='max-w-3xl mx-auto space-y-6'>
+                    {feed.map((post) => (
+                        <ForumPost key={post.id} post={post} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
