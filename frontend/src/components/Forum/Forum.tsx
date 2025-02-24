@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import FeedService from "@/pages/api/apiService";
 import ForumPost from "./ForumPost";
 
 export interface Post {
