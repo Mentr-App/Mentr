@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
   return (
     <div className="w-full flex items-center justify-between bg-[#262d34] px-[7%] py-4">
       {/* Logo */}
-      <img src={logo_img.src} alt="Logo" className="w-40 cursor-pointer" />
+      <img src={logo_img.src} alt="Logo" className="w-40 curs or-pointer" />
 
       {/* Navigation Icons */}
       <ul className="flex-1 list-none text-center">
