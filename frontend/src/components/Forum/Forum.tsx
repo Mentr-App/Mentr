@@ -92,7 +92,7 @@ const Forum: React.FC = () => {
 
     return (
         <div
-            className='flex-1 p-6'
+            className='flex-1 p-6 h-[88vh] overflow-scroll'
             style={{ backgroundColor: "var(--background)" }}>
             {/* Segmented Toggle */}
             <div className='flex justify-end mb-4'>
@@ -137,23 +137,25 @@ const Forum: React.FC = () => {
                 </div>
             </div>
 
-            {isGridView ? (
-                // Grid View
-                <div className='max-w-7xl mx-auto'>
-                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            <div className="flex-1 overflow-y-scroll px-6 pb-6">
+                {isGridView ? (
+                    // Grid View
+                    <div className='max-w-7xl mx-auto'>
+                        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                            {feed.map((post) => (
+                                <ForumPost key={post._id.$oid} post={post} />
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    // List View
+                    <div className='max-w-3xl mx-auto space-y-6 overflow-scroll'>
                         {feed.map((post) => (
                             <ForumPost key={post._id.$oid} post={post} />
                         ))}
                     </div>
-                </div>
-            ) : (
-                // List View
-                <div className='max-w-3xl mx-auto space-y-6'>
-                    {feed.map((post) => (
-                        <ForumPost key={post._id.$oid} post={post} />
-                    ))}
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
