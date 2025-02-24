@@ -3,9 +3,9 @@ from flask_cors import CORS
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from app.database import mongo
-from app.routes import register_resources
 from app.config import config_by_name
 from app.extensions import jwt
+from app.blueprints import register_blueprints
 
 def create_app(config_name="development"):
     app = Flask(__name__)
@@ -24,8 +24,7 @@ def create_app(config_name="development"):
     api = Api(app)
 
     #Register API resources
-    register_resources(api)
-
+    register_blueprints(app)
     return app
 
     
