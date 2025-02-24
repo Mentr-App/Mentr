@@ -11,7 +11,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     e.preventDefault();
     setError(null); 
     const endpoint = isLogin ? '../api/login' : '../api/signup';
-    const payload = isLogin ? { email, password } : { username, email, password };
+    const payload = isLogin ? { username, password } : { username, email, password };
 
     try {
       const response = await fetch(endpoint, {
@@ -49,7 +49,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       <div className="bg-[#262d34] p-8 rounded-lg w-96">
         <h2 className="text-2xl text-white mb-6">{isLogin ? 'Login' : 'Sign Up'}</h2>
         <form onSubmit={handleSubmit}>
-          {!isLogin && (
+          {(
             <input
               type="text"
               placeholder="Username"
@@ -58,13 +58,15 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               className="w-full bg-[#2C353D] text-white px-4 py-2 rounded mb-4 outline-none"
             />
           )}
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-[#2C353D] text-white px-4 py-2 rounded mb-4 outline-none"
-          />
+          {
+            !isLogin && (<input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-[#2C353D] text-white px-4 py-2 rounded mb-4 outline-none"
+            />)
+          }
           <input
             type="password"
             placeholder="Password"

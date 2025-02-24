@@ -5,9 +5,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { username, email, password } = req.body;
+  const { username,  password } = req.body;
 
-  if (!username || !email || !password) {
+  if (!username || !password) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 

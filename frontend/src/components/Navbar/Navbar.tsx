@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import logo_img from '@/assets/logo.png';
 import profile_img from '@/assets/user.png';
 import search_img from '@/assets/search.png';
@@ -9,11 +10,35 @@ import LoginPopup from '@/components/LoginPopup/LoginPopup';
 
 const Navbar: React.FC = () => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const router = useRouter();
+
+  const handleProfileClick = () => {
+    const token = localStorage.getItem('access_token');
+
+    if (token) {
+      setIsDropdownVisible(!isDropdownVisible);
+    } else {
+      setIsPopupVisible(true);
+    }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    setIsDropdownVisible(false);
+    router.push('/'); 
+  };
+
+  const handleUserSettings = () => {
+    //router.push('/profile'); 
+    setIsDropdownVisible(false);
+  };
 
   return (
     <div className="w-full flex items-center justify-between bg-[#262d34] px-[7%] py-4">
       {/* Logo */}
-      <img src={logo_img.src} alt="Logo" className="w-40 curs or-pointer" />
+      <img src={logo_img.src} alt="Logo" className="w-40 cursor-pointer" />
 
       {/* Navigation Icons */}
       <ul className="flex-1 list-none text-center">
@@ -54,13 +79,33 @@ const Navbar: React.FC = () => {
         />
       </div>
 
-      {/* User Icon */}
-      <img
-        src={profile_img.src}
-        alt="User"
-        className="w-8 cursor-pointer ml-10 opacity-60 hover:opacity-100 transition-opacity duration-200"
-        onClick={() => setIsPopupVisible(true)}
-      />
+      {/* User Icon and Dropdown */}
+      <div className="relative">
+        <img
+          src={profile_img.src}
+          alt="User"
+          className="w-8 cursor-pointer ml-10 opacity-60 hover:opacity-100 transition-opacity duration-200"
+          onClick={handleProfileClick}
+        />
+        {isDropdownVisible && (
+          <div className="absolute right-0 mt-2 w-48 bg-[#2C353D] rounded-lg shadow-lg">
+            <ul className="py-2">
+              <li
+                className="px-4 py-2 text-white hover:bg-[#3a454d] cursor-pointer"
+                onClick={handleUserSettings}
+              >
+                User Settings
+              </li>
+              <li
+                className="px-4 py-2 text-white hover:bg-[#3a454d] cursor-pointer"
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
 
       {/* Login Popup */}
       {isPopupVisible && <LoginPopup onClose={() => setIsPopupVisible(false)} />}
