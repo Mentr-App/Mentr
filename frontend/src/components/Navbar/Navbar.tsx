@@ -31,36 +31,49 @@ const Navbar: React.FC = () => {
     };
 
     const handleUserSettings = () => {
-        //router.push('/profile');
+        router.push("/profile");
         setIsDropdownVisible(false);
     };
 
+    const handleLogoClick = () => {
+        router.push("/");
+    };
+
     return (
-        <div className='w-full flex items-center justify-between bg-[#262d34] px-[7%] py-4'>
+        <div
+            className='w-full flex items-center justify-between px-[7%] py-4'
+            style={{ backgroundColor: "var(--secondary)" }}>
             {/* Logo */}
             <img
                 src={logo_img.src}
                 alt='Logo'
                 className='w-40 cursor-pointer'
+                onClick={handleLogoClick}
             />
 
             {/* Navigation Icons */}
             <ul className='flex-1 list-none text-center'>
-                <li className='inline-block mx-5 my-2 text-lg cursor-pointer text-[#f7f7f7]'>
+                <li
+                    className='inline-block mx-5 my-2 text-lg cursor-pointer'
+                    style={{ color: "var(--text-primary)" }}>
                     <img
                         src={people_img.src}
                         alt='People'
                         className='w-10 opacity-70 hover:opacity-100 transition-opacity duration-200'
                     />
                 </li>
-                <li className='inline-block mx-5 my-2 text-lg cursor-pointer text-[#f7f7f7]'>
+                <li
+                    className='inline-block mx-5 my-2 text-lg cursor-pointer'
+                    style={{ color: "var(--text-primary)" }}>
                     <img
                         src={chat_img.src}
                         alt='Chat'
                         className='w-10 opacity-70 hover:opacity-100 transition-opacity duration-200'
                     />
                 </li>
-                <li className='inline-block mx-5 my-2 text-lg cursor-pointer text-[#f7f7f7]'>
+                <li
+                    className='inline-block mx-5 my-2 text-lg cursor-pointer'
+                    style={{ color: "var(--text-primary)" }}>
                     <img
                         src={create_img.src}
                         alt='Create'
@@ -70,11 +83,16 @@ const Navbar: React.FC = () => {
             </ul>
 
             {/* Search Box */}
-            <div className='flex items-center bg-[#2C353D] px-5 py-2 rounded-full'>
+            <div
+                className='flex items-center px-5 py-2 rounded-full'
+                style={{ backgroundColor: "var(--foreground)" }}>
                 <input
                     type='text'
                     placeholder='Search'
-                    className='bg-transparent border-0 outline-none text-white text-lg max-w-[200px] placeholder:text-gray-400'
+                    className='bg-transparent border-0 outline-none text-lg max-w-[200px]'
+                    style={{
+                        color: "var(--text-primary)",
+                    }}
                 />
                 <img
                     src={search_img.src}
@@ -92,15 +110,23 @@ const Navbar: React.FC = () => {
                     onClick={handleProfileClick}
                 />
                 {isDropdownVisible && (
-                    <div className='absolute right-0 mt-2 w-48 bg-[#2C353D] rounded-lg shadow-lg'>
+                    <div
+                        className='absolute right-0 mt-2 w-48 rounded-lg shadow-lg'
+                        style={{ backgroundColor: "var(--foreground)" }}>
                         <ul className='py-2'>
                             <li
-                                className='px-4 py-2 text-white hover:bg-[#3a454d] cursor-pointer'
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
                                 onClick={handleUserSettings}>
                                 User Settings
                             </li>
                             <li
-                                className='px-4 py-2 text-white hover:bg-[#3a454d] cursor-pointer'
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
                                 onClick={handleSignOut}>
                                 Sign Out
                             </li>

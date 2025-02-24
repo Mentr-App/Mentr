@@ -38,66 +38,71 @@ const Profile: React.FC = () => {
 
     if (loading)
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className='flex justify-center items-center h-64'>
+                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
             </div>
         );
 
     if (error)
         return (
-            <div className="text-red-500 text-center p-4">Error: {error}</div>
+            <div className='text-primary-dark text-center p-4'>
+                Error: {error}
+            </div>
         );
+
     if (!profile)
         return (
-            <div className="text-gray-500 text-center p-4">
+            <div className='text-text-secondary text-center p-4'>
                 Profile not found
             </div>
         );
 
     return (
-        <div className="bg-[#262d34] rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-white">
+        <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto'>
+            <div className='flex items-center justify-between mb-6'>
+                <h1 className='text-2xl font-bold text-text-primary'>
                     Profile Settings
                 </h1>
                 <button
                     onClick={() => setIsEditing(!isEditing)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                    className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'>
                     {isEditing ? "Save Changes" : "Edit Profile"}
                 </button>
             </div>
 
-            <div className="space-y-6">
-                <div className="bg-[#2C353D] p-4 rounded">
-                    <h2 className="text-lg font-semibold text-white mb-4">
+            <div className='space-y-6'>
+                <div className='bg-foreground p-4 rounded'>
+                    <h2 className='text-lg font-semibold text-text-primary mb-4'>
                         User Information
                     </h2>
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-gray-400 mb-1">
+                    <div className='space-y-4'>
+                        <div className='space-y-2'>
+                            <label className='block text-text-light'>
                                 Username
                             </label>
                             {isEditing ? (
                                 <input
-                                    type="text"
+                                    type='text'
                                     value={profile.username}
-                                    className="w-full bg-[#1a1f24] text-white p-2 rounded"
+                                    className='w-full bg-background text-text-primary p-2 rounded'
                                 />
                             ) : (
-                                <p className="text-white">{profile.username}</p>
+                                <p className='text-text-primary'>
+                                    {profile.username}
+                                </p>
                             )}
                         </div>
-                        <div>
-                            <label className="block text-gray-400 mb-1">
+                        <div className='space-y-2'>
+                            <label className='block text-text-light'>
                                 Email
                             </label>
-                            <p className="text-white">{profile.email}</p>
+                            <p className='text-text-primary'>{profile.email}</p>
                         </div>
-                        <div>
-                            <label className="block text-gray-400 mb-1">
+                        <div className='space-y-2'>
+                            <label className='block text-text-light'>
                                 Member Since
                             </label>
-                            <p className="text-white">
+                            <p className='text-text-primary'>
                                 {new Date(
                                     profile.created_at
                                 ).toLocaleDateString()}

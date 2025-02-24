@@ -29,12 +29,12 @@ const ForumPost: React.FC<ForumPostProps> = ({ post }) => {
     };
 
     return (
-        <div className='bg-[#262d34] rounded-lg shadow-lg p-6'>
-            <h2 className='text-xl font-semibold text-white mb-2'>
+        <div className='bg-secondary rounded-lg shadow-lg p-6'>
+            <h2 className='text-xl font-semibold text-text-primary mb-2'>
                 {post.title}
             </h2>
-            <p className='text-gray-300 mb-4'>{post.content}</p>
-            <div className='flex justify-between items-center text-sm text-gray-400'>
+            <p className='text-text-secondary mb-4'>{post.content}</p>
+            <div className='flex justify-between items-center text-sm text-text-light'>
                 <span>{post.author || "Anonymous"}</span>
                 <span>{getRelativeTime(post.createdAt)}</span>
             </div>

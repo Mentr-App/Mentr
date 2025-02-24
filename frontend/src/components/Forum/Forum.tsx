@@ -40,23 +40,37 @@ const Forum: React.FC = () => {
     if (loading) {
         return (
             <div className='flex justify-center items-center h-64'>
-                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500'></div>
+                <div
+                    className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2'
+                    style={{ borderColor: "var(--primary)" }}></div>
             </div>
         );
     }
 
     if (error) {
-        return <div className='text-center text-red-500 p-4'>{error}</div>;
+        return (
+            <div
+                className='text-center p-4'
+                style={{ color: "var(--primary-dark)" }}>
+                {error}
+            </div>
+        );
     }
 
     if (feed.length === 0) {
         return (
-            <div className='text-center text-gray-400 p-4'>No posts yet</div>
+            <div
+                className='text-center p-4'
+                style={{ color: "var(--text-secondary)" }}>
+                No posts yet
+            </div>
         );
     }
 
     return (
-        <div className='flex-1 p-6'>
+        <div
+            className='flex-1 p-6'
+            style={{ backgroundColor: "var(--background)" }}>
             {/* Segmented Toggle */}
             <div className='flex justify-end mb-4'>
                 <div className='toggle-container'>
