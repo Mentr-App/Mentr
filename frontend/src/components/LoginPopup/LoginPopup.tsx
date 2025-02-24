@@ -47,7 +47,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     return (
         <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50'>
-            <div className='bg-secondary p-8 rounded-lg w-96'>
+            <div className='bg-[#262d34] p-8 rounded-lg w-96'>
                 <h2 className='text-2xl text-text-primary mb-6'>
                     {isLogin ? "Login" : "Sign Up"}
                 </h2>
@@ -57,7 +57,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         placeholder='Username'
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className='w-full bg-foreground text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                        className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                     />
                     {!isLogin && (
                         <input
@@ -65,7 +65,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             placeholder='Email'
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className='w-full bg-foreground text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                            className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                         />
                     )}
                     <input
@@ -73,7 +73,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         placeholder='Password'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className='w-full bg-foreground text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                        className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                     />
                     <button
                         type='submit'
