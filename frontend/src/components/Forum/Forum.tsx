@@ -3,11 +3,18 @@ import FeedService from "@/pages/api/apiService";
 import ForumPost from "./ForumPost";
 
 export interface Post {
-    id: string;
+    _id: IDObject;
     title: string;
     content: string;
     author?: string;
-    createdAt: string;
+    author_id: IDObject;
+    created_at: string;
+    downvotes: number;
+    upvotes: number;
+}
+
+export interface IDObject {
+    $oid: string
 }
 
 const Forum: React.FC = () => {
@@ -19,10 +26,26 @@ const Forum: React.FC = () => {
     const [isGridView, setIsGridView] = useState(true);
 
     useEffect(() => {
+        const endpoint = "/api/feed"
+        const access_token = localStorage.getItem("access_token")
         const loadFeed = async () => {
             try {
-                const data = await FeedService.fetchFeed();
-                setFeed(data);
+                const response = await fetch(endpoint, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${access_token}`,
+                        "Content-Type": "application/json"
+                    },
+                })
+
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    throw new Error(errorData.message || "Something went wrong")
+                }
+
+                const data = await response.json()
+                console.log(data)
+                setFeed(data.feed)
             } catch (error) {
                 const errorMessage =
                     error instanceof Error
@@ -119,7 +142,7 @@ const Forum: React.FC = () => {
                 <div className='max-w-7xl mx-auto'>
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                         {feed.map((post) => (
-                            <ForumPost key={post.id} post={post} />
+                            <ForumPost key={post._id.$oid} post={post} />
                         ))}
                     </div>
                 </div>
@@ -127,7 +150,7 @@ const Forum: React.FC = () => {
                 // List View
                 <div className='max-w-3xl mx-auto space-y-6'>
                     {feed.map((post) => (
-                        <ForumPost key={post.id} post={post} />
+                        <ForumPost key={post._id.$oid} post={post} />
                     ))}
                 </div>
             )}
