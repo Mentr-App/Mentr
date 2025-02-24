@@ -31,9 +31,18 @@ def login():
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
     username = request.json.get("username")
-    password = request.json.get("password")
+    if User.find_user_by_username(username):
+        return {"message": "Username already exists"}, 401
+    if User.find_user_by_email(email):
+        return {"message": "Email already exists"}, 401
     email = request.json.get("email")
-    return User.create_user(username, password, email)
+    password = request.json.get("password")
+    id = User.create_user(username, password, email)
+    access_token = create_access_token(identity=id, fresh=True)
+    refresh_token = create_refresh_token(identity=id)
+    return {"access_token": access_token, "refresh_token": refresh_token}, 200
+
+    
     
 @jwt_required(refresh=True) 
 @auth_bp.route("/refresh", methods=["POST"])

@@ -21,12 +21,18 @@ class User:
             "created_at": datetime.utcnow(),
             }).inserted_id
         print(user_id)
-        return {"message": "User created successfully", "user_id": str(user_id)}, 201
+        return str(user_id)
 
     @staticmethod
     def find_user_by_username(username):
         """Finds a user by username."""
         user = mongo.db.users.find_one({"username": username})
+        return user if user else None
+
+    @staticmethod
+    def find_user_by_email(email):
+        """Finds a user by username."""
+        user = mongo.db.users.find_one({"email": email})
         return user if user else None
 
     @staticmethod
