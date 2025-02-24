@@ -32,7 +32,6 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       if (data.access_token && data.refresh_token) {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
-        alert(isLogin ? 'Login successful!' : 'Signup successful!');
         onClose(); 
       }
     } catch (err) {
