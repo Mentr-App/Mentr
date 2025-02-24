@@ -33,9 +33,9 @@ def signup():
     username = request.json.get("username")
     if User.find_user_by_username(username):
         return {"message": "Username already exists"}, 401
+    email = request.json.get("email")
     if User.find_user_by_email(email):
         return {"message": "Email already exists"}, 401
-    email = request.json.get("email")
     password = request.json.get("password")
     id = User.create_user(username, password, email)
     access_token = create_access_token(identity=id, fresh=True)
