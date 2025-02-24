@@ -2,6 +2,7 @@ from app.database import mongo, bcrypt
 from datetime import datetime
 from bson import ObjectId
 
+
 class User:
     """User Model to interact with MongoDB"""
 
@@ -11,15 +12,17 @@ class User:
         print(username, password)
         if mongo.db.users.find_one({"username": username}):
             return {"message": "Username already exists"}, 400
-        
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
         print(hashed_password)
-        user_id = mongo.db.users.insert_one({
-            "username": username, 
-            "email": email,
-            "password": hashed_password, 
-            "created_at": datetime.utcnow(),
-            }).inserted_id
+        user_id = mongo.db.users.insert_one(
+            {
+                "username": username,
+                "email": email,
+                "password": hashed_password,
+                "created_at": datetime.utcnow(),
+            }
+        ).inserted_id
         print(user_id)
         return str(user_id)
 
