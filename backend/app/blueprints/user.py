@@ -4,14 +4,7 @@ from flask import Blueprint
 from flask import Blueprint
 
 user_bp = Blueprint("user", __name__)
-"""
-def post(self):
-    Create a new user.
-    username = request.json.get("username")
-    password = request.json.get("password")
 
-    return User.create_user(username, password)
-"""
 @user_bp.route("/", methods=["GET"])
 def get():
     """Retrieve user details by username."""
