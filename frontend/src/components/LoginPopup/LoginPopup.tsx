@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const securityQuestions = [
   "What was the name of your first pet?",
@@ -7,6 +8,7 @@ const securityQuestions = [
 ];
 
 const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const { login } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -58,8 +60,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             const data = await response.json();
 
             if (data.access_token && data.refresh_token) {
-                localStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
+                login(data.access_token, data.refresh_token);
                 onClose();
             }
         } catch (err) {

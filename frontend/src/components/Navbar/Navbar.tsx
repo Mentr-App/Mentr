@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import logo_img from "@/assets/logo.png";
 import profile_img from "@/assets/user.png";
 import search_img from "@/assets/search.png";
@@ -12,11 +13,10 @@ const Navbar: React.FC = () => {
     const [isPopupVisible, setIsPopupVisible] = useState(false);
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
     const router = useRouter();
+    const { isAuthenticated, logout } = useAuth();
 
     const handleProfileClick = () => {
-        const token = localStorage.getItem("access_token");
-
-        if (token) {
+        if (isAuthenticated) {
             setIsDropdownVisible(!isDropdownVisible);
         } else {
             setIsPopupVisible(true);
@@ -24,8 +24,7 @@ const Navbar: React.FC = () => {
     };
 
     const handleSignOut = () => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        logout();
         setIsDropdownVisible(false);
         router.push("/");
     };
@@ -40,13 +39,12 @@ const Navbar: React.FC = () => {
     };
 
     const handleCreatePost = () => {
-        const access_token = localStorage.getItem("access_token")
-        if (access_token) {
-            router.push("/create")
+        if (isAuthenticated) {
+            router.push("/create");
         } else {
-            setIsPopupVisible(true)
+            setIsPopupVisible(true);
         }
-    }
+    };
 
     return (
         <div
