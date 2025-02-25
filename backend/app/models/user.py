@@ -58,5 +58,6 @@ class User:
         mongo.db.users.update_one({'_id': user['_id']},{'$set': {'reset_token': token}})
     
     @staticmethod
-    def verify_reset_token(token):
-        return mongo.db.users.find_one({'reset_token': token}) != None
+    def find_user_by_reset_token(token):
+        user = mongo.db.users.find_one({'reset_token': token})
+        return user if user else None
