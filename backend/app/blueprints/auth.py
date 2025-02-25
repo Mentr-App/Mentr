@@ -34,7 +34,9 @@ def signup():
     if User.find_user_by_username(username):
         return {"message": "Username already exists"}, 401
     email = request.json.get("email")
-    if User.find_user_by_email(email):
+    if not email:
+        email = ""
+    elif User.find_user_by_email(email):
         return {"message": "Email already exists"}, 401
     password = request.json.get("password")
     id = User.create_user(username, password, email)

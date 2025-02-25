@@ -13,7 +13,11 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         const endpoint = isLogin ? "../api/login" : "../api/signup";
         const payload = isLogin
             ? { username, password }
-            : { username, email, password };
+            : { 
+                username, 
+                password, 
+                email
+              };
 
         try {
             const response = await fetch(endpoint, {
@@ -62,7 +66,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     {!isLogin && (
                         <input
                             type='email'
-                            placeholder='Email'
+                            placeholder='Email (optional)' // Updated placeholder
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className='w-full bg-foreground text-text-primary px-4 py-2 rounded mb-4 outline-none'
