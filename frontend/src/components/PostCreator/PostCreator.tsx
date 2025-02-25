@@ -74,7 +74,7 @@ const PostCreator: React.FC = () => {
                     />
                     <label
                         htmlFor="title"
-                        className={`absolute left-4 top-2 text-sm text-gray-500 transform transition-all duration-200 peer-focus:text-indigo-600 ${title ? "top-0 text-xs" : "top-2 text-sm" }`}
+                        className={`absolute left-4 text-sm text-gray-500 transform transition-all duration-200 peer-focus:text-indigo-600 ${title ? "top-0 text-xs" : "top-2 text-sm" }`}
                     >
                         Title <span className="text-red-500">*</span>
                     </label>
@@ -93,7 +93,7 @@ const PostCreator: React.FC = () => {
                     />
                     <label
                         htmlFor="body"
-                        className={`absolute left-4 top-2 text-sm text-gray-500 transform transition-all duration-200 peer-focus:text-indigo-600 ${body ? "top-0 text-xs" : "top-2 text-sm" }`}
+                        className={`absolute left-4 text-sm text-gray-500 transform transition-all duration-200 peer-focus:text-indigo-600 ${body ? "top-0 text-xs" : "top-2 text-sm" }`}
                     >
                         Body <span className="text-red-500">*</span>
                     </label>
