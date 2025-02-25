@@ -52,3 +52,11 @@ class User:
         if result.deleted_count:
             return {"message": "User deleted successfully"}, 200
         return {"message": "User not found"}, 404
+    
+    @staticmethod
+    def insert_reset_token(user, token):
+        mongo.db.users.update_one({'_id': user['_id']},{'$set': {'reset_token': token}})
+    
+    @staticmethod
+    def verify_reset_token(token):
+        return mongo.db.users.find_one({'reset_token': token}) != None

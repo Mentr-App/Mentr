@@ -3,6 +3,7 @@ from flask_restful import Resource
 from app.models.user import User
 from app.models.securityquestions import SecurityQuestions
 from app.database import bcrypt
+import datetime
 from flask_jwt_extended import (
     create_access_token, 
     create_refresh_token,
@@ -10,7 +11,11 @@ from flask_jwt_extended import (
     get_jwt_identity
 )
 from flask import Blueprint
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Message
+from app.mail import mail
 
+serializer = URLSafeTimedSerializer("asjodiasjodqdhioqWeh 12jb3en 1easj lhdasb xmna bdjasjd")
 auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/login", methods=["POST"])
@@ -60,3 +65,19 @@ def refresh():
     access_token = create_access_token(identity=current_user_id, fresh=False)
 
     return {"access_token": access_token}, 200
+
+@auth_bp.route('/forgot_password', methods=["POST"])
+def forgot_password():
+    username = request.json.get("username")
+    user = User.find_user_by_username(username)
+    if not user:
+        return {"message": "No username exists"}, 401
+    if not user.get("email"):
+        return {"message": "User does not have a linked email"}, 401
+    token = serializer.dumps(user['email'], salt=str(datetime.now()) + 'password-reset-salt')
+    User.insert_reset_token(user, token)
+    reset_url = f"http://localhost:3000/reset_password?token={token}"
+    msg = Message("Password Reset Request", recipients=[user['email']], body=f"To reset your password, visit the following link: {reset_url}")
+    mail.send(msg)
+    return {"message": "Check your inbox"}, 200
+    

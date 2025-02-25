@@ -6,6 +6,8 @@ from app.database import mongo
 from app.config import config_by_name
 from app.extensions import jwt
 from app.blueprints import register_blueprints
+from app.mail import init_mail
+
 
 def create_app(config_name="development"):
     app = Flask(__name__)
@@ -16,10 +18,9 @@ def create_app(config_name="development"):
 
     #Init JWT tokens
     jwt.init_app(app)
-
+    init_mail(app)
     #Init mongo app
     mongo.init_app(app)
-
     #Create restful api
     api = Api(app)
 
