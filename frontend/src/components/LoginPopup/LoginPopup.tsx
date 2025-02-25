@@ -42,7 +42,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     answer: securityAnswers[index]
                 }))
               };
-
+        console.log(payload )
         try {
             const response = await fetch(endpoint, {
                 method: "POST",

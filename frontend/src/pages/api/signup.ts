@@ -5,9 +5,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { username, email, password, security_questions } = req.body;
-
-  if (!username || !password || !security_questions) {
+  const { username, email, password, securityQuestions } = req.body;
+  console.log(securityQuestions)
+  if (!username || !password || !securityQuestions) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
   else if(username.length < 5 || username.length > 12) {
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
   for (let i = 0; i < 3; i++) {
-    if (!security_questions[i]) {
+    if (!securityQuestions[i]) {
       return res.status(400).json({ message: 'Invalid security questions'});
     }
   }
@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, email, password, security_questions }),
+      body: JSON.stringify({ username, email, password, securityQuestions }),
     });
 
     if (!response.ok) {

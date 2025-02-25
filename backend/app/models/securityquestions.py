@@ -3,11 +3,14 @@ from bson import ObjectId
 
 class SecurityQuestions:
     @staticmethod
-    def create_questions(answer1, answer2, answer3):
+    def create_questions(questions):
         return mongo.db.security_questions.insert_one({
-            "answer1": answer1,
-            "answer2": answer2,
-            "answer3": answer3
+            "question1": questions[0]["question"],
+            "question2": questions[1]["question"],
+            "question3": questions[2]["question"],
+            "answer1": questions[0]["answer"],
+            "answer2": questions[1]["answer"],
+            "answer3": questions[2]["answer"]
         }).inserted_id
         
     @staticmethod
