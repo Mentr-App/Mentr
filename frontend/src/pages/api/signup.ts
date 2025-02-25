@@ -5,9 +5,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { username, email, password } = req.body;
+  const { username, email, password, security_questions } = req.body;
 
-  if (!username || !password) {
+  if (!username || !password || !security_questions) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
   else if(username.length < 5 || username.length > 12) {
@@ -22,14 +22,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Invalid email format' });
     }
   }
-
+  for (let i = 0; i < 3; i++) {
+    
+  }
   try {
     const response = await fetch('http://localhost:8000/auth/signup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify({ username, email, password, security_questions }),
     });
 
     if (!response.ok) {
