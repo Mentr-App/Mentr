@@ -1,6 +1,7 @@
 from flask import request
 from flask_restful import Resource
 from app.models.user import User
+from app.models.securityquestions import SecurityQuestions
 from app.database import bcrypt
 from flask_jwt_extended import (
     create_access_token, 
@@ -39,6 +40,8 @@ def signup():
     elif User.find_user_by_email(email):
         return {"message": "Email already exists"}, 401
     password = request.json.get("password")
+    questions = request.json.get("security_questions")
+    SecurityQuestions.create_questions(questions[0], questions[1], questions[2])
     id = User.create_user(username, password, email)
     access_token = create_access_token(identity=id, fresh=True)
     refresh_token = create_refresh_token(identity=id)
