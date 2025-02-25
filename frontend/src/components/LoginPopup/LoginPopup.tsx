@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const { login } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -13,10 +15,10 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         const endpoint = isLogin ? "../api/login" : "../api/signup";
         const payload = isLogin
             ? { username, password }
-            : { 
-                username, 
-                password, 
-                email
+            : {
+                  username,
+                  password,
+                  email,
               };
 
         try {
@@ -36,8 +38,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             const data = await response.json();
 
             if (data.access_token && data.refresh_token) {
-                localStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
+                login(data.access_token, data.refresh_token);
                 onClose();
             }
         } catch (err) {
@@ -66,7 +67,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     {!isLogin && (
                         <input
                             type='email'
-                            placeholder='Email (optional)' 
+                            placeholder='Email (optional)'
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'

@@ -25,14 +25,18 @@ export default async function handler(
                 .json({ message: "Method not allowed or invalid action" });
         }
 
-        const response = await fetch(endpoint, {
+        const requestOptions: RequestInit = {
             method,
             headers: {
                 "Content-Type": "application/json",
                 Authorization: authHeader,
             },
-            ...(req.body && { body: JSON.stringify(req.body) }),
-        });
+        };
+
+        if (method !== "GET" && req.body)
+            requestOptions.body = JSON.stringify(req.body);
+
+        const response = await fetch(endpoint, requestOptions);
 
         if (!response.ok) {
             const errorData = await response

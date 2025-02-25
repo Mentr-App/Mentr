@@ -1,6 +1,10 @@
 import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const PostCreator: React.FC = () => {
+    const { isAuthenticated } = useAuth();
+    const router = useRouter();
     const [title, setTitle] = useState<string>("");
     const [body, setBody] = useState<string>("");
     const [image, setImage] = useState<File | null>(null);
@@ -26,25 +30,38 @@ const PostCreator: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isAuthenticated) {
+            setError("You must be logged in to create a post");
+            return;
+        }
+
         setIsSubmitting(true);
         setError(null);
 
         try {
-            const token = localStorage.getItem("access_token");
-            if (!token) {
-                throw new Error("You must be logged in to create a post");
-            }
+            // const response = await fetch("/api/post", {
+            //     method: "POST",
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //         Authorization: `Bearer ${localStorage.getItem(
+            //             "access_token"
+            //         )}`,
+            //     },
+            //     body: JSON.stringify({
+            //         title,
+            //         body,
+            //     }),
+            // });
 
-            const response = await fetch("/api/post", {
+            const response = await fetch("http://localhost:8000/post", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${localStorage.getItem(
+                        "access_token"
+                    )}`,
                 },
-                body: JSON.stringify({
-                    title,
-                    body,
-                }),
+                body: JSON.stringify({ title: "test", content: "test" }),
             });
 
             if (!response.ok) {
@@ -55,8 +72,7 @@ const PostCreator: React.FC = () => {
             setTitle("");
             setBody("");
             setImage(null);
-            
-            window.location.href = "/";
+            router.push("/");
         } catch (err) {
             setError(
                 err instanceof Error
