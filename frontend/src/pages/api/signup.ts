@@ -7,8 +7,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
+  if (!username || !password) {
     return res.status(400).json({ message: 'Missing required fields' });
+  }
+  else if(username.length < 5 || username.length > 12) {
+    return res.status(400).json({message: 'Invalid Username'})
+  }
+  if(password.length < 3) {
+    return res.status(400).json({message: 'Invalid Password'})
+  }
+  if (email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
   }
 
   try {
