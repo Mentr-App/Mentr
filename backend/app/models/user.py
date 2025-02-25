@@ -21,7 +21,7 @@ class User:
                 "email": email,
                 "password": hashed_password,
                 "created_at": datetime.utcnow(),
-                "security_questions_id": security_questions_id
+                "security_questions_id": ObjectId(security_questions_id)
             }
         ).inserted_id
         print(user_id)

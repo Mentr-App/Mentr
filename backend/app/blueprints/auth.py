@@ -42,8 +42,8 @@ def signup():
     password = request.json.get("password")
     questions = request.json.get("securityQuestions")
     print(questions)
-    SecurityQuestions.create_questions(questions)
-    id = User.create_user(username, password, email)
+    question_id = SecurityQuestions.create_questions(questions)
+    id = User.create_user(username, password, email, question_id)
     access_token = create_access_token(identity=id, fresh=True)
     refresh_token = create_refresh_token(identity=id)
     return {"access_token": access_token, "refresh_token": refresh_token}, 200
