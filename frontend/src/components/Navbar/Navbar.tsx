@@ -39,6 +39,15 @@ const Navbar: React.FC = () => {
         router.push("/");
     };
 
+    const handleCreatePost = () => {
+        const access_token = localStorage.getItem("access_token")
+        if (access_token) {
+            router.push("/create")
+        } else {
+            setIsPopupVisible(true)
+        }
+    }
+
     return (
         <div
             className='w-full flex items-center justify-between px-[7%] py-4'
@@ -77,6 +86,7 @@ const Navbar: React.FC = () => {
                     <img
                         src={create_img.src}
                         alt='Create'
+                        onClick={handleCreatePost}
                         className='w-10 opacity-70 hover:opacity-100 transition-opacity duration-200'
                     />
                 </li>
