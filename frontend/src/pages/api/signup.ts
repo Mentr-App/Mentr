@@ -23,7 +23,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
   for (let i = 0; i < 3; i++) {
-    
+    if (!security_questions[i]) {
+      return res.status(400).json({ message: 'Invalid security questions'});
+    }
   }
   try {
     const response = await fetch('http://localhost:8000/auth/signup', {
