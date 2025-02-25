@@ -1,3 +1,4 @@
+import { ChartNoAxesColumnDecreasing } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
 interface ProfileData {
@@ -17,13 +18,29 @@ const Profile: React.FC = () => {
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                // Temporary mock data - replace with actual API call
-                const mockData: ProfileData = {
-                    username: "placeholder",
-                    email: "placeholder@example.com",
-                    created_at: new Date().toISOString(),
+                const endpoint = "/api/profile";
+                const access_token = localStorage.getItem("access_token");
+                const response = await fetch(endpoint, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Failed to create post");
+                }
+                const userData = await response.json();
+                console.log(userData["created_at"]["$date"]);
+                console.log(new Date());
+                const profileData: ProfileData = {
+                    username: userData["username"],
+                    email: userData["email"],
+                    created_at: userData["created_at"]["$date"],
                 };
-                setProfile(mockData);
+                setProfile(profileData);
                 setLoading(false);
             } catch (err) {
                 setError(
