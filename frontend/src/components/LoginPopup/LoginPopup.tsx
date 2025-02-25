@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const securityQuestions = [
   "What was the name of your first pet?",
@@ -16,6 +17,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [error, setError] = useState<string | null>(null);
     const [showSecurityQuestions, setShowSecurityQuestions] = useState(false);
     const [securityAnswers, setSecurityAnswers] = useState(["", "", ""]);
+    const router = useRouter()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -76,6 +78,10 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         const newAnswers = [...securityAnswers];
         newAnswers[index] = value;
         setSecurityAnswers(newAnswers);
+    };
+
+    const handleForgotPassword = () => {
+        router.push("/forgotpassword")
     };
 
     return (
@@ -146,6 +152,15 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         >
                             {isLogin ? "Login" : "Continue to Security Questions"}
                         </button>
+                        {isLogin && (
+                            <button
+                                type="button"
+                                onClick={handleForgotPassword}
+                                className="w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200"
+                            >
+                                Forgot Password?
+                            </button>
+                        )}
                     </form>
                 )}
 
