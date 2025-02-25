@@ -1,6 +1,6 @@
 from datetime import datetime
 from bson import ObjectId
-from app import mongo
+from app.database import mongo
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity
