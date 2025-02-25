@@ -3,6 +3,7 @@ from .post import post_bp
 from .test import test_bp
 from .feed import feed_bp
 from .user import user_bp
+from .profile import profile_bp
 
 def register_blueprints(app):
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -10,3 +11,4 @@ def register_blueprints(app):
     app.register_blueprint(test_bp, url_prefix="/test")
     app.register_blueprint(feed_bp, url_prefix="/feed")
     app.register_blueprint(user_bp, url_prefix="/user")
+    app.register_blueprint(profile_bp, url_prefix="/profile")

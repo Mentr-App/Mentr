@@ -34,6 +34,26 @@ const Navbar: React.FC = () => {
         setIsDropdownVisible(false);
     };
 
+    const handleFAQ = () => {
+        router.push("/faq");
+        setIsDropdownVisible(false);
+    };
+
+    const handleContact = () => {
+        router.push("/contact");
+        setIsDropdownVisible(false);
+    };
+
+    const handleAbout = () => {
+        router.push("/about");
+        setIsDropdownVisible(false);
+    };
+
+    const handlePrivacyPolicy = () => {
+        router.push("/privacypolicy");
+        setIsDropdownVisible(false);
+    };
+
     const handleLogoClick = () => {
         router.push("/");
     };
@@ -129,6 +149,38 @@ const Navbar: React.FC = () => {
                                 }}
                                 onClick={handleUserSettings}>
                                 User Settings
+                            </li>
+                            <li
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
+                                onClick={handleFAQ}>
+                                Frequently Asked Questions
+                            </li>
+                            <li
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
+                                onClick={handleAbout}>
+                                About Us
+                            </li>
+                            <li
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
+                                onClick={handleContact}>
+                                Contact Us
+                            </li>
+                            <li
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
+                                onClick={handlePrivacyPolicy}>
+                                Privacy Policy
                             </li>
                             <li
                                 className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
