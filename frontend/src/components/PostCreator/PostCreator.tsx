@@ -6,7 +6,7 @@ const PostCreator: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const router = useRouter();
     const [title, setTitle] = useState<string>("");
-    const [body, setBody] = useState<string>("");
+    const [content, setContent] = useState<string>("");
     const [image, setImage] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ const PostCreator: React.FC = () => {
         if (name === "title") {
             setTitle(value);
         } else if (name === "body") {
-            setBody(value);
+            setContent(value);
         }
     };
 
@@ -39,29 +39,16 @@ const PostCreator: React.FC = () => {
         setError(null);
 
         try {
-            // const response = await fetch("/api/post", {
-            //     method: "POST",
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //         Authorization: `Bearer ${localStorage.getItem(
-            //             "access_token"
-            //         )}`,
-            //     },
-            //     body: JSON.stringify({
-            //         title,
-            //         body,
-            //     }),
-            // });
-
-            const response = await fetch("http://localhost:8000/post", {
+            const endpoint = "/api/post";
+            const access_token = localStorage.getItem("access_token");
+            const payload = { title, content };
+            const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
+                    Authorization: `Bearer ${access_token}`,
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem(
-                        "access_token"
-                    )}`,
                 },
-                body: JSON.stringify({ title: "test", content: "test" }),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -70,7 +57,7 @@ const PostCreator: React.FC = () => {
             }
 
             setTitle("");
-            setBody("");
+            setContent("");
             setImage(null);
             router.push("/");
         } catch (err) {
@@ -118,7 +105,7 @@ const PostCreator: React.FC = () => {
                     <textarea
                         id='body'
                         name='body'
-                        value={body}
+                        value={content}
                         onChange={handleInputChange}
                         required
                         rows={4}
@@ -127,7 +114,7 @@ const PostCreator: React.FC = () => {
                     <label
                         htmlFor='body'
                         className={`absolute left-4 text-sm text-gray-500 transform transition-all duration-200 peer-focus:text-indigo-600 ${
-                            body ? "top-0 text-xs" : "top-2 text-sm"
+                            content ? "top-0 text-xs" : "top-2 text-sm"
                         }`}>
                         Body <span className='text-red-500'>*</span>
                     </label>

@@ -7,6 +7,7 @@ from app.database import mongo
 
 post_bp = Blueprint("post", __name__)
 
+
 @post_bp.route("/", methods=["POST"])
 @jwt_required()
 def create_post():
@@ -16,21 +17,20 @@ def create_post():
         title = request.json.get("title")
         content = request.json.get("content")
         author_id = get_jwt_identity()
-        print("Parsed data:", {
-            "title": title,
-            "content": content,
-            "author_id": author_id
-        })
-        
+        print(
+            "Parsed data:", {"title": title, "content": content, "author_id": author_id}
+        )
+
         if not title or not content:
             return {"message": "Missing title or content"}, 400
-            
+
         post_id = Post.create_post(author_id, title, content)
         print("Post created with ID:", post_id)
         return {"message": "Post created successfully", "post_id": post_id}, 201
     except Exception as e:
         print("Error creating post:", str(e))
         return {"message": "Error creating post", "error": str(e)}, 500
+
 
 @post_bp.route("/<post_id>/vote", methods=["POST"])
 @jwt_required()
@@ -48,10 +48,7 @@ def vote_post(post_id):
         return {"message": "Post not found"}, 404
 
     if "votes" not in post:
-        mongo.db.posts.update_one(
-            {"_id": ObjectId(post_id)},
-            {"$set": {"votes": []}}
-        )
+        mongo.db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": {"votes": []}})
         post["votes"] = []
 
     existing_vote_index = None
@@ -67,14 +64,14 @@ def vote_post(post_id):
                 {"_id": ObjectId(post_id)},
                 {
                     "$pull": {"votes": {"user_id": user_id}},
-                    "$inc": {f"{vote_type}votes": -1}
-                }
+                    "$inc": {f"{vote_type}votes": -1},
+                },
             )
             return {
                 "message": f"Removed {vote_type}vote successfully",
                 "vote_type": None,
                 "upvotes": post["upvotes"] - (1 if vote_type == "up" else 0),
-                "downvotes": post["downvotes"] - (1 if vote_type == "down" else 0)
+                "downvotes": post["downvotes"] - (1 if vote_type == "down" else 0),
             }, 200
         else:
             mongo.db.posts.update_one(
@@ -83,15 +80,15 @@ def vote_post(post_id):
                     "$set": {"votes.$.vote_type": vote_type},
                     "$inc": {
                         f"{vote_type}votes": 1,
-                        f"{'down' if vote_type == 'up' else 'up'}votes": -1
-                    }
-                }
+                        f"{'down' if vote_type == 'up' else 'up'}votes": -1,
+                    },
+                },
             )
             return {
                 "message": f"Changed vote to {vote_type}vote successfully",
                 "vote_type": vote_type,
                 "upvotes": post["upvotes"] + (1 if vote_type == "up" else -1),
-                "downvotes": post["downvotes"] + (1 if vote_type == "down" else -1)
+                "downvotes": post["downvotes"] + (1 if vote_type == "down" else -1),
             }, 200
     else:
         # User hasn't voted on this post yet
@@ -99,32 +96,31 @@ def vote_post(post_id):
             {"_id": ObjectId(post_id)},
             {
                 "$push": {"votes": {"user_id": user_id, "vote_type": vote_type}},
-                "$inc": {f"{vote_type}votes": 1}
-            }
+                "$inc": {f"{vote_type}votes": 1},
+            },
         )
         return {
             "message": f"Post {vote_type}voted successfully",
             "vote_type": vote_type,
             "upvotes": post["upvotes"] + (1 if vote_type == "up" else 0),
-            "downvotes": post["downvotes"] + (1 if vote_type == "down" else 0)
+            "downvotes": post["downvotes"] + (1 if vote_type == "down" else 0),
         }, 200
+
 
 @post_bp.route("/<post_id>/vote", methods=["GET"])
 @jwt_required()
 def check_vote(post_id):
     """Check if current user has voted on a post."""
     user_id = get_jwt_identity()
-    
+
     post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
     if not post:
         return {"message": "Post not found"}, 404
-    
+
     user_vote = None
     for vote in post.get("votes", []):
         if vote.get("user_id") == user_id:
             user_vote = vote
             break
-    
-    return {
-        "vote_type": user_vote["vote_type"] if user_vote else None
-    }, 200
+
+    return {"vote_type": user_vote["vote_type"] if user_vote else None}, 200
