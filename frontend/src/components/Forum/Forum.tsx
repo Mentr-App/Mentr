@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ForumPost from "./ForumPost";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Post {
     _id: IDObject;
@@ -13,38 +14,72 @@ export interface Post {
 }
 
 export interface IDObject {
-    $oid: string
+    $oid: string;
+}
+
+interface UserVotes {
+    [postId: string]: "up" | "down";
 }
 
 const Forum: React.FC = () => {
     const [feed, setFeed] = useState<Post[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [userVotes, setUserVotes] = useState<UserVotes>({});
+    const { isAuthenticated } = useAuth();
 
     // Track which layout is active (grid or list)
     const [isGridView, setIsGridView] = useState(true);
 
+    const fetchUserVotes = async () => {
+        if (!isAuthenticated) {
+            setUserVotes({});
+            return;
+        }
+
+        try {
+            const response = await fetch("http://localhost:8000/user/votes", {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUserVotes(data.votes);
+            }
+        } catch (error) {
+            console.error("Error fetching user votes:", error);
+        }
+    };
+
     useEffect(() => {
-        const endpoint = "/api/feed"
-        const access_token = localStorage.getItem("access_token")
+        fetchUserVotes();
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        const endpoint = "/api/feed";
+        const access_token = localStorage.getItem("access_token");
         const loadFeed = async () => {
             try {
                 const response = await fetch(endpoint, {
                     method: "GET",
                     headers: {
-                        "Authorization": `Bearer ${access_token}`,
-                        "Content-Type": "application/json"
+                        Authorization: `Bearer ${access_token}`,
+                        "Content-Type": "application/json",
                     },
-                })
+                });
 
                 if (!response.ok) {
-                    const errorData = await response.json()
-                    throw new Error(errorData.message || "Something went wrong")
+                    const errorData = await response.json();
+                    throw new Error(
+                        errorData.message || "Something went wrong"
+                    );
                 }
 
-                const data = await response.json()
-                console.log(data)
-                setFeed(data.feed)
+                const data = await response.json();
+                console.log(data);
+                setFeed(data.feed);
             } catch (error) {
                 const errorMessage =
                     error instanceof Error
@@ -58,6 +93,30 @@ const Forum: React.FC = () => {
 
         loadFeed();
     }, []);
+
+    const handleVoteUpdate = (
+        postId: string,
+        newVoteType: "up" | "down" | null,
+        newUpvotes: number,
+        newDownvotes: number
+    ) => {
+        setUserVotes((prev) => {
+            const newVotes = { ...prev };
+            if (newVoteType === null) {
+                delete newVotes[postId];
+            } else {
+                newVotes[postId] = newVoteType;
+            }
+            return newVotes;
+        });
+        setFeed((prev) =>
+            prev.map((post) =>
+                post._id.$oid === postId
+                    ? { ...post, upvotes: newUpvotes, downvotes: newDownvotes }
+                    : post
+            )
+        );
+    };
 
     if (loading) {
         return (
@@ -136,13 +195,18 @@ const Forum: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-scroll px-6 pb-6">
+            <div className='flex-1 overflow-y-scroll px-6 pb-6'>
                 {isGridView ? (
                     // Grid View
                     <div className='max-w-7xl mx-auto'>
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                             {feed.map((post) => (
-                                <ForumPost key={post._id.$oid} post={post} />
+                                <ForumPost
+                                    key={post._id.$oid}
+                                    post={post}
+                                    currentVoteType={userVotes[post._id.$oid]}
+                                    onVoteUpdate={handleVoteUpdate}
+                                />
                             ))}
                         </div>
                     </div>
@@ -150,7 +214,12 @@ const Forum: React.FC = () => {
                     // List View
                     <div className='max-w-3xl mx-auto space-y-6 overflow-scroll'>
                         {feed.map((post) => (
-                            <ForumPost key={post._id.$oid} post={post} />
+                            <ForumPost
+                                key={post._id.$oid}
+                                post={post}
+                                currentVoteType={userVotes[post._id.$oid]}
+                                onVoteUpdate={handleVoteUpdate}
+                            />
                         ))}
                     </div>
                 )}

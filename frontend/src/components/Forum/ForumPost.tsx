@@ -1,59 +1,27 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Post } from "./Forum";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ForumPostProps {
     post: Post;
+    currentVoteType: "up" | "down" | null;
+    onVoteUpdate: (
+        postId: string,
+        voteType: "up" | "down" | null,
+        newUpvotes: number,
+        newDownvotes: number
+    ) => void;
 }
 
-const ForumPost: React.FC<ForumPostProps> = ({ post }) => {
+const ForumPost: React.FC<ForumPostProps> = ({
+    post,
+    currentVoteType,
+    onVoteUpdate,
+}) => {
     const { isAuthenticated } = useAuth();
     const [upvotes, setUpvotes] = useState<number>(post.upvotes || 0);
     const [downvotes, setDownvotes] = useState<number>(post.downvotes || 0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [currentVoteType, setCurrentVoteType] = useState<
-        "up" | "down" | null
-    >(null);
-
-    const checkVoteStatus = useCallback(async () => {
-        if (!isAuthenticated) {
-            setCurrentVoteType(null);
-            return null;
-        }
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-            setCurrentVoteType(null);
-            return null;
-        }
-
-        try {
-            const response = await fetch(
-                `/api/post/${post._id.$oid}?action=vote`,
-                {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                setCurrentVoteType(data.vote_type);
-                return data.vote_type;
-            }
-            return null;
-        } catch (error) {
-            console.error("Error checking vote status:", error);
-            return null;
-        }
-    }, [post._id, isAuthenticated]);
-
-    // Check vote status initially and when auth state changes
-    React.useEffect(() => {
-        checkVoteStatus();
-    }, [checkVoteStatus, isAuthenticated]);
 
     const handleVote = async (type: "up" | "down") => {
         if (!isAuthenticated) {
@@ -81,7 +49,12 @@ const ForumPost: React.FC<ForumPostProps> = ({ post }) => {
                 const data = await response.json();
                 setUpvotes(data.upvotes);
                 setDownvotes(data.downvotes);
-                setCurrentVoteType(data.vote_type);
+                onVoteUpdate(
+                    post._id.$oid,
+                    data.vote_type,
+                    data.upvotes,
+                    data.downvotes
+                );
             }
         } catch (error) {
             console.error("Error voting on post:", error);
