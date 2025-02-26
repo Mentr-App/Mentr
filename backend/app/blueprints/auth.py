@@ -76,8 +76,23 @@ def forgot_password():
         return {"message": "User does not have a linked email"}, 401
     token = serializer.dumps(user['email'], salt=str(datetime.now()) + 'password-reset-salt')
     User.insert_reset_token(user, token)
-    reset_url = f"http://localhost:3000/reset_password?token={token}"
+    frontendurl = "http://localhost:3000"
+    reset_url = f"{frontendurl}/reset_password?token={token}"
     msg = Message("Password Reset Request", recipients=[user['email']], body=f"To reset your password, visit the following link: {reset_url}")
     mail.send(msg)
     return {"message": "Check your inbox"}, 200
+
+@auth_bp.route('/verify_answers', methods=["POST"])
+def verify_answers():
+    answers = request.json.get("answers")
+    token = request.json.get("token")
+    if User.verify_answers(answers, token):
+        return {"message": "Success"}, 200
+    return {"message": "Incorrect answers"}, 401
+
+auth_bp.route('/set_password', methods=["POST"])
+def set_password():
+    token = request.json.get("token")
+    password = request.json.get("password")
+    User.set_password(password, token)
     
