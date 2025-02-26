@@ -38,3 +38,19 @@ def set_profile_info():
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
+
+@profile_bp.route("/delete", methods=["POST"])
+@jwt_required()
+def delete_profile_info():
+    try:
+        user_id = get_jwt_identity()
+        print("deleting user: ")
+        print(user_id)
+        user = User.find_user_by_id(user_id)
+        print(user["username"])
+
+        
+        return User.delete_user(user["username"])
+    except Exception as e:
+        print("Error finding user:", str(e))
+        return {"message": "Error finding user", "error": str(e)}, 500

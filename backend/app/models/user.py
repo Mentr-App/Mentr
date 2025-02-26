@@ -70,7 +70,7 @@ class User:
         print(result)
         if result:
             return {"message": "User updated successfully"}, 200
-        return {"message": "User not found!!!!"}, 404
+        return {"message": "User not found"}, 404
 
     @staticmethod
     def insert_reset_token(user, token):

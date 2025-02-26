@@ -1,5 +1,7 @@
 import { ChartNoAxesColumnDecreasing } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
     username: string;
@@ -16,6 +18,8 @@ const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editableUsername, setEditableUsername] = useState<string>("");
     const [editableEmail, setEditableEmail] = useState<string>("");
+    const {logout} = useAuth();
+    const router = useRouter();
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -66,7 +70,6 @@ const Profile: React.FC = () => {
             });
         }
 
-
         try {
             const endpoint = "/api/profile/setProfile";
             const access_token = localStorage.getItem("access_token");
@@ -82,7 +85,7 @@ const Profile: React.FC = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to create post");
+                throw new Error(errorData.message || "Failed to set profile");
             }
         } catch (err) {
             setError(
@@ -91,9 +94,38 @@ const Profile: React.FC = () => {
             setLoading(false);
         }
 
-
-
         setIsEditing(false);
+    };
+
+    const handleResetPassword = () => {
+        // LEO
+        console.log("reset");
+    };
+
+    const handleDeleteAccount = async () => {
+        try {
+            const endpoint = "/api/profile/deleteProfile";
+            const access_token = localStorage.getItem("access_token");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to delete profile");
+            }
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "An error occurred"
+            );
+            setLoading(false);
+        }
+        logout();
+        router.push("/");
     };
 
     if (loading)
@@ -152,6 +184,11 @@ const Profile: React.FC = () => {
                                     {profile.username}
                                 </p>
                             )}
+                            <button
+                                onClick={handleResetPassword}
+                                className='px-4 py-2 bg-red-500 text-text-primary rounded hover:bg-red-600 transition-colors'>
+                                Reset Password
+                            </button>
                         </div>
                         <div className='space-y-2'>
                             <label className='block text-text-light'>
@@ -177,6 +214,11 @@ const Profile: React.FC = () => {
                                     profile.created_at
                                 ).toLocaleDateString()}
                             </p>
+                            <button
+                                onClick={handleDeleteAccount}
+                                className='px-4 py-2 bg-red-500 text-text-primary rounded hover:bg-red-600 transition-colors'>
+                                Delete Account
+                            </button>
                         </div>
                     </div>
                 </div>
