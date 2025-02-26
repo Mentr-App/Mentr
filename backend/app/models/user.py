@@ -2,6 +2,7 @@ from app.database import mongo, bcrypt
 from datetime import datetime
 from bson import ObjectId
 from app.models.securityquestions import SecurityQuestions
+import random
 
 class User:
     """User Model to interact with MongoDB"""
@@ -25,7 +26,9 @@ class User:
                 "userType": userType,
                 "company": company if company else "",
                 "industry": industry if industry else "",
-                "major": major if major else ""
+                "major": major if major else "",
+                "two_factor_enabled": False,
+                "two_factor_number": random.randint(100000, 999999)
             }
         ).inserted_id
         print(user_id)
@@ -91,3 +94,7 @@ class User:
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
         mongo.db.users.update_one({'reset_token': token},{'$set': {'password': hashed_password}})
         return mongo.db.users.find_one({'reset_token': token}) != None
+    
+    @staticmethod
+    def scrambled_number(user):
+        mongo.db.users.update_one({'_id': user['_id']},{'$set': {'two_factor_number': random.randint(100000, 999999)}})

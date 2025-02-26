@@ -28,10 +28,14 @@ def login():
     user = User.find_user_by_username(username)
     print(user)
     if user and bcrypt.check_password_hash(user["password"], password):
+        if user.get("two_factor_enabled") == True:
+            two_factor_number =  user.get("two_factor_number")
+            msg = Message("Password Reset Request", recipients=[user["email"]], body=f"Your two factor authentication code is: {two_factor_number} ")
+            mail.send(msg)
+            return {"message": "Check your email for your two factor authentication code"}, 200
         access_token = create_access_token(identity=str(user["_id"]), fresh=True)
         refresh_token = create_refresh_token(identity=str(user["_id"]))
         return {"access_token": access_token, "refresh_token": refresh_token}, 200
-
     return {"message": "Invalid credentials"}, 401
 
 @auth_bp.route("/signup", methods=["POST"])
@@ -108,4 +112,16 @@ def set_password():
     if User.set_password(password, token):
         return {"message": "Password successfully set"}, 200
     return {"message": "Error setting password"}, 401
-    
+
+@auth_bp.route('/two_factor', methods=["POST"])
+def two_factor():
+    number = request.json.get("code")
+    username = request.json.get("username")
+    user = User.find_user_by_username(username)
+    if user and user.get("two_factor_number") == number:
+        User.scrambled_number(user)
+        access_token = create_access_token(identity=str(user["_id"]), fresh=True)
+        refresh_token = create_refresh_token(identity=str(user["_id"]))
+        return {"access_token": access_token, "refresh_token": refresh_token}, 200
+    return {"message": "Invalid number"}, 401
+

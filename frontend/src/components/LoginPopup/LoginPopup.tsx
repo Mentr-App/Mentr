@@ -23,7 +23,9 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [major, setMajor] = useState("");
     const [company, setCompany] = useState("");
     const [industry, setIndustry] = useState("");
-
+    const [twoFactorCode, setTwoFactorCode] = useState("");
+    const [isTwoFactorActive, setIsTwoFactorActive] = useState(false);
+     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -77,7 +79,43 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             }
 
             const data = await response.json();
-
+            if (data.message) {
+                setIsTwoFactorActive(true);
+                return;
+            }
+            if (data.access_token && data.refresh_token) {
+                login(data.access_token, data.refresh_token);
+                onClose();
+            }
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unexpected error occurred");
+            }
+        }
+    };
+    
+    const handleTwoFactorSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+    
+        try {
+            const response = await fetch("../api/two_fac", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ username, code: twoFactorCode }),
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to verify 2FA code");
+            }
+    
+            const data = await response.json();
+    
             if (data.access_token && data.refresh_token) {
                 login(data.access_token, data.refresh_token);
                 onClose();
@@ -178,8 +216,31 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     {showForgotPassword ? (showSecurityQuestions ? "Security Questions" : "Reset Password") : 
                      isLogin ? "Login" : "Sign Up"}
                 </h2>
-
-                {showForgotPassword ? (
+                
+                {isTwoFactorActive ? (
+                    <form onSubmit={handleTwoFactorSubmit}>
+                        <input
+                            type='text'
+                            placeholder='Enter your 2FA code'
+                            value={twoFactorCode}
+                            onChange={(e) => setTwoFactorCode(e.target.value)}
+                            className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                        />
+                        <button
+                            type='submit'
+                            className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'
+                        >
+                            Verify Code
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsTwoFactorActive(false)}
+                            className="w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200"
+                        >
+                            Back to Login
+                        </button>
+                    </form>
+                ) : (showForgotPassword ? (
                     showSecurityQuestions ? (
                         <form onSubmit={handleSecurityAnswersSubmit}>
                         {securityQuestions.map((question, index) => (
@@ -349,7 +410,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             </button>
                         )}
                     </form>
-                ))}
+                )))}
 
                 {error && <p className='text-primary-dark mt-4'>{error}</p>}
                 {successMessage && <p className='text-green-500 mt-4'>{successMessage}</p>}
