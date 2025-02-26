@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ForumPost from "./ForumPost";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export interface Post {
     _id: IDObject;
@@ -11,6 +12,11 @@ export interface Post {
     created_at: string;
     downvotes: number;
     upvotes: number;
+}
+
+export interface AuthorObject {
+    _id: string;
+    username: string
 }
 
 export interface IDObject {
@@ -30,6 +36,8 @@ const Forum: React.FC = () => {
 
     // Track which layout is active (grid or list)
     const [isGridView, setIsGridView] = useState(true);
+
+    const router = useRouter()
 
     const fetchUserVotes = async () => {
         if (!isAuthenticated) {
@@ -52,6 +60,11 @@ const Forum: React.FC = () => {
             console.error("Error fetching user votes:", error);
         }
     };
+
+    const handlePostClick = (post: Post) => {
+        console.log(post)
+        router.push("/post/" + post._id.$oid)
+    }
 
     useEffect(() => {
         fetchUserVotes();
@@ -206,6 +219,7 @@ const Forum: React.FC = () => {
                                     post={post}
                                     currentVoteType={userVotes[post._id.$oid]}
                                     onVoteUpdate={handleVoteUpdate}
+                                    onClick={() => handlePostClick(post)}
                                 />
                             ))}
                         </div>
@@ -219,6 +233,7 @@ const Forum: React.FC = () => {
                                 post={post}
                                 currentVoteType={userVotes[post._id.$oid]}
                                 onVoteUpdate={handleVoteUpdate}
+                                onClick={() => handlePostClick(post)}
                             />
                         ))}
                     </div>

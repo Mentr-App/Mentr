@@ -11,28 +11,36 @@ interface ForumPostProps {
         newUpvotes: number,
         newDownvotes: number
     ) => void;
+    onClick: () => void;
 }
 
 const ForumPost: React.FC<ForumPostProps> = ({
     post,
     currentVoteType,
     onVoteUpdate,
+    onClick
 }) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, setIsPopupVisible } = useAuth();
     const [upvotes, setUpvotes] = useState<number>(post.upvotes || 0);
     const [downvotes, setDownvotes] = useState<number>(post.downvotes || 0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>, voteType:"up" | "down") => {
+        event.stopPropagation()
+
+        handleVote(voteType)
+    }
+
     const handleVote = async (type: "up" | "down") => {
         if (!isAuthenticated) {
-            alert("You need to log in to vote on posts");
+            setIsPopupVisible(true)
             return;
         }
 
         setIsLoading(true);
         try {
             const response = await fetch(
-                `/api/post/${post._id.$oid}?action=vote`,
+                `/api/vote/${post._id.$oid}?action=vote`,
                 {
                     method: "POST",
                     headers: {
@@ -67,10 +75,11 @@ const ForumPost: React.FC<ForumPostProps> = ({
         const date = new Date(dateString);
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
-        const diffHours = diffMs / (1000 * 60 * 60);
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        console.log(diffHours)
         const diffDays = diffHours / 24;
 
-        if (diffHours < 0) {
+        if (diffHours <= 0) {
             return "Now";
         } else if (diffHours < 24) {
             const hours = Math.floor(diffHours);
@@ -88,7 +97,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
     };
 
     return (
-        <div className='bg-secondary-light rounded-lg shadow-lg p-6 hover:bg-gray-500 ease-in-out transition duration-300'>
+        <div onClick={onClick} className='bg-secondary-light rounded-lg shadow-lg p-6 hover:bg-gray-500 ease-in-out transition duration-300 cursor-pointer'>
             <h2 className='text-xl font-semibold text-text-primary mb-2'>
                 {post.title}
             </h2>
@@ -98,7 +107,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                     <span>{post.author || "Anonymous"}</span>
                     <div className='flex items-center space-x-2'>
                         <button
-                            onClick={() => handleVote("up")}
+                            onClick={(event) => handleButtonClick(event, "up")}
                             disabled={isLoading}
                             className={`flex items-center space-x-1 px-2 py-1 rounded transition-colors ${
                                 currentVoteType === "up"
@@ -123,7 +132,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                             <span>{upvotes}</span>
                         </button>
                         <button
-                            onClick={() => handleVote("down")}
+                            onClick={(event) => handleButtonClick(event, "down")}
                             disabled={isLoading}
                             className={`flex items-center space-x-1 px-2 py-1 rounded transition-colors ${
                                 currentVoteType === "down"

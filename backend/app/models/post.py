@@ -10,6 +10,21 @@ class Post:
     """Post model for handling post-related operations in MongoDB."""
 
     @staticmethod
+    def view_post(post_id):
+        post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
+        if not post:
+            return None
+
+        author = mongo.db.users.find_one({"_id": post["author_id"]}, {"username": 1, "_id": 1})
+        if not author:
+            return None
+
+        post["author"] = author
+        post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
+        return post
+        
+
+    @staticmethod
     def create_post(author_id, title, content):
         """Insert a new post into the database."""
         post_data = {

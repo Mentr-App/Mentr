@@ -14,14 +14,25 @@ export default async function handler(
 
     try {
         let method = req.method;
-        let endpoint = `http://localhost:8000/post/${postId}`;
+        let endpoint = `http://localhost:8000/post/${postId}/vote`;
+
+        // Only handle vote actions
+        if (action !== "vote") {
+            return res
+                .status(405)
+                .json({ message: "Method not allowed or invalid action" });
+        }
 
         const requestOptions: RequestInit = {
             method,
             headers: {
                 "Content-Type": "application/json",
+                Authorization: authHeader,
             },
         };
+
+        if (method !== "GET" && req.body)
+            requestOptions.body = JSON.stringify(req.body);
 
         const response = await fetch(endpoint, requestOptions);
 
