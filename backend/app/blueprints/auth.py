@@ -30,7 +30,7 @@ def login():
     if user and bcrypt.check_password_hash(user["password"], password):
         if user.get("two_factor_enabled") == True:
             two_factor_number =  user.get("two_factor_number")
-            msg = Message("Password Reset Request", recipients=[user["email"]], body=f"Your two factor authentication code is: {two_factor_number} ")
+            msg = Message("Two Factor Authentication Code", recipients=[user["email"]], body=f"Your two factor authentication code is: {two_factor_number} ")
             mail.send(msg)
             return {"message": "Check your email for your two factor authentication code"}, 200
         access_token = create_access_token(identity=str(user["_id"]), fresh=True)
