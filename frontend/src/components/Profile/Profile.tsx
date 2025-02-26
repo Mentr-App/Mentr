@@ -13,6 +13,9 @@ interface ProfileData {
     major?: string;
     company?: string;
     industry?: string;
+    linkedin?: string;
+    instagram?: string;
+    twitter?: string;
 }
 
 const Profile: React.FC = () => {
@@ -26,6 +29,9 @@ const Profile: React.FC = () => {
     const [editableMajor, setEditableMajor] = useState<string>("");
     const [editableCompany, setEditableCompany] = useState<string>("");
     const [editableIndustry, setEditableIndustry] = useState<string>("");
+    const [editableLinkedin, setEditableLinkedin] = useState<string>("");
+    const [editableInstagram, setEditableInstagram] = useState<string>("");
+    const [editableTwitter, setEditableTwitter] = useState<string>("");
     const { logout } = useAuth();
     const router = useRouter();
 
@@ -57,6 +63,9 @@ const Profile: React.FC = () => {
                     major: userData["major"],
                     company: userData["company"],
                     industry: userData["industry"],
+                    linkedin: userData["linkedin"],
+                    instagram: userData["instagram"],
+                    twitter: userData["twitter"],
                 };
                 setProfile(profileData);
                 setEditableUsername(profileData.username);
@@ -65,6 +74,9 @@ const Profile: React.FC = () => {
                 setEditableMajor(profileData.major || "");
                 setEditableCompany(profileData.company || "");
                 setEditableIndustry(profileData.industry || "");
+                setEditableLinkedin(profileData.linkedin || "");
+                setEditableInstagram(profileData.instagram || "");
+                setEditableTwitter(profileData.twitter || "");
                 setLoading(false);
             } catch (err) {
                 setError(
@@ -87,6 +99,9 @@ const Profile: React.FC = () => {
                 major: editableMajor,
                 company: editableCompany,
                 industry: editableIndustry,
+                linkedin: editableLinkedin,
+                instagram: editableInstagram,
+                twitter: editableTwitter,
             });
         }
 
@@ -100,6 +115,9 @@ const Profile: React.FC = () => {
                 major: editableUserType === "Mentee" ? editableMajor : undefined,
                 company: editableUserType === "Mentor" ? editableCompany : undefined,
                 industry: editableUserType === "Mentor" ? editableIndustry : undefined,
+                linkedin: editableLinkedin,
+                instagram: editableInstagram,
+                twitter: editableTwitter,
             };
             const response = await fetch(endpoint, {
                 method: "POST",
@@ -155,6 +173,39 @@ const Profile: React.FC = () => {
         router.push("/");
     };
 
+    const handleUnlinkSocialMedia = async (field: keyof ProfileData) => {
+        try {
+            const endpoint = "/api/profile/setProfile";
+            const access_token = localStorage.getItem("access_token");
+            const payload = {
+                [field]: "",
+            };
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to unlink account");
+            }
+
+            // Update the local state to reflect the change
+            setProfile((prevProfile) => ({
+                ...prevProfile!,
+                [field]: "",
+            }));
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "An error occurred"
+            );
+        }
+    };
+
     if (loading)
         return (
             <div className='flex justify-center items-center h-64'>
@@ -194,127 +245,203 @@ const Profile: React.FC = () => {
                     <h2 className='text-lg font-semibold text-text-primary mb-4'>
                         User Information
                     </h2>
-                    <div className='space-y-4'>
-                        <div className='space-y-2'>
-                            <label className='block text-text-light'>
-                                Username
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type='text'
-                                    value={editableUsername}
-                                    onChange={(e) => setEditableUsername(e.target.value)}
-                                    className='w-full bg-background text-text-primary p-2 rounded'
-                                />
-                            ) : (
-                                <p className='text-text-primary'>
-                                    {profile.username}
-                                </p>
-                            )}
-                            <button
-                                onClick={handleResetPassword}
-                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                Reset Password
-                            </button>
-                        </div>
-                        <div className='space-y-2'>
-                            <label className='block text-text-light'>
-                                Email
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type='email'
-                                    value={editableEmail}
-                                    onChange={(e) => setEditableEmail(e.target.value)}
-                                    className='w-full bg-background text-text-primary p-2 rounded'
-                                />
-                            ) : (
-                                <p className='text-text-primary'>{profile.email}</p>
-                            )}
-                        </div>
-                        <div className='space-y-2'>
-                            <label className='block text-text-light'>
-                                User Type
-                            </label>
-                            {isEditing ? (
-                                <select
-                                    value={editableUserType || ""}
-                                    onChange={(e) => setEditableUserType(e.target.value as "Mentor" | "Mentee")}
-                                    className='w-full bg-background text-text-primary p-2 rounded'
-                                >
-                                    <option value="" disabled>Select user type</option>
-                                    <option value="Mentor">Mentor</option>
-                                    <option value="Mentee">Mentee</option>
-                                </select>
-                            ) : (
-                                <p className='text-text-primary'>{profile.userType}</p>
-                            )}
-                        </div>
-                        {editableUserType === "Mentee" && (
+                    <div className='flex space-x-6'>
+                        <div className='w-1/2 space-y-4'>
                             <div className='space-y-2'>
                                 <label className='block text-text-light'>
-                                    Major
+                                    Username
                                 </label>
                                 {isEditing ? (
                                     <input
                                         type='text'
-                                        value={editableMajor}
-                                        onChange={(e) => setEditableMajor(e.target.value)}
+                                        value={editableUsername}
+                                        onChange={(e) => setEditableUsername(e.target.value)}
                                         className='w-full bg-background text-text-primary p-2 rounded'
                                     />
                                 ) : (
-                                    <p className='text-text-primary'>{profile.major}</p>
+                                    <p className='text-text-primary'>
+                                        {profile.username}
+                                    </p>
+                                )}
+                                <button
+                                    onClick={handleResetPassword}
+                                    className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                    Reset Password
+                                </button>
+                            </div>
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    Email
+                                </label>
+                                {isEditing ? (
+                                    <input
+                                        type='email'
+                                        value={editableEmail}
+                                        onChange={(e) => setEditableEmail(e.target.value)}
+                                        className='w-full bg-background text-text-primary p-2 rounded'
+                                    />
+                                ) : (
+                                    <p className='text-text-primary'>{profile.email}</p>
                                 )}
                             </div>
-                        )}
-                        {editableUserType === "Mentor" && (
-                            <>
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    Member Since
+                                </label>
+                                <p className='text-text-primary'>
+                                    {new Date(
+                                        profile.created_at
+                                    ).toLocaleDateString()}
+                                </p>
+                                <button
+                                    onClick={handleDeleteAccount}
+                                    className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                    Delete Account
+                                </button>
+                            </div>
+                        </div>
+                        <div className='w-1/2 space-y-4'>
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    User Type
+                                </label>
+                                {isEditing ? (
+                                    <select
+                                        value={editableUserType || ""}
+                                        onChange={(e) => setEditableUserType(e.target.value as "Mentor" | "Mentee")}
+                                        className='w-full bg-background text-text-primary p-2 rounded'
+                                    >
+                                        <option value="" disabled>Select user type</option>
+                                        <option value="Mentor">Mentor</option>
+                                        <option value="Mentee">Mentee</option>
+                                    </select>
+                                ) : (
+                                    <p className='text-text-primary'>{profile.userType}</p>
+                                )}
+                            </div>
+                            {editableUserType === "Mentee" && (
                                 <div className='space-y-2'>
                                     <label className='block text-text-light'>
-                                        Company
+                                        Major
                                     </label>
                                     {isEditing ? (
                                         <input
                                             type='text'
-                                            value={editableCompany}
-                                            onChange={(e) => setEditableCompany(e.target.value)}
+                                            value={editableMajor}
+                                            onChange={(e) => setEditableMajor(e.target.value)}
                                             className='w-full bg-background text-text-primary p-2 rounded'
                                         />
                                     ) : (
-                                        <p className='text-text-primary'>{profile.company}</p>
+                                        <p className='text-text-primary'>{profile.major}</p>
                                     )}
                                 </div>
-                                <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        Industry
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type='text'
-                                            value={editableIndustry}
-                                            onChange={(e) => setEditableIndustry(e.target.value)}
-                                            className='w-full bg-background text-text-primary p-2 rounded'
-                                        />
-                                    ) : (
-                                        <p className='text-text-primary'>{profile.industry}</p>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                        <div className='space-y-2'>
-                            <label className='block text-text-light'>
-                                Member Since
-                            </label>
-                            <p className='text-text-primary'>
-                                {new Date(
-                                    profile.created_at
-                                ).toLocaleDateString()}
-                            </p>
-                            <button
-                                onClick={handleDeleteAccount}
-                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                Delete Account
-                            </button>
+                            )}
+                            {editableUserType === "Mentor" && (
+                                <>
+                                    <div className='space-y-2'>
+                                        <label className='block text-text-light'>
+                                            Company
+                                        </label>
+                                        {isEditing ? (
+                                            <input
+                                                type='text'
+                                                value={editableCompany}
+                                                onChange={(e) => setEditableCompany(e.target.value)}
+                                                className='w-full bg-background text-text-primary p-2 rounded'
+                                            />
+                                        ) : (
+                                            <p className='text-text-primary'>{profile.company}</p>
+                                        )}
+                                    </div>
+                                    <div className='space-y-2'>
+                                        <label className='block text-text-light'>
+                                            Industry
+                                        </label>
+                                        {isEditing ? (
+                                            <input
+                                                type='text'
+                                                value={editableIndustry}
+                                                onChange={(e) => setEditableIndustry(e.target.value)}
+                                                className='w-full bg-background text-text-primary p-2 rounded'
+                                            />
+                                        ) : (
+                                            <p className='text-text-primary'>{profile.industry}</p>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    LinkedIn
+                                </label>
+                                {isEditing ? (
+                                    <input
+                                        type='text'
+                                        value={editableLinkedin}
+                                        onChange={(e) => setEditableLinkedin(e.target.value)}
+                                        className='w-full bg-background text-text-primary p-2 rounded'
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <p className='text-text-primary'>{profile.linkedin}</p>
+                                        {profile.linkedin && (
+                                            <button
+                                                onClick={() => handleUnlinkSocialMedia("linkedin")}
+                                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                Unlink
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    Instagram
+                                </label>
+                                {isEditing ? (
+                                    <input
+                                        type='text'
+                                        value={editableInstagram}
+                                        onChange={(e) => setEditableInstagram(e.target.value)}
+                                        className='w-full bg-background text-text-primary p-2 rounded'
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <p className='text-text-primary'>{profile.instagram}</p>
+                                        {profile.instagram && (
+                                            <button
+                                                onClick={() => handleUnlinkSocialMedia("instagram")}
+                                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                Unlink
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    Twitter
+                                </label>
+                                {isEditing ? (
+                                    <input
+                                        type='text'
+                                        value={editableTwitter}
+                                        onChange={(e) => setEditableTwitter(e.target.value)}
+                                        className='w-full bg-background text-text-primary p-2 rounded'
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <p className='text-text-primary'>{profile.twitter}</p>
+                                        {profile.twitter && (
+                                            <button
+                                                onClick={() => handleUnlinkSocialMedia("twitter")}
+                                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                Unlink
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

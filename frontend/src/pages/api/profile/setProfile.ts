@@ -13,7 +13,17 @@ export default async function handler(
     console.log("Request body:", req.body);
 
     const authHeader = req.headers.authorization;
-    const { username, email, userType, major, company, industry } = req.body;
+    const {
+        username,
+        email,
+        userType,
+        major,
+        company,
+        industry,
+        linkedin,
+        instagram,
+        twitter,
+    } = req.body;
 
     try {
         const response = await fetch("http://localhost:8000/profile/set", {
@@ -29,6 +39,9 @@ export default async function handler(
                 major,
                 company,
                 industry,
+                linkedin,
+                instagram,
+                twitter,
             }),
         });
 
