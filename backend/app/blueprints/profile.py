@@ -36,17 +36,17 @@ def set_profile_info():
         twitter = request.json.get("twitter")
         
         return User.update_user(
-            user_id,
-            username,
-            email,
-            userType,
-            major,
-            company,
-            industry,
-            linkedin,
-            instagram,
-            twitter,
-            two_factor_enabled
+            user_id=user_id,
+            username=username,
+            email=email,
+            userType=userType,
+            major=major,
+            company=company,
+            industry=industry,
+            linkedin=linkedin,
+            instagram=instagram,
+            twitter=twitter,
+            two_factor_enabled=two_factor_enabled
         )
     except Exception as e:
         print("Error updating user profile:", str(e))

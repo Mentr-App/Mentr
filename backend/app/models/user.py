@@ -88,9 +88,8 @@ class User:
             update_data["company"] = company
         if industry:
             update_data["industry"] = industry
-        if two_factor_enabled:
-            update_data["two_factor_enabled"] = two_factor_enabled
             
+        update_data["two_factor_enabled"] = two_factor_enabled
         update_data["linkedin"] = linkedin
         update_data["instagram"] = instagram
         update_data["twitter"] = twitter
