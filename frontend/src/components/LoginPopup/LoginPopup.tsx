@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+
 
 const securityQuestions = [
   "What was the name of your first pet?",
@@ -17,7 +17,8 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [error, setError] = useState<string | null>(null);
     const [showSecurityQuestions, setShowSecurityQuestions] = useState(false);
     const [securityAnswers, setSecurityAnswers] = useState(["", "", ""]);
-    const router = useRouter()
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,18 +81,75 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         setSecurityAnswers(newAnswers);
     };
 
-    const handleForgotPassword = () => {
-        router.push("/forgotpassword")
-    };
+    const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setSuccessMessage(null);
 
+        if (!username) {
+            setError("Username is required");
+            return;
+        }
+
+        try {
+            const response = await fetch("../api/forgotPassword", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ username }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Something went wrong");
+            }
+
+            setSuccessMessage("Password reset instructions have been sent to your email");
+            setUsername("");
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unexpected error occurred");
+            }
+        }
+    };
     return (
         <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50'>
             <div className='bg-[#262d34] p-8 rounded-lg w-96'>
                 <h2 className='text-2xl text-text-primary mb-6'>
-                    {isLogin ? "Login" : (showSecurityQuestions ? "Security Questions" : "Sign Up")}
+                    {showForgotPassword ? "Reset Password" : 
+                     isLogin ? "Login" : (showSecurityQuestions ? "Security Questions" : "Sign Up")}
                 </h2>
-                
-                {!isLogin && showSecurityQuestions ? (
+                {showForgotPassword ? (
+                    <form onSubmit={handleForgotPasswordSubmit}>
+                        <input
+                            type='text'
+                            placeholder='Username'
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                        />
+                        <button
+                            type='submit'
+                            className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'
+                        >
+                            Reset Password
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowForgotPassword(false);
+                                setError(null);
+                                setSuccessMessage(null);
+                            }}
+                            className="w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200"
+                        >
+                            Back to Login
+                        </button>
+                    </form>
+                ) : (!isLogin && showSecurityQuestions ? (
                     <form onSubmit={handleSubmit}>
                         {securityQuestions.map((question, index) => (
                             <div key={index} className="mb-4">
@@ -152,19 +210,20 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         >
                             {isLogin ? "Login" : "Continue to Security Questions"}
                         </button>
-                        {isLogin && (
+                        {isLogin && !showForgotPassword && !showSecurityQuestions &&(
                             <button
                                 type="button"
-                                onClick={handleForgotPassword}
+                                onClick={() => setShowForgotPassword(true)}
                                 className="w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200"
                             >
                                 Forgot Password?
                             </button>
                         )}
                     </form>
-                )}
+                ))}
 
                 {error && <p className='text-primary-dark mt-4'>{error}</p>}
+                {successMessage && <p className='text-green-500 mt-4'>{successMessage}</p>}
 
                 {!showSecurityQuestions && (
                     <p className='text-text-primary mt-4'>

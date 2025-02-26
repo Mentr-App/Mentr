@@ -1,7 +1,7 @@
 from app.database import mongo, bcrypt
 from datetime import datetime
 from bson import ObjectId
-
+from app.models.securityquestions import SecurityQuestions
 
 class User:
     """User Model to interact with MongoDB"""
@@ -68,4 +68,24 @@ class User:
             return {"message": "User updated successfully"}, 200
         return {"message": "User not found!!!!"}, 404
 
-
+    @staticmethod
+    def insert_reset_token(user, token):
+        mongo.db.users.update_one({'_id': user['_id']},{'$set': {'reset_token': token}})
+    
+    @staticmethod
+    def verify_answers(answers, token):
+        question_id = mongo.db.users.find_one({"reset_token" : token})["_id"]
+        if not question_id:
+            return False
+        questions = SecurityQuestions.get_questions_by_id(ObjectId(question_id))
+        if answers[0] == questions["answer1"] and answers[1] == questions["answer2"] and answers[3] == questions["answer3"]:
+            return True
+        return False
+    @staticmethod
+    def get_questions_id_by_reset_token(token):
+        user = mongo.db.users.find_one({"reset_token": token})
+        return user["security_questions_id"] if user else None
+    
+    @staticmethod
+    def set_password(password, token):
+        mongo.db.users.update_one({'reset_token': token},{'$set': {'password': password}})

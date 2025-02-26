@@ -3,6 +3,7 @@ from flask_restful import Resource
 from app.models.user import User
 from app.models.securityquestions import SecurityQuestions
 from app.database import bcrypt
+from datetime import datetime
 from flask_jwt_extended import (
     create_access_token, 
     create_refresh_token,
@@ -10,7 +11,11 @@ from flask_jwt_extended import (
     get_jwt_identity
 )
 from flask import Blueprint
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Message
+from app.mail import mail
 
+serializer = URLSafeTimedSerializer("asjodiasjodqdhioqWeh 12jb3en 1easj lhdasb xmna bdjasjd")
 auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/login", methods=["POST"])
@@ -60,3 +65,45 @@ def refresh():
     access_token = create_access_token(identity=current_user_id, fresh=False)
 
     return {"access_token": access_token}, 200
+
+@auth_bp.route('/forgot_password', methods=["POST"])
+def forgot_password():
+    username = request.json.get("username")
+    user = User.find_user_by_username(username)
+    if not user:
+        return {"message": "No username exists"}, 401
+    if not user.get("email"):
+        return {"message": "User does not have a linked email"}, 401
+    token = serializer.dumps(user['email'], salt=str(datetime.now()) + 'password-reset-salt')
+    User.insert_reset_token(user, token)
+    frontendurl = "http://localhost:3000"
+    reset_url = f"{frontendurl}/reset_password?token={token}"
+    msg = Message("Password Reset Request", recipients=[user['email']], body=f"To reset your password, visit the following link: {reset_url}")
+    mail.send(msg)
+    return {"message": "Check your inbox"}, 200
+
+@auth_bp.route('/get_questions', methods=["POST"])
+def get_questions():
+    token = request.json.get("token")
+    if not token:
+        return {"message": "Error getting questions"}, 401
+    user = User.get_questions_id_by_reset_token(token)
+    if not user:
+        return {"message": "Please click the link in your email again"}, 401
+    questions = SecurityQuestions.get_questions_by_id(user)
+    return {"questions", [questions[0], questions[1], questions[2]]}, 200
+
+@auth_bp.route('/verify_answers', methods=["POST"])
+def verify_answers():
+    answers = request.json.get("answers")
+    token = request.json.get("token")
+    if User.verify_answers(answers, token):
+        return {"message": "Success"}, 200
+    return {"message": "Incorrect answers"}, 401
+
+auth_bp.route('/set_password', methods=["POST"])
+def set_password():
+    token = request.json.get("token")
+    password = request.json.get("password")
+    User.set_password(password, token)
+    
