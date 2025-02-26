@@ -5,7 +5,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { username, email, password, securityQuestions } = req.body;
+  const { username, email, password, securityQuestions, userType, major, company, industry } = req.body;
   console.log(securityQuestions)
   if (!username || !password || !securityQuestions) {
     return res.status(400).json({ message: 'Missing required fields' });
@@ -27,13 +27,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Invalid security questions'});
     }
   }
+  if (!userType) {
+    return res.status(400).json({ message: 'Mentor/Mentee status must be indicated'});
+  }
+  if (userType == "mentor" && (!company || !industry)) {
+    return res.status(400).json({ message: 'Company and industry must be indicated'})
+  }
+  if (userType == "mentee" && !major) {
+    return res.status(400).json({ message: 'Major must be indicated'})
+  }
   try {
     const response = await fetch('http://localhost:8000/auth/signup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, email, password, securityQuestions }),
+      body: JSON.stringify({ username, email, password, securityQuestions, userType, major, industry, company }),
     });
 
     if (!response.ok) {

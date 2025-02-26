@@ -48,7 +48,13 @@ def signup():
     questions = request.json.get("securityQuestions")
     print(questions)
     question_id = SecurityQuestions.create_questions(questions)
-    id = User.create_user(username, password, email, question_id)
+    userType = request.json.get("userType")
+    if not userType:
+        return {"message": "Mentor/Mentee Status Missing"}, 401
+    company = request.json.get("company")
+    industry = request.json.get("industry")
+    major = request.json.get("major")
+    id = User.create_user(username, password, email, question_id, userType, company, industry, major)
     access_token = create_access_token(identity=id, fresh=True)
     refresh_token = create_refresh_token(identity=id)
     return {"access_token": access_token, "refresh_token": refresh_token}, 200

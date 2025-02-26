@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-
 const signUpSecurityQuestions = [
   "What was the name of your first pet?",
   "What city were you born in?",
@@ -20,14 +19,26 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [securityQuestions, setSecurityQuestions] = useState<string[]>([]);
+    const [userType, setUserType] = useState<"mentor" | "mentee" | null>(null);
+    const [major, setMajor] = useState("");
+    const [company, setCompany] = useState("");
+    const [industry, setIndustry] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         
         if (!isLogin && !showSecurityQuestions) {
-            if (!username || !password) {
-                setError("Username and password are required");
+            if (!username || !password || !userType) {
+                setError("Username, password, and user type are required");
+                return;
+            }
+            if (userType === "mentee" && !major) {
+                setError("Major is required for mentees");
+                return;
+            }
+            if (userType === "mentor" && (!company || !industry)) {
+                setError("Company and industry are required for mentors");
                 return;
             }
             setShowSecurityQuestions(true);
@@ -41,12 +52,16 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 username, 
                 password, 
                 email,
+                userType,
+                major: userType === "mentee" ? major : undefined,
+                company: userType === "mentor" ? company : undefined,
+                industry: userType === "mentor" ? industry : undefined,
                 securityQuestions: securityQuestions.map((question, index) => ({
                     question,
                     answer: securityAnswers[index]
                 }))
               };
-        console.log(payload )
+        console.log(payload)
         try {
             const response = await fetch(endpoint, {
                 method: "POST",
@@ -277,6 +292,47 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             onChange={(e) => setPassword(e.target.value)}
                             className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                         />
+                        {!isLogin && (
+                            <div className="mb-4">
+                                <label className="text-text-primary mb-2 block">Are you a mentor or mentee?</label>
+                                <select
+                                    value={userType || ""}
+                                    onChange={(e) => setUserType(e.target.value as "mentor" | "mentee")}
+                                    className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'
+                                >
+                                    <option value="" disabled>Select an option</option>
+                                    <option value="mentor">Mentor</option>
+                                    <option value="mentee">Mentee</option>
+                                </select>
+                            </div>
+                        )}
+                        {!isLogin && userType === "mentee" && (
+                            <input
+                                type='text'
+                                placeholder='Major'
+                                value={major}
+                                onChange={(e) => setMajor(e.target.value)}
+                                className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                            />
+                        )}
+                        {!isLogin && userType === "mentor" && (
+                            <>
+                                <input
+                                    type='text'
+                                    placeholder='Company'
+                                    value={company}
+                                    onChange={(e) => setCompany(e.target.value)}
+                                    className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                                />
+                                <input
+                                    type='text'
+                                    placeholder='Industry'
+                                    value={industry}
+                                    onChange={(e) => setIndustry(e.target.value)}
+                                    className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                                />
+                            </>
+                        )}
                         <button
                             type='submit'
                             className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'

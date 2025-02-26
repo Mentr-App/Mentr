@@ -7,7 +7,7 @@ class User:
     """User Model to interact with MongoDB"""
 
     @staticmethod
-    def create_user(username, password, email, security_questions_id = ""):
+    def create_user(username, password, email, security_questions_id, userType, company="", industry="", major=""):
         """Creates a new user with a hashed password."""
         print(username, password)
         if mongo.db.users.find_one({"username": username}):
@@ -21,7 +21,11 @@ class User:
                 "email": email,
                 "password": hashed_password,
                 "created_at": datetime.utcnow(),
-                "security_questions_id": ObjectId(security_questions_id)
+                "security_questions_id": ObjectId(security_questions_id),
+                "userType": userType,
+                "company": company if company else "",
+                "industry": industry if industry else "",
+                "major": major if major else ""
             }
         ).inserted_id
         print(user_id)
