@@ -10,10 +10,10 @@ import people_img from "@/assets/people.png";
 import LoginPopup from "@/components/LoginPopup/LoginPopup";
 
 const Navbar: React.FC = () => {
-    const [isPopupVisible, setIsPopupVisible] = useState(false);
+    // const [isPopupVisible, setIsPopupVisible] = useState(false);
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
     const router = useRouter();
-    const { isAuthenticated, logout } = useAuth();
+    const { isAuthenticated, logout, isPopupVisible, setIsPopupVisible } = useAuth();
 
     const handleProfileClick = () => {
         if (isAuthenticated) {

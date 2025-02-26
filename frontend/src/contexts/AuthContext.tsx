@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface AuthContextType {
     isAuthenticated: boolean;
+    isPopupVisible: boolean;
+    setIsPopupVisible: (React.Dispatch<React.SetStateAction<boolean>>);
     login: (accessToken: string, refreshToken: string) => void;
     logout: () => void;
 }
@@ -12,6 +14,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false)
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
@@ -55,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, login, logout,isPopupVisible, setIsPopupVisible }}>
             {children}
         </AuthContext.Provider>
     );
