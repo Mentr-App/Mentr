@@ -7,15 +7,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const { username } = req.body;
-        
+    
         if (!username) {
             return res.status(401).json({ message: 'Username must not be empty'});
         }
+        const flaskApiUrl = "http://localhost:8000/auth/forgot_password";
+        const response = await fetch(flaskApiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({username})
+        });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            return res.status(response.status).json({ message: errorData.message});
+        }
 
-        return res.status(200).json({ message: 'Password reset email sent' });
+        const message = await response.json();
+        console.log(message)
+        return res.status(200).json(message);
     } catch (error) {
-        console.error('Password reset error:', error);
-        return res.status(500).json({ message: 'Internal server error' });
+        console.error("Error sending password reset request:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
+
 }

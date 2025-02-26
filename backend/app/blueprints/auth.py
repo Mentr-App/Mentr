@@ -3,7 +3,7 @@ from flask_restful import Resource
 from app.models.user import User
 from app.models.securityquestions import SecurityQuestions
 from app.database import bcrypt
-import datetime
+from datetime import datetime
 from flask_jwt_extended import (
     create_access_token, 
     create_refresh_token,
