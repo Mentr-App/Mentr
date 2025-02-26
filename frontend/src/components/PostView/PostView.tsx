@@ -195,7 +195,7 @@ const PostView: React.FC<PostViewProps> = ({post_id}) => {
         }
     }, [userVotes, post])
 
-    if (!post) return <p>Loading...</p>
+    if (!post) return <></>
 
     return (
         <div className="h-[80vh] w-screen m-5 p-6 bg-secondary-light shadow-md rounded-lg overflow-scroll flex flex-col">
