@@ -61,7 +61,7 @@ class User:
         return {"message": "User not found"}, 404
 
     @staticmethod
-    def update_user(user_id, username, email, userType=None, major=None, company=None, industry=None):
+    def update_user(user_id, username, email, userType=None, major=None, company=None, industry=None, two_factor_enabled=False):
         """Updates a user's profile information given user_id"""
         update_data = {
             "username": username,
@@ -76,7 +76,9 @@ class User:
             update_data["company"] = company
         if industry:
             update_data["industry"] = industry
-
+        if two_factor_enabled:
+            update_data["two_factor_enabled"] = two_factor_enabled
+            
         result = mongo.db.users.find_one_and_update(
             {"_id": ObjectId(user_id)},
             {"$set": update_data}
@@ -101,10 +103,13 @@ class User:
         return False
     
     @staticmethod
-    def set_password(password, token):
+    def set_password_by_token(password, token):
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
         mongo.db.users.update_one({'reset_token': token},{'$set': {'password': hashed_password}})
         return mongo.db.users.find_one({'reset_token': token}) != None
+    @staticmethod
+    def set_password(password, id):
+        mongo.db.users.update_one({'_id': id},{'$set': {'password': password}})
     
     @staticmethod
     def scrambled_number(user):

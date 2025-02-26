@@ -25,13 +25,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(response.status).json({ message: errorData.message });
     }
     const data = await response.json();
+    console.log(data)
     if (data.message) {
       const {message} = data.message;
       return res.status(200).json({message});
     }
-    const { access_token, refresh_token } = await response.json();
-    
-    return res.status(200).json({ access_token, refresh_token });
+
+    return res.status(200).json({ "access_token": data.access_token, "refresh_token": data.refresh_token });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({ message: 'Internal Server Error' });

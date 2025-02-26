@@ -13,23 +13,17 @@ export default async function handler(
     console.log("Request body:", req.body);
 
     const authHeader = req.headers.authorization;
-    const { username, email, userType, major, company, industry, two_factor_enabled} = req.body;
+    const { password  } = req.body;
 
     try {
-        const response = await fetch("http://localhost:8000/profile/set", {
+        const response = await fetch("http://localhost:8000/profile/set_password", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 ...(authHeader && { Authorization: authHeader }),
             },
             body: JSON.stringify({
-                username,
-                email,
-                userType,
-                major,
-                company,
-                industry,
-                two_factor_enabled
+                password
             }),
         });
 
@@ -38,15 +32,9 @@ export default async function handler(
             return null;
         });
 
-        console.log("Backend response:", {
-            status: response.status,
-            data,
-        });
-
         if (!response.ok) {
             return res.status(response.status).json({
                 message: data?.message || "Failed to set profile",
-                error: data?.error || "Unknown error",
             });
         }
 

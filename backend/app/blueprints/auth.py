@@ -109,7 +109,7 @@ def verify_answers():
 def set_password():
     token = request.json.get("token")
     password = request.json.get("password")
-    if User.set_password(password, token):
+    if User.set_password_by_token(password, token):
         return {"message": "Password successfully set"}, 200
     return {"message": "Error setting password"}, 401
 

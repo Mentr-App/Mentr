@@ -30,8 +30,8 @@ def set_profile_info():
         major = request.json.get("major")
         company = request.json.get("company")
         industry = request.json.get("industry")
-        
-        return User.update_user(user_id, username, email, userType, major, company, industry)
+        two_factor_enabled = request.json.get("two_factor_enabled") 
+        return User.update_user(user_id, username, email, userType, major, company, industry, two_factor_enabled)
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
@@ -47,3 +47,16 @@ def delete_profile_info():
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
+    
+@profile_bp.route("/set_password", methods=["POST"])
+@jwt_required()
+def set_password():
+    try:
+        password = request.json.get("password")
+        user_id = get_jwt_identity()
+        User.set_password(password, user_id)
+        return {"message": "successfully set"},200
+    except Exception as e:
+        print("Error setting password:", str(e))
+        return {"message": "Error setting password", "error": str(e)}, 500
+        

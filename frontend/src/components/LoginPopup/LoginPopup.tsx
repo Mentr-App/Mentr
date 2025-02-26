@@ -79,6 +79,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             }
 
             const data = await response.json();
+            console.log(data)
             if (data.message) {
                 setIsTwoFactorActive(true);
                 return;

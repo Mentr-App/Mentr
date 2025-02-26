@@ -13,6 +13,7 @@ interface ProfileData {
     major?: string;
     company?: string;
     industry?: string;
+    two_factor_enabled: boolean;
 }
 
 const Profile: React.FC = () => {
@@ -26,6 +27,7 @@ const Profile: React.FC = () => {
     const [editableMajor, setEditableMajor] = useState<string>("");
     const [editableCompany, setEditableCompany] = useState<string>("");
     const [editableIndustry, setEditableIndustry] = useState<string>("");
+    const [editableTwoFactorEnabled, setEditableTwoFactorEnabled] = useState<boolean>(false);
     const { logout } = useAuth();
     const router = useRouter();
 
@@ -57,6 +59,7 @@ const Profile: React.FC = () => {
                     major: userData["major"],
                     company: userData["company"],
                     industry: userData["industry"],
+                    two_factor_enabled: userData["two_factor_enabled"]
                 };
                 setProfile(profileData);
                 setEditableUsername(profileData.username);
@@ -65,6 +68,7 @@ const Profile: React.FC = () => {
                 setEditableMajor(profileData.major || "");
                 setEditableCompany(profileData.company || "");
                 setEditableIndustry(profileData.industry || "");
+                setEditableTwoFactorEnabled(profileData.two_factor_enabled);
                 setLoading(false);
             } catch (err) {
                 setError(
@@ -87,6 +91,7 @@ const Profile: React.FC = () => {
                 major: editableMajor,
                 company: editableCompany,
                 industry: editableIndustry,
+                two_factor_enabled: editableTwoFactorEnabled,
             });
         }
 
@@ -100,6 +105,7 @@ const Profile: React.FC = () => {
                 major: editableUserType === "Mentee" ? editableMajor : undefined,
                 company: editableUserType === "Mentor" ? editableCompany : undefined,
                 industry: editableUserType === "Mentor" ? editableIndustry : undefined,
+                two_factor_enabled: editableTwoFactorEnabled,
             };
             const response = await fetch(endpoint, {
                 method: "POST",
@@ -127,6 +133,8 @@ const Profile: React.FC = () => {
     const handleResetPassword = () => {
         //LEO
         console.log("reset");
+        router.push('/reset_password');
+
     };
 
     const handleDeleteAccount = async () => {
@@ -301,6 +309,31 @@ const Profile: React.FC = () => {
                                 </div>
                             </>
                         )}
+                        <div className='space-y-2'>
+                            <label className='block text-text-light'>
+                                Two-Factor Authentication
+                            </label>
+                            <button
+                                onClick={(e) => {
+                                    if (isEditing) {
+                                        setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
+                                    }
+                                }}
+                                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                                    editableTwoFactorEnabled ? 'bg-primary' : 'bg-gray-300'
+                                } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={!isEditing}
+                            >
+                                <span
+                                    className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                                        editableTwoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                            <p className='text-text-primary'>
+                                {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
+                            </p>
+                        </div>
                         <div className='space-y-2'>
                             <label className='block text-text-light'>
                                 Member Since

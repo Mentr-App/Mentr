@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-
 export default function ResetPassword() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-  
+  const access_token = localStorage.getItem("access_token");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +25,7 @@ export default function ResetPassword() {
           return;
       }
 
-      if (!token) {
+      if (!token && !access_token) {
           setError("Invalid reset token");
           return;
       }
@@ -36,22 +33,50 @@ export default function ResetPassword() {
       setIsLoading(true);
 
       try {
-          const response = await fetch("../api/set-password", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ token, password }),
-          });
-
-          if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || "Failed to reset password");
-          }
-
-          setSuccessMessage("Your password has been reset successfully. You can now log in.");
-          setPassword("");
-          setConfirmPassword("");
+        if (!access_token) {
+            const response = await fetch("../api/set-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ token, password }),
+            });
+  
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to reset password");
+            }
+  
+            setSuccessMessage("Your password has been reset successfully. You can now log in.");
+            setPassword("");
+            setConfirmPassword("");
+        }
+        else {
+            try {
+                const endpoint = "/api/profile/setPassword";
+                const access_token = localStorage.getItem("access_token");
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({password})
+                });
+    
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Failed to set password");
+                }
+                setSuccessMessage("Your password has been reset successfully. You can now log in.");
+                setPassword("");
+                setConfirmPassword("");
+            } catch (err) {
+                setError(
+                    err instanceof Error ? err.message : "An error occurred"
+                );
+            }
+        }
       } catch (err) {
           if (err instanceof Error) {
               setError(err.message);
