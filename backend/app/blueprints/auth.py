@@ -82,6 +82,17 @@ def forgot_password():
     mail.send(msg)
     return {"message": "Check your inbox"}, 200
 
+@auth_bp.route('/get_questions', methods=["POST"])
+def get_questions():
+    token = request.json.get("token")
+    if not token:
+        return {"message": "Error getting questions"}, 401
+    user = User.get_questions_id_by_reset_token(token)
+    if not user:
+        return {"message": "Please click the link in your email again"}, 401
+    questions = SecurityQuestions.get_questions_by_id(user)
+    return {"questions", [questions[0], questions[1], questions[2]]}, 200
+
 @auth_bp.route('/verify_answers', methods=["POST"])
 def verify_answers():
     answers = request.json.get("answers")

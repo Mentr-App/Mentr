@@ -59,13 +59,17 @@ class User:
     
     @staticmethod
     def verify_answers(answers, token):
-        question_id = mongo.db.users.find_one({"reset_token" : token}).id
+        question_id = mongo.db.users.find_one({"reset_token" : token})["_id"]
         if not question_id:
             return False
         questions = SecurityQuestions.get_questions_by_id(ObjectId(question_id))
         if answers[0] == questions["answer1"] and answers[1] == questions["answer2"] and answers[3] == questions["answer3"]:
             return True
         return False
+    @staticmethod
+    def get_questions_id_by_reset_token(token):
+        user = mongo.db.users.find_one({"reset_token": token})
+        return user["security_questions_id"] if user else None
     
     @staticmethod
     def set_password(password, token):
