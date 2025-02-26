@@ -22,6 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Invalid email format' });
     }
   }
+  console.log(securityQuestions)
   for (let i = 0; i < 3; i++) {
     if (!securityQuestions[i]) {
       return res.status(400).json({ message: 'Invalid security questions'});

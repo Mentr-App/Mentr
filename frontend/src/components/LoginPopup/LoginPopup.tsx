@@ -56,7 +56,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 major: userType === "mentee" ? major : undefined,
                 company: userType === "mentor" ? company : undefined,
                 industry: userType === "mentor" ? industry : undefined,
-                securityQuestions: securityQuestions.map((question, index) => ({
+                securityQuestions: signUpSecurityQuestions.map((question, index) => ({
                     question,
                     answer: securityAnswers[index]
                 }))
