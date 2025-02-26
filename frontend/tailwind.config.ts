@@ -11,24 +11,24 @@ export default {
     theme: {
     	extend: {
     		colors: {
-    			background: 'var(--background)',
-    			foreground: 'var(--foreground)',
+    			background: 'hsl(var(--background))',
+    			foreground: 'hsl(var(--foreground))',
     			primary: {
-    				DEFAULT: 'var(--primary)',
-    				foreground: 'var(--primary-foreground)'
+    				DEFAULT: 'hsl(var(--primary))',
+    				foreground: 'hsl(var(--primary-foreground))'
     			},
     			'primary-dark': 'var(--primary-dark)',
     			secondary: {
-    				DEFAULT: 'var(--secondary)',
-    				foreground: 'var(--secondary-foreground)'
+    				DEFAULT: 'hsl(var(--secondary))',
+    				foreground: 'hsl(var(--secondary-foreground))'
     			},
     			'secondary-light': 'var(--secondary-light)',
     			'text-primary': 'var(--text-primary)',
     			'text-secondary': 'var(--text-secondary)',
     			'text-light': 'var(--text-light)',
     			card: {
-    				DEFAULT: 'var(--card)',
-    				foreground: 'var(--card-foreground)'
+    				DEFAULT: 'hsl(var(--card))',
+    				foreground: 'hsl(var(--card-foreground))'
     			},
     			popover: {
     				DEFAULT: 'hsl(var(--popover))',
