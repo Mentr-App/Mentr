@@ -66,44 +66,40 @@ def refresh():
 
     return {"access_token": access_token}, 200
 
-@auth_bp.route('/forgot_password', methods=["POST"])
-def forgot_password():
-    username = request.json.get("username")
-    user = User.find_user_by_username(username)
-    if not user:
-        return {"message": "No username exists"}, 401
-    if not user.get("email"):
-        return {"message": "User does not have a linked email"}, 401
-    token = serializer.dumps(user['email'], salt=str(datetime.now()) + 'password-reset-salt')
-    User.insert_reset_token(user, token)
-    frontendurl = "http://localhost:3000"
-    reset_url = f"{frontendurl}/reset_password?token={token}"
-    msg = Message("Password Reset Request", recipients=[user['email']], body=f"To reset your password, visit the following link: {reset_url}")
-    mail.send(msg)
-    return {"message": "Check your inbox"}, 200
-
 @auth_bp.route('/get_questions', methods=["POST"])
 def get_questions():
-    token = request.json.get("token")
-    if not token:
-        return {"message": "Error getting questions"}, 401
-    user = User.get_questions_id_by_reset_token(token)
+    email = request.json.get("email")       
+    if not email:
+        return {"Message": "Email must not be empty"},401
+    user = User.find_user_by_email(email)
     if not user:
-        return {"message": "Please click the link in your email again"}, 401
-    questions = SecurityQuestions.get_questions_by_id(user)
-    return {"questions", [questions[0], questions[1], questions[2]]}, 200
+        return {"message": "No user with your email exists"}, 401
+    print(user)
+    questions = SecurityQuestions.get_questions_by_id(user["security_questions_id"])
+    if not questions:
+        return {"No questions"}, 401
+    return {"questions": [questions["question1"], questions["question2"], questions["question3"]]}, 200
 
 @auth_bp.route('/verify_answers', methods=["POST"])
 def verify_answers():
     answers = request.json.get("answers")
-    token = request.json.get("token")
-    if User.verify_answers(answers, token):
-        return {"message": "Success"}, 200
+    email = request.json.get("email")
+    if User.verify_answers(answers, email):
+        user = User.find_user_by_email(email)
+        token = serializer.dumps(email, salt=str(datetime.now()) + 'password-reset-salt')
+        User.insert_reset_token(user, token)
+        frontendurl = "http://localhost:3000"
+        reset_url = f"{frontendurl}/reset_password?token={token}"
+        msg = Message("Password Reset Request", recipients=[email], body=f"To reset your password, visit the following link: {reset_url}")
+        mail.send(msg)
+        return {"message": "Check your email for a reset password email"}, 200
     return {"message": "Incorrect answers"}, 401
 
-auth_bp.route('/set_password', methods=["POST"])
+@auth_bp.route('/set_password', methods=["POST"])
 def set_password():
     token = request.json.get("token")
     password = request.json.get("password")
-    User.set_password(password, token)
+    if User.set_password(password, token):
+        return {"message": "Password successfully set"}, 200
+    return {"message": "Error setting password"}, 401
     

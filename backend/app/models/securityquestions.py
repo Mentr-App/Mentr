@@ -15,5 +15,5 @@ class SecurityQuestions:
         
     @staticmethod
     def get_questions_by_id(id):
-        questions = mongo.db.users.find_one({"_id": ObjectId(id)})
+        questions = mongo.db.security_questions.find_one({"_id": ObjectId(id)})
         return questions if questions else None

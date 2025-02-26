@@ -58,12 +58,12 @@ class User:
         mongo.db.users.update_one({'_id': user['_id']},{'$set': {'reset_token': token}})
     
     @staticmethod
-    def verify_answers(answers, token):
-        question_id = mongo.db.users.find_one({"reset_token" : token})["_id"]
+    def verify_answers(answers, email):
+        question_id = mongo.db.users.find_one({"email" : email})["security_questions_id"]
         if not question_id:
             return False
         questions = SecurityQuestions.get_questions_by_id(ObjectId(question_id))
-        if answers[0] == questions["answer1"] and answers[1] == questions["answer2"] and answers[3] == questions["answer3"]:
+        if answers[0] == questions["answer1"] and answers[1] == questions["answer2"] and answers[2] == questions["answer3"]:
             return True
         return False
     @staticmethod
@@ -73,4 +73,6 @@ class User:
     
     @staticmethod
     def set_password(password, token):
-        mongo.db.users.update_one({'reset_token': token},{'$set': {'password': password}})
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        mongo.db.users.update_one({'reset_token': token},{'$set': {'password': hashed_password}})
+        return mongo.db.users.find_one({'reset_token': token}) != None
