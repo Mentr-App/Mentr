@@ -10,26 +10,16 @@ export default async function handler(
 
     console.log("Request method:", req.method);
     console.log("Request headers:", req.headers);
-    console.log("Request body:", req.body);
-
     const authHeader = req.headers.authorization;
-    const { username, email, userType, major, company, industry } = req.body;
+
 
     try {
-        const response = await fetch("http://localhost:8000/profile/set", {
+        const response = await fetch("http://localhost:8000/profile/delete", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 ...(authHeader && { Authorization: authHeader }),
             },
-            body: JSON.stringify({
-                username,
-                email,
-                userType,
-                major,
-                company,
-                industry,
-            }),
         });
 
         const data = await response.json().catch((e) => {
@@ -44,14 +34,14 @@ export default async function handler(
 
         if (!response.ok) {
             return res.status(response.status).json({
-                message: data?.message || "Failed to set profile",
+                message: data?.message || "Failed to delete credentials",
                 error: data?.error || "Unknown error",
             });
         }
 
         return res.status(201).json(data);
     } catch (error) {
-        console.error("Error setting profile:", error);
+        console.error("Error deleting credentials:", error);
         return res.status(500).json({
             message: "Internal Server Error",
             error: error instanceof Error ? error.message : "Unknown error",

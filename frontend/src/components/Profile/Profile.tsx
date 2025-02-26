@@ -1,5 +1,7 @@
 import { ChartNoAxesColumnDecreasing } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
     username: string;
@@ -7,6 +9,10 @@ interface ProfileData {
     created_at: string;
     bio?: string;
     interests?: string[];
+    userType?: "Mentor" | "Mentee";
+    major?: string;
+    company?: string;
+    industry?: string;
 }
 
 const Profile: React.FC = () => {
@@ -16,6 +22,12 @@ const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editableUsername, setEditableUsername] = useState<string>("");
     const [editableEmail, setEditableEmail] = useState<string>("");
+    const [editableUserType, setEditableUserType] = useState<"Mentor" | "Mentee" | undefined>(undefined);
+    const [editableMajor, setEditableMajor] = useState<string>("");
+    const [editableCompany, setEditableCompany] = useState<string>("");
+    const [editableIndustry, setEditableIndustry] = useState<string>("");
+    const { logout } = useAuth();
+    const router = useRouter();
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -41,10 +53,18 @@ const Profile: React.FC = () => {
                     username: userData["username"],
                     email: userData["email"],
                     created_at: userData["created_at"]["$date"],
+                    userType: userData["userType"],
+                    major: userData["major"],
+                    company: userData["company"],
+                    industry: userData["industry"],
                 };
                 setProfile(profileData);
                 setEditableUsername(profileData.username);
                 setEditableEmail(profileData.email);
+                setEditableUserType(profileData.userType || undefined);
+                setEditableMajor(profileData.major || "");
+                setEditableCompany(profileData.company || "");
+                setEditableIndustry(profileData.industry || "");
                 setLoading(false);
             } catch (err) {
                 setError(
@@ -63,14 +83,24 @@ const Profile: React.FC = () => {
                 ...profile,
                 username: editableUsername,
                 email: editableEmail,
+                userType: editableUserType,
+                major: editableMajor,
+                company: editableCompany,
+                industry: editableIndustry,
             });
         }
-
 
         try {
             const endpoint = "/api/profile/setProfile";
             const access_token = localStorage.getItem("access_token");
-            const payload = { "username": editableUsername, "email": editableEmail };
+            const payload = {
+                username: editableUsername,
+                email: editableEmail,
+                userType: editableUserType,
+                major: editableUserType === "Mentee" ? editableMajor : undefined,
+                company: editableUserType === "Mentor" ? editableCompany : undefined,
+                industry: editableUserType === "Mentor" ? editableIndustry : undefined,
+            };
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
@@ -82,7 +112,7 @@ const Profile: React.FC = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to create post");
+                throw new Error(errorData.message || "Failed to set profile");
             }
         } catch (err) {
             setError(
@@ -91,9 +121,38 @@ const Profile: React.FC = () => {
             setLoading(false);
         }
 
-
-
         setIsEditing(false);
+    };
+
+    const handleResetPassword = () => {
+        //LEO
+        console.log("reset");
+    };
+
+    const handleDeleteAccount = async () => {
+        try {
+            const endpoint = "/api/profile/deleteProfile";
+            const access_token = localStorage.getItem("access_token");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to delete profile");
+            }
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "An error occurred"
+            );
+            setLoading(false);
+        }
+        logout();
+        router.push("/");
     };
 
     if (loading)
@@ -152,6 +211,11 @@ const Profile: React.FC = () => {
                                     {profile.username}
                                 </p>
                             )}
+                            <button
+                                onClick={handleResetPassword}
+                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                Reset Password
+                            </button>
                         </div>
                         <div className='space-y-2'>
                             <label className='block text-text-light'>
@@ -170,6 +234,75 @@ const Profile: React.FC = () => {
                         </div>
                         <div className='space-y-2'>
                             <label className='block text-text-light'>
+                                User Type
+                            </label>
+                            {isEditing ? (
+                                <select
+                                    value={editableUserType || ""}
+                                    onChange={(e) => setEditableUserType(e.target.value as "Mentor" | "Mentee")}
+                                    className='w-full bg-background text-text-primary p-2 rounded'
+                                >
+                                    <option value="" disabled>Select user type</option>
+                                    <option value="Mentor">Mentor</option>
+                                    <option value="Mentee">Mentee</option>
+                                </select>
+                            ) : (
+                                <p className='text-text-primary'>{profile.userType}</p>
+                            )}
+                        </div>
+                        {editableUserType === "Mentee" && (
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    Major
+                                </label>
+                                {isEditing ? (
+                                    <input
+                                        type='text'
+                                        value={editableMajor}
+                                        onChange={(e) => setEditableMajor(e.target.value)}
+                                        className='w-full bg-background text-text-primary p-2 rounded'
+                                    />
+                                ) : (
+                                    <p className='text-text-primary'>{profile.major}</p>
+                                )}
+                            </div>
+                        )}
+                        {editableUserType === "Mentor" && (
+                            <>
+                                <div className='space-y-2'>
+                                    <label className='block text-text-light'>
+                                        Company
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type='text'
+                                            value={editableCompany}
+                                            onChange={(e) => setEditableCompany(e.target.value)}
+                                            className='w-full bg-background text-text-primary p-2 rounded'
+                                        />
+                                    ) : (
+                                        <p className='text-text-primary'>{profile.company}</p>
+                                    )}
+                                </div>
+                                <div className='space-y-2'>
+                                    <label className='block text-text-light'>
+                                        Industry
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type='text'
+                                            value={editableIndustry}
+                                            onChange={(e) => setEditableIndustry(e.target.value)}
+                                            className='w-full bg-background text-text-primary p-2 rounded'
+                                        />
+                                    ) : (
+                                        <p className='text-text-primary'>{profile.industry}</p>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                        <div className='space-y-2'>
+                            <label className='block text-text-light'>
                                 Member Since
                             </label>
                             <p className='text-text-primary'>
@@ -177,6 +310,11 @@ const Profile: React.FC = () => {
                                     profile.created_at
                                 ).toLocaleDateString()}
                             </p>
+                            <button
+                                onClick={handleDeleteAccount}
+                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                Delete Account
+                            </button>
                         </div>
                     </div>
                 </div>
