@@ -36,7 +36,12 @@ const Profile: React.FC = () => {
     const [editableTwoFactorEnabled, setEditableTwoFactorEnabled] = useState<boolean>(false);
     const { logout } = useAuth();
     const router = useRouter();
-
+    
+    useEffect(() => {
+        if (editableEmail.length == 0){
+            setEditableTwoFactorEnabled(false);
+        }
+    }, [editableEmail])
     useEffect(() => {
         const loadProfile = async () => {
             try {
@@ -384,7 +389,7 @@ const Profile: React.FC = () => {
                             </label>
                             <button
                                 onClick={(e) => {
-                                    if (isEditing) {
+                                    if (isEditing && editableEmail) {
                                         setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
                                     }
                                 }}
