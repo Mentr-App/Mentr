@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const response = await fetch('http://localhost:8000/auth/two_fac', {
+    const response = await fetch('http://localhost:8000/auth/two_factor', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const errorData = await response.json();
       return res.status(response.status).json({ message: errorData.message });
     }
-    
+
     const { access_token, refresh_token } = await response.json();
     
     return res.status(200).json({ access_token, refresh_token });

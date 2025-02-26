@@ -79,8 +79,8 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             }
 
             const data = await response.json();
-            console.log(data)
-            if (data.message) {
+            console.log(data.message)
+            if (data.message === 'Check your email for your two factor authentication code') {
                 setIsTwoFactorActive(true);
                 return;
             }

@@ -27,8 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const data = await response.json();
     console.log(data)
     if (data.message) {
-      const {message} = data.message;
-      return res.status(200).json({message});
+      return res.status(200).json(data);
     }
 
     return res.status(200).json({ "access_token": data.access_token, "refresh_token": data.refresh_token });

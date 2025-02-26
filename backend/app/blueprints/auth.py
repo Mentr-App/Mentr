@@ -115,7 +115,7 @@ def set_password():
 
 @auth_bp.route('/two_factor', methods=["POST"])
 def two_factor():
-    number = request.json.get("code")
+    number = int(request.json.get("code"))
     username = request.json.get("username")
     user = User.find_user_by_username(username)
     if user and user.get("two_factor_number") == number:
