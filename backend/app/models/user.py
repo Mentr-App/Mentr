@@ -81,10 +81,6 @@ class User:
         if answers[0] == questions["answer1"] and answers[1] == questions["answer2"] and answers[2] == questions["answer3"]:
             return True
         return False
-    @staticmethod
-    def get_questions_id_by_reset_token(token):
-        user = mongo.db.users.find_one({"reset_token": token})
-        return user["security_questions_id"] if user else None
     
     @staticmethod
     def set_password(password, token):
