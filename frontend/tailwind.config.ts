@@ -11,36 +11,36 @@ export default {
     theme: {
     	extend: {
     		colors: {
-    			background: 'hsl(var(--background))',
-    			foreground: 'hsl(var(--foreground))',
+    			background: 'var(--background)',
+    			foreground: 'var(--foreground)',
     			primary: {
-    				DEFAULT: 'hsl(var(--primary))',
-    				foreground: 'hsl(var(--primary-foreground))'
+    				DEFAULT: 'var(--primary)',
+    				foreground: 'var(--primary-foreground)'
     			},
     			'primary-dark': 'var(--primary-dark)',
     			secondary: {
-    				DEFAULT: 'hsl(var(--secondary))',
-    				foreground: 'hsl(var(--secondary-foreground))'
+    				DEFAULT: 'var(--secondary)',
+    				foreground: 'var(--secondary-foreground)'
     			},
     			'secondary-light': 'var(--secondary-light)',
     			'text-primary': 'var(--text-primary)',
     			'text-secondary': 'var(--text-secondary)',
     			'text-light': 'var(--text-light)',
     			card: {
-    				DEFAULT: 'hsl(var(--card))',
-    				foreground: 'hsl(var(--card-foreground))'
+    				DEFAULT: 'var(--card)',
+    				foreground: 'var(--card-foreground)'
     			},
     			popover: {
-    				DEFAULT: 'hsl(var(--popover))',
-    				foreground: 'hsl(var(--popover-foreground))'
+    				DEFAULT: 'var(--popover)',
+    				foreground: 'var(--popover-foreground)'
     			},
     			muted: {
-    				DEFAULT: 'hsl(var(--muted))',
-    				foreground: 'hsl(var(--muted-foreground))'
+    				DEFAULT: 'var(--muted)',
+    				foreground: 'var(--muted-foreground)'
     			},
     			accent: {
-    				DEFAULT: 'hsl(var(--accent))',
-    				foreground: 'hsl(var(--accent-foreground))'
+    				DEFAULT: 'var(--accent)',
+    				foreground: 'var(--accent-foreground)'
     			},
     			destructive: {
     				DEFAULT: 'hsl(var(--destructive))',

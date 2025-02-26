@@ -12,7 +12,7 @@ const PostPage: React.FC = () => {
         }
     }, [router.isReady, router.query.post_id])
 
-    if (!postId) return <p>Loading...</p>
+    if (!postId) return <></>
 
     return (
         <>

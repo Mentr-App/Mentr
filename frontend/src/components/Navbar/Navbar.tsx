@@ -16,11 +16,12 @@ const Navbar: React.FC = () => {
     const { isAuthenticated, logout, isPopupVisible, setIsPopupVisible } = useAuth();
 
     const handleProfileClick = () => {
-        if (isAuthenticated) {
-            setIsDropdownVisible(!isDropdownVisible);
-        } else {
-            setIsPopupVisible(true);
-        }
+        // if (isAuthenticated) {
+        //     setIsDropdownVisible(!isDropdownVisible);
+        // } else {
+        //     setIsPopupVisible(true);
+        // }
+        setIsDropdownVisible(!isDropdownVisible)
     };
 
     const handleSignOut = () => {
@@ -142,6 +143,7 @@ const Navbar: React.FC = () => {
                         className='absolute right-0 mt-2 w-48 rounded-lg shadow-lg'
                         style={{ backgroundColor: "var(--foreground)" }}>
                         <ul className='py-2'>
+                            {isAuthenticated &&
                             <li
                                 className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
                                 style={{
@@ -150,6 +152,7 @@ const Navbar: React.FC = () => {
                                 onClick={handleUserSettings}>
                                 User Settings
                             </li>
+                            }           
                             <li
                                 className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
                                 style={{
@@ -182,6 +185,19 @@ const Navbar: React.FC = () => {
                                 onClick={handlePrivacyPolicy}>
                                 Privacy Policy
                             </li>
+                            {!isAuthenticated ?
+                            <li
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
+                                onClick={() => {
+                                    setIsDropdownVisible(false)
+                                    setIsPopupVisible(true)
+                                    }}>
+                                Log in
+                            </li>
+                            :
                             <li
                                 className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
                                 style={{
@@ -190,6 +206,7 @@ const Navbar: React.FC = () => {
                                 onClick={handleSignOut}>
                                 Sign Out
                             </li>
+                            }
                         </ul>
                     </div>
                 )}
