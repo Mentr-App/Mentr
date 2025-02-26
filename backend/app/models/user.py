@@ -58,16 +58,27 @@ class User:
         return {"message": "User not found"}, 404
 
     @staticmethod
-    def update_user_email(user_id, username, email):
-        """Updates a user's username and email given userid"""
-        print("user_id: ")
-        print(user_id)
-        print("username: ")
-        print(username)
-        print("email: ")
-        print(email)
-        result = mongo.db.users.find_one_and_update({"_id":ObjectId(user_id)}, { '$set': { "username" : username, "email": email} })
-        print(result)
+    def update_user(user_id, username, email, userType=None, major=None, company=None, industry=None):
+        """Updates a user's profile information given user_id"""
+        update_data = {
+            "username": username,
+            "email": email,
+        }
+
+        if userType:
+            update_data["userType"] = userType
+        if major:
+            update_data["major"] = major
+        if company:
+            update_data["company"] = company
+        if industry:
+            update_data["industry"] = industry
+
+        result = mongo.db.users.find_one_and_update(
+            {"_id": ObjectId(user_id)},
+            {"$set": update_data}
+        )
+
         if result:
             return {"message": "User updated successfully"}, 200
         return {"message": "User not found"}, 404

@@ -12,11 +12,8 @@ profile_bp = Blueprint("profile", __name__)
 @jwt_required()
 def get_profile_info():
     try:
-        #print("Request received:", request.json)
         user_id = get_jwt_identity()
-        print("Author ID:", user_id)
         user = User.find_user_by_id(user_id)
-        print(user)
         return user, 201
     except Exception as e:
         print("Error finding user:", str(e))
@@ -27,14 +24,14 @@ def get_profile_info():
 def set_profile_info():
     try:
         user_id = get_jwt_identity()
-        print(request.json)
         username = request.json.get("username")
         email = request.json.get("email")
-        print(
-            "Parsed data:", {"username": username, "email": email, "user_id": user_id}
-        )
+        userType = request.json.get("userType")
+        major = request.json.get("major")
+        company = request.json.get("company")
+        industry = request.json.get("industry")
         
-        return User.update_user_email(user_id, username, email)
+        return User.update_user(user_id, username, email, userType, major, company, industry)
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
@@ -44,11 +41,7 @@ def set_profile_info():
 def delete_profile_info():
     try:
         user_id = get_jwt_identity()
-        print("deleting user: ")
-        print(user_id)
         user = User.find_user_by_id(user_id)
-        print(user["username"])
-
         
         return User.delete_user(user["username"])
     except Exception as e:
