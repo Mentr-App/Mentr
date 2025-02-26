@@ -31,10 +31,26 @@ def set_profile_info():
         company = request.json.get("company")
         industry = request.json.get("industry")
         two_factor_enabled = request.json.get("two_factor_enabled") 
-        return User.update_user(user_id, username, email, userType, major, company, industry, two_factor_enabled)
+        linkedin = request.json.get("linkedin")
+        instagram = request.json.get("instagram")
+        twitter = request.json.get("twitter")
+        
+        return User.update_user(
+            user_id,
+            username,
+            email,
+            userType,
+            major,
+            company,
+            industry,
+            linkedin,
+            instagram,
+            twitter,
+            two_factor_enabled
+        )
     except Exception as e:
-        print("Error finding user:", str(e))
-        return {"message": "Error finding user", "error": str(e)}, 500
+        print("Error updating user profile:", str(e))
+        return {"message": "Error updating user profile", "error": str(e)}, 500
 
 @profile_bp.route("/delete", methods=["POST"])
 @jwt_required()

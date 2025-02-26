@@ -61,13 +61,25 @@ class User:
         return {"message": "User not found"}, 404
 
     @staticmethod
-    def update_user(user_id, username, email, userType=None, major=None, company=None, industry=None, two_factor_enabled=False):
+    def update_user(
+        user_id,
+        username=None,
+        email=None,
+        userType=None,
+        major=None,
+        company=None,
+        industry=None,
+        linkedin=None,
+        instagram=None,
+        two_factor_enabled=False,
+        twitter=None,
+    ):
         """Updates a user's profile information given user_id"""
-        update_data = {
-            "username": username,
-            "email": email,
-        }
-
+        update_data = {}
+        if username:
+            update_data["username"] = username
+        if email:
+            update_data["email"] = email
         if userType:
             update_data["userType"] = userType
         if major:
@@ -79,6 +91,11 @@ class User:
         if two_factor_enabled:
             update_data["two_factor_enabled"] = two_factor_enabled
             
+        update_data["linkedin"] = linkedin
+        update_data["instagram"] = instagram
+        update_data["twitter"] = twitter
+
+        # Update the user in the database
         result = mongo.db.users.find_one_and_update(
             {"_id": ObjectId(user_id)},
             {"$set": update_data}
