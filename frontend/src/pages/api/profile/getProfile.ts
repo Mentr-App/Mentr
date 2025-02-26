@@ -41,7 +41,7 @@ export default async function handler(
 
         return res.status(201).json(data);
     } catch (error) {
-        console.error("Error creating post:", error);
+        console.error("Error finding users:", error);
         return res.status(500).json({
             message: "Internal Server Error",
             error: error instanceof Error ? error.message : "Unknown error",

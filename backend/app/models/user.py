@@ -52,7 +52,22 @@ class User:
         if result.deleted_count:
             return {"message": "User deleted successfully"}, 200
         return {"message": "User not found"}, 404
-    
+
+    @staticmethod
+    def update_user_email(user_id, username, email):
+        """Updates a user's username and email given userid"""
+        print("user_id: ")
+        print(user_id)
+        print("username: ")
+        print(username)
+        print("email: ")
+        print(email)
+        result = mongo.db.users.find_one_and_update({"_id":ObjectId(user_id)}, { '$set': { "username" : username, "email": email} })
+        print(result)
+        if result:
+            return {"message": "User updated successfully"}, 200
+        return {"message": "User not found!!!!"}, 404
+
     @staticmethod
     def insert_reset_token(user, token):
         mongo.db.users.update_one({'_id': user['_id']},{'$set': {'reset_token': token}})

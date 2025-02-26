@@ -14,11 +14,13 @@ const Profile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [editableUsername, setEditableUsername] = useState<string>("");
+    const [editableEmail, setEditableEmail] = useState<string>("");
 
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                const endpoint = "/api/profile";
+                const endpoint = "/api/profile/getProfile";
                 const access_token = localStorage.getItem("access_token");
                 const response = await fetch(endpoint, {
                     method: "GET",
@@ -30,7 +32,7 @@ const Profile: React.FC = () => {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || "Failed to create post");
+                    throw new Error(errorData.message || "Failed to find user");
                 }
                 const userData = await response.json();
                 console.log(userData["created_at"]["$date"]);
@@ -41,6 +43,8 @@ const Profile: React.FC = () => {
                     created_at: userData["created_at"]["$date"],
                 };
                 setProfile(profileData);
+                setEditableUsername(profileData.username);
+                setEditableEmail(profileData.email);
                 setLoading(false);
             } catch (err) {
                 setError(
@@ -52,6 +56,45 @@ const Profile: React.FC = () => {
 
         loadProfile();
     }, []);
+
+    const handleSaveChanges = async () => {
+        if (profile) {
+            setProfile({
+                ...profile,
+                username: editableUsername,
+                email: editableEmail,
+            });
+        }
+
+
+        try {
+            const endpoint = "/api/profile/setProfile";
+            const access_token = localStorage.getItem("access_token");
+            const payload = { "username": editableUsername, "email": editableEmail };
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to create post");
+            }
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "An error occurred"
+            );
+            setLoading(false);
+        }
+
+
+
+        setIsEditing(false);
+    };
 
     if (loading)
         return (
@@ -81,7 +124,7 @@ const Profile: React.FC = () => {
                     Profile Settings
                 </h1>
                 <button
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
                     className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'>
                     {isEditing ? "Save Changes" : "Edit Profile"}
                 </button>
@@ -100,7 +143,8 @@ const Profile: React.FC = () => {
                             {isEditing ? (
                                 <input
                                     type='text'
-                                    value={profile.username}
+                                    value={editableUsername}
+                                    onChange={(e) => setEditableUsername(e.target.value)}
                                     className='w-full bg-background text-text-primary p-2 rounded'
                                 />
                             ) : (
@@ -113,7 +157,16 @@ const Profile: React.FC = () => {
                             <label className='block text-text-light'>
                                 Email
                             </label>
-                            <p className='text-text-primary'>{profile.email}</p>
+                            {isEditing ? (
+                                <input
+                                    type='email'
+                                    value={editableEmail}
+                                    onChange={(e) => setEditableEmail(e.target.value)}
+                                    className='w-full bg-background text-text-primary p-2 rounded'
+                                />
+                            ) : (
+                                <p className='text-text-primary'>{profile.email}</p>
+                            )}
                         </div>
                         <div className='space-y-2'>
                             <label className='block text-text-light'>

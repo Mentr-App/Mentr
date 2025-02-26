@@ -21,3 +21,20 @@ def get_profile_info():
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
+
+@profile_bp.route("/set", methods=["POST"])
+@jwt_required()
+def set_profile_info():
+    try:
+        user_id = get_jwt_identity()
+        print(request.json)
+        username = request.json.get("username")
+        email = request.json.get("email")
+        print(
+            "Parsed data:", {"username": username, "email": email, "user_id": user_id}
+        )
+        
+        return User.update_user_email(user_id, username, email)
+    except Exception as e:
+        print("Error finding user:", str(e))
+        return {"message": "Error finding user", "error": str(e)}, 500
