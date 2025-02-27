@@ -1,15 +1,23 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 export default function ResetPassword() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-  const access_token = localStorage.getItem("access_token");
+
+  const [accessToken, setAccessToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect (() => {
+    const value = window.localStorage.getItem("access_token");
+    setAccessToken(value ? value : "");
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -26,7 +34,7 @@ export default function ResetPassword() {
           return;
       }
 
-      if (!token && !access_token) {
+      if (!token && !accessToken) {
           setError("Invalid reset token");
           return;
       }
@@ -34,7 +42,7 @@ export default function ResetPassword() {
       setIsLoading(true);
 
       try {
-        if (!access_token) {
+        if (!accessToken) {
             const response = await fetch("../api/set-password", {
                 method: "POST",
                 headers: {
@@ -58,7 +66,7 @@ export default function ResetPassword() {
                 const response = await fetch(endpoint, {
                     method: "POST",
                     headers: {
-                        Authorization: `Bearer ${access_token}`,
+                        Authorization: `Bearer ${accessToken}`,
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({password})
