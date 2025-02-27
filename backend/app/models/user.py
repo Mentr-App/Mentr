@@ -125,7 +125,8 @@ class User:
         return mongo.db.users.find_one({'reset_token': token}) != None
     @staticmethod
     def set_password(password, id):
-        mongo.db.users.update_one({'_id': id},{'$set': {'password': password}})
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        mongo.db.users.update_one({'_id': ObjectId(id)},{'$set': {'password': hashed_password}})
     
     @staticmethod
     def scrambled_number(user):

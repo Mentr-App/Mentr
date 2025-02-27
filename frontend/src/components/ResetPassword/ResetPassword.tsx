@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+
 export default function ResetPassword() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -54,7 +55,6 @@ export default function ResetPassword() {
         else {
             try {
                 const endpoint = "/api/profile/setPassword";
-                const access_token = localStorage.getItem("access_token");
                 const response = await fetch(endpoint, {
                     method: "POST",
                     headers: {
