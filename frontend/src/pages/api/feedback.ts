@@ -13,10 +13,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         //HOW DOES OUR FLASK BACKEND WORK LOL
-        const response = await fetch('http://localhost:8000/api/submit_feedback', {
+        const response = await fetch('http://localhost:8000/feedback', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ feedback })
         });

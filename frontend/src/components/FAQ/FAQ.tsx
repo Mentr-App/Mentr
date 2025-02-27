@@ -47,7 +47,7 @@ const FAQ: React.FC = () => {
             setSubmittingFeedback(true);
     
             try {
-                const response = await fetch("../../pages/api/feedback", {
+                const response = await fetch("/api/feedback", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ feedback }),
