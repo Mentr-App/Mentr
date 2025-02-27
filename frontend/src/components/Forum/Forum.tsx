@@ -12,6 +12,7 @@ export interface Post {
     created_at: string;
     downvotes: number;
     upvotes: number;
+    views: number;
 }
 
 export interface AuthorObject {
