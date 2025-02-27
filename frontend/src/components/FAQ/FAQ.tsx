@@ -47,7 +47,7 @@ const FAQ: React.FC = () => {
         setSubmittingFeedback(true);
 
         try {
-            const response = await fetch("../api/feedback", {
+            const response = await fetch("../../pages/api/feedback", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ feedback }),
@@ -138,6 +138,4 @@ const FAQ: React.FC = () => {
         </div>
     );
 };
-
-// TODO: Add a link to the contact page, set up API routes for feedback submission, and handle form submission in the FAQ component.
 export default FAQ;
