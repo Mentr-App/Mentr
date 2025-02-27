@@ -126,6 +126,13 @@ const FAQ: React.FC = () => {
                     <label className="block font-bold text-[#EC6333] bg-[#2C353D]">
                         Or, Contact Us Directly:
                     </label>
+                    <div className="=mt-1">
+                    <Link legacyBehavior href="/contact">
+                        <a className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
+                            Contact Us
+                        </a>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
