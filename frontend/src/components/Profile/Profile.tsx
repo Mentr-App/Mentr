@@ -101,33 +101,24 @@ const Profile: React.FC = () => {
     }, []);
 
     const handleSaveChanges = async () => {
-        // Validate social media links
         const warnings: { [key: string]: string } = {};
 
-        // LinkedIn validation
         if (editableLinkedin && !editableLinkedin.includes("linkedin.com/in")) {
             warnings.linkedin = "LinkedIn URL must contain 'linkedin.com/in'.";
         }
-
-        // Instagram validation
         if (editableInstagram && !editableInstagram.includes("instagram.com")) {
             warnings.instagram = "Instagram URL must contain 'instagram.com'.";
         }
-
-        // Twitter validation
         if (editableTwitter && !editableTwitter.includes("twitter.com")) {
             warnings.twitter = "Twitter URL must contain 'twitter.com'.";
         }
 
-        // Set validation warnings
         setValidationWarnings(warnings);
 
-        // If there are validation warnings, stop the save operation
         if (Object.keys(warnings).length > 0) {
             return;
         }
 
-        // If validation passes, proceed with saving changes
         if (profile) {
             setProfile({
                 ...profile,
@@ -186,12 +177,16 @@ const Profile: React.FC = () => {
     };
 
     const handleResetPassword = () => {
-        //LEO
         console.log("reset");
         router.push('/reset_password');
     };
 
     const handleDeleteAccount = async () => {
+        const isConfirmed = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+
+        if (!isConfirmed) {
+            return;
+        }
         try {
             const endpoint = "/api/profile/deleteProfile";
             const access_token = localStorage.getItem("access_token");
@@ -446,6 +441,33 @@ const Profile: React.FC = () => {
                                     </div>
                                 </>
                             )}
+                            <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    Two-Factor Authentication
+                                </label>
+                                <button
+                                    onClick={(e) => {
+                                        if (isEditing && editableEmail) {
+                                            console.log("HELLO")
+                                            setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
+                                        }
+                                    }}
+                                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                                        editableTwoFactorEnabled ? 'bg-primary' : 'bg-gray-300'
+                                    } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={!isEditing}
+                                >
+                                    <span
+                                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                                            editableTwoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                    />
+                                </button>
+                                <p className='text-text-primary'>
+                                    {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
+                                </p>
+                            </div>
+
                             <div className='space-y-2'>
                                 <label className='block text-text-light'>
                                     LinkedIn
