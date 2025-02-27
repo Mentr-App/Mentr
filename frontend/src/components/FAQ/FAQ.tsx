@@ -43,27 +43,25 @@ const FAQ: React.FC = () => {
     };
 
     const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setSubmittingFeedback(true);
-
-        try {
-            const response = await fetch("../../pages/api/feedback", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ feedback }),
-            });
-
-            if (!response.ok) throw new Error("Failed to submit feedback");
-
-            setRevealThank(true);
-        } catch (error) {
-            console.error("Error submitting feedback:", error);
-            alert("An error occurred while submitting feedback.");
-        } finally {
-            setSubmittingFeedback(false);
-            setFeedback("");
-        }
-    };
+            event.preventDefault();
+            setSubmittingFeedback(true);
+    
+            try {
+                const response = await fetch("../../pages/api/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ feedback }),
+                });
+    
+                if (!response.ok) throw new Error("Failed to submit feedback");
+                setRevealThank(true);
+            } catch (error: any) {
+                alert(error.message || "An unknown error occurred");
+            } finally {
+                setSubmittingFeedback(false);
+                setFeedback("");
+            }
+        };
 
     const handleFeedbackChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setFeedback(event.target.value);
