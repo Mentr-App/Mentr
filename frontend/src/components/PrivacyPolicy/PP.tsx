@@ -1,134 +1,101 @@
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/router";
 
 const PP: React.FC = () => {
-    const [activeIndex, setActiveIndex] = useState<number | null>(null);
-    const [feedback, setFeedback] = useState<string>("");
-    const [submittingFeedback, setSubmittingFeedback] = useState<boolean>(false);
-    const [revealThank, setRevealThank] = useState<boolean>(false);
+  const { logout } = useAuth();
+  const router = useRouter();
 
-    const questionsAnswers = [
-        {
-            question: "What is Mentr?",
-            answer: "Mentr is a university-verified platform designed to connect students with alumni for personalized mentorship. Our purpose is for students to ask industry-related questions, match with mentors, and participate in a forum to gain career insights and advice."
-        },
-        {
-            question: "How do I register for an account?",
-            answer: "To register for an account on Mentr, simply click on 'Sign Up' and provide your university email to verify your identity. Once registered, you can create a profile and start interacting with mentors and the forum."
-        },
-        {
-            question: "Can I change my profile details?",
-            answer: "Yes, you can update critical information such as your password, username, email, and profile picture directly from your account settings. You can also update your mentor or mentee status if needed."
-        },
-        {
-            question: "How does mentor-mentee matching work?",
-            answer: "Mentor-mentee matching on Mentr is based on an algorithm that considers ratings, experience, and user-defined preferences. Mentees can set preferences and view profiles, while mentors are notified when a match occurs."
-        },
-        {
-            question: "What kind of forum interactions are available?",
-            answer: "The forum allows users to post questions, upload images, comment on discussions, and like or save posts for later viewing. Posts can also be edited, and users can search and filter content based on various criteria."
-        },
-        {
-            question: "How can I ensure my privacy on the platform?",
-            answer: "Mentr takes user privacy seriously. You can block other users to prevent them from viewing your profile, messages, or posts. Additionally, all data is securely stored, and you can delete your account at any time to remove all associated information."
-        },
-        {
-            question: "What are the benefits of becoming a mentor?",
-            answer: "As a mentor, you can help guide students by sharing industry knowledge and experience. You will also receive notifications when a mentee matches with you and be able to remove mentees if necessary."
-        }
-    ];
+  const handleRejectTerms = () => {
+    logout();
+    router.push("/");
+  };
 
-    const handleToggle = (index: number) => {
-        setActiveIndex(index === activeIndex ? null : index);
-    };
+  return (
+    <div className="min-h-screen bg-[#2C353D] rounded flex flex-col items-center justify-center py-10">
+      <div className="bg-secondary rounded-lg shadow-lg p-8 max-w-3xl w-full">
+        <h1 className="text-lg text-[#EC6333] font-bold mb-6">Privacy Policy</h1>
 
-    const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setSubmittingFeedback(true);
+        <h2 className="text-md text-white font-semibold mb-4">1. Data Collection</h2>
+        <p className="text-white mb-6">
+          We collect information directly from you when you sign up for an account,
+          such as your name, email address, and other identifying information.
+          Nothing is collected other than what you submit in text boxes and what
+          you use to verify your account.
+        </p>
 
-        try {
-            const response = await fetch("../api/feedback", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ feedback }),
-            });
+        <h2 className="text-md text-white font-semibold mb-4">2. Data Usage</h2>
+        <p className="text-white mb-6">
+          The information we collect is used to enhance your experience on our
+          website. The main purpose of collecting information for verification
+          is to ensure all accounts are verified and accountable, which
+          helps us improve the site functionality and offer support.
+        </p>
 
-            if (!response.ok) throw new Error("Failed to submit feedback");
+        <h2 className="text-md text-white font-semibold mb-4">3. Data Retention</h2>
+        <p className="text-white mb-6">
+          We retain your data as long as it is necessary for the purposes stated
+          in this policy, or as required by law. You may request deletion of
+          your account and data at any time by following the instructions
+          provided in the "Data Deletion" section below.
+        </p>
 
-            setRevealThank(true);
-        } catch (error) {
-            console.error("Error submitting feedback:", error);
-            alert("An error occurred while submitting feedback.");
-        } finally {
-            setSubmittingFeedback(false);
-            setFeedback("");
-        }
-    };
+        <h2 className="text-md text-white font-semibold mb-4">4. Data Security</h2>
+        <p className="text-white mb-6">
+          Your data is stored securely, and we implement
+          security measures to protect against unauthorized access. However, no
+          online system is 100% secure, so we cannot guarantee the absolute
+          security of your information.
+        </p>
 
-    const handleFeedbackChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setFeedback(event.target.value);
-    };
+        <h2 className="text-md text-white font-semibold mb-4">5. Third-Party Sharing</h2>
+        <p className="text-white mb-6">
+          We do not share your personal data with third parties without your
+          consent, except as necessary for the functioning of our website
+          (i.e. verification of accounts). All third-party services we use are
+          required to maintain the confidentiality and security of your
+          information.
+        </p>
 
-    return (
-        <div className="min-h-screen bg-[#2C353D] rounded flex flex-col items-center justify-center py-10">
-            <div className="bg-secondary rounded-lg shadow-lg p-8 max-w-3xl w-full">
-                <h1 className="text-lg text-[#EC6333] font-bold">
-                    Frequently Asked Questions
-                </h1>
-                <div className="space-y-4">
-                    {questionsAnswers.map((qa, index) => (
-                        <div key={index}>
-                            <button
-                                onClick={() => handleToggle(index)}
-                                className={`w-full text-left py-4 px-4 text-lg font-bold rounded text-[#EC6333] transition-colors duration-300 ${
-                                    activeIndex === index ? "bg-[#3C454D]" : "bg-[#2C353D]"
-                                }`}>
-                                {qa.question}
-                            </button>
-                            <div
-                                className={`overflow-hidden transition-all duration-500 ${
-                                    activeIndex === index ? "max-h-40" : "max-h-0"
-                                }`}>
-                                <p className="px-4 py-2 block rounded text-white bg-[#2F383G] font-medium">{qa.answer}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+        <h2 className="text-md text-white font-semibold mb-4">6. Data Deletion</h2>
+        <p className="text-white mb-6">
+          To delete your account and all associated data, please visit your
+          account settings and follow the deletion process or contact us directly.
+          Once your data has been deleted, it cannot be restored. Any content created
+          under your account will be either anonymized completely or deleted.
+        </p>
 
-                <div className="mt-8">
-                    <form onSubmit={submitFeedback} className="space-y-4">
-                        <label htmlFor="feedback" className="block font-bold text-[#EC6333] bg-[#2C353D]">
-                            Don't see your question? Ask us here!
-                        </label>
-                        <textarea
-                            id="feedback"
-                            value={feedback}
-                            onChange={handleFeedbackChange}
-                            className="w-full p-3 border border-border rounded-lg bg-[#2C353D] text-white"
-                            rows={4}
-                            placeholder="Write your question here..."
-                        ></textarea>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-[#EC6333] text-white font-bold rounded-lg hover:bg-accent-hover disabled:opacity-50 transition duration-300"
-                            disabled={submittingFeedback}>
-                            {submittingFeedback ? "Submitting..." : "Submit Question"}
-                        </button>
-                    </form>
-                    {revealThank && (
-                        <p className="block font-bold text-[#EC6333] bg-[#2C353D]">
-                            Thank you for reaching out!
-                        </p>
-                    )}
-                </div>
+        <h2 className="text-md text-white font-semibold mb-4">7. Rejecting Terms</h2>
+        <p className="text-white mb-6">
+          If you do not agree to the terms of this privacy policy, you may reject
+          them by deleting your account and avoiding further
+          interaction with the site. You can manage your permissions through
+          your account settings. By continuing to use the site, you agree to
+          the terms of this policy.
+        </p>
+        
+        <button
+          className="block px-4 py-2 bg-red-600 text-white text-center font-bold rounded-lg hover:bg-red-700 transition duration-300 mb-6"
+          onClick={handleRejectTerms}
+        >
+          Reject Terms and Log Out
+        </button>
 
-                <div className="mt-6">
-                    <label className="block font-bold text-[#EC6333] bg-[#2C353D]">
-                        Or, Contact Us Directly:
-                    </label>
-                </div>
-            </div>
-        </div>
-    );
+        <h2 className="text-md text-white font-semibold mb-4">8. Contact Us</h2>
+        <p className="text-white mb-6">
+          If you have any questions about this privacy policy or how your data is handled,
+          please reach out to us using the link below.
+        </p>
+
+        <Link legacyBehavior href="/contact">
+          <a className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
+            Contact Us
+          </a>
+        </Link>
+      </div>
+    </div>
+  );
 };
+
 export default PP;

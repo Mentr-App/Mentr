@@ -6,25 +6,25 @@ const Contact = () => {
     const [revealThank, setRevealThank] = useState<boolean>(false);
 
     const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setSubmittingFeedback(true);
-
-        try {
-            const response = await fetch("../api/feedback", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ feedback }),
-            });
-
-            if (!response.ok) throw new Error("Failed to submit feedback");
-            setRevealThank(true);
-        } catch (error: any) {
-            alert(error.message || "An unknown error occurred");
-        } finally {
-            setSubmittingFeedback(false);
-            setFeedback("");
-        }
-    };
+                event.preventDefault();
+                setSubmittingFeedback(true);
+        
+                try {
+                    const response = await fetch("/api/feedback", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ feedback }),
+                    });
+        
+                    if (!response.ok) throw new Error("Failed to submit feedback");
+                    setRevealThank(true);
+                } catch (error: any) {
+                    alert(error.message || "An unknown error occurred");
+                } finally {
+                    setSubmittingFeedback(false);
+                    setFeedback("");
+                }
+            };
 
     const handleFeedbackChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setFeedback(event.target.value);
@@ -79,7 +79,7 @@ const Contact = () => {
                         <div className="mt-8">
                         <form onSubmit={submitFeedback} className="space-y-4">
                             <label htmlFor="feedback" className="text-xl block font-bold text-[#EC6333] bg-secondary">
-                                Alternatively, Leave Us Feedback!
+                                Alternatively, Contact Us Here!
                             </label>
                             <textarea
                                 id="feedback"
@@ -87,13 +87,13 @@ const Contact = () => {
                                 onChange={handleFeedbackChange}
                                 className="w-full p-3 border border-border rounded-lg bg-[#2C353D] text-white"
                                 rows={4}
-                                placeholder="Write your feedback here..."
+                                placeholder="Write your message here..."
                             ></textarea>
                             <button
                                 type="submit"
                                 className="px-4 py-2 bg-[#EC6333] text-white font-bold rounded-lg hover:bg-accent-hover disabled:opacity-50 transition duration-300"
                                 disabled={submittingFeedback}>
-                                {submittingFeedback ? "Submitting..." : "Submit Feedback"}
+                                {submittingFeedback ? "Submitting..." : "Submit Message"}
                             </button>
                         </form>
                         {revealThank && (

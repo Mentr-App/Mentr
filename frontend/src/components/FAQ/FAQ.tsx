@@ -43,27 +43,25 @@ const FAQ: React.FC = () => {
     };
 
     const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setSubmittingFeedback(true);
-
-        try {
-            const response = await fetch("../api/feedback", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ feedback }),
-            });
-
-            if (!response.ok) throw new Error("Failed to submit feedback");
-
-            setRevealThank(true);
-        } catch (error) {
-            console.error("Error submitting feedback:", error);
-            alert("An error occurred while submitting feedback.");
-        } finally {
-            setSubmittingFeedback(false);
-            setFeedback("");
-        }
-    };
+            event.preventDefault();
+            setSubmittingFeedback(true);
+    
+            try {
+                const response = await fetch("/api/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ feedback }),
+                });
+    
+                if (!response.ok) throw new Error("Failed to submit feedback");
+                setRevealThank(true);
+            } catch (error: any) {
+                alert(error.message || "An unknown error occurred");
+            } finally {
+                setSubmittingFeedback(false);
+                setFeedback("");
+            }
+        };
 
     const handleFeedbackChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setFeedback(event.target.value);
@@ -126,11 +124,16 @@ const FAQ: React.FC = () => {
                     <label className="block font-bold text-[#EC6333] bg-[#2C353D]">
                         Or, Contact Us Directly:
                     </label>
+                    <div className="=mt-1">
+                    <Link legacyBehavior href="/contact">
+                        <a className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
+                            Contact Us
+                        </a>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
-
-// TODO: Add a link to the contact page, set up API routes for feedback submission, and handle form submission in the FAQ component.
 export default FAQ;

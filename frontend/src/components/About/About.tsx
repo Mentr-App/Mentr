@@ -2,45 +2,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 
 const About: React.FC = () => {
-    const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [feedback, setFeedback] = useState<string>("");
     const [submittingFeedback, setSubmittingFeedback] = useState<boolean>(false);
     const [revealThank, setRevealThank] = useState<boolean>(false);
-
-    const questionsAnswers = [
-        {
-            question: "What is Mentr?",
-            answer: "Mentr is a university-verified platform designed to connect students with alumni for personalized mentorship. Our purpose is for students to ask industry-related questions, match with mentors, and participate in a forum to gain career insights and advice."
-        },
-        {
-            question: "How do I register for an account?",
-            answer: "To register for an account on Mentr, simply click on 'Sign Up' and provide your university email to verify your identity. Once registered, you can create a profile and start interacting with mentors and the forum."
-        },
-        {
-            question: "Can I change my profile details?",
-            answer: "Yes, you can update critical information such as your password, username, email, and profile picture directly from your account settings. You can also update your mentor or mentee status if needed."
-        },
-        {
-            question: "How does mentor-mentee matching work?",
-            answer: "Mentor-mentee matching on Mentr is based on an algorithm that considers ratings, experience, and user-defined preferences. Mentees can set preferences and view profiles, while mentors are notified when a match occurs."
-        },
-        {
-            question: "What kind of forum interactions are available?",
-            answer: "The forum allows users to post questions, upload images, comment on discussions, and like or save posts for later viewing. Posts can also be edited, and users can search and filter content based on various criteria."
-        },
-        {
-            question: "How can I ensure my privacy on the platform?",
-            answer: "Mentr takes user privacy seriously. You can block other users to prevent them from viewing your profile, messages, or posts. Additionally, all data is securely stored, and you can delete your account at any time to remove all associated information."
-        },
-        {
-            question: "What are the benefits of becoming a mentor?",
-            answer: "As a mentor, you can help guide students by sharing industry knowledge and experience. You will also receive notifications when a mentee matches with you and be able to remove mentees if necessary."
-        }
-    ];
-
-    const handleToggle = (index: number) => {
-        setActiveIndex(index === activeIndex ? null : index);
-    };
 
     const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -73,59 +37,85 @@ const About: React.FC = () => {
         <div className="min-h-screen bg-[#2C353D] rounded flex flex-col items-center justify-center py-10">
             <div className="bg-secondary rounded-lg shadow-lg p-8 max-w-3xl w-full">
                 <h1 className="text-lg text-[#EC6333] font-bold">
-                    Frequently Asked Questions
+                    About Us
                 </h1>
-                <div className="space-y-4">
-                    {questionsAnswers.map((qa, index) => (
-                        <div key={index}>
-                            <button
-                                onClick={() => handleToggle(index)}
-                                className={`w-full text-left py-4 px-4 text-lg font-bold rounded text-[#EC6333] transition-colors duration-300 ${
-                                    activeIndex === index ? "bg-[#3C454D]" : "bg-[#2C353D]"
-                                }`}>
-                                {qa.question}
-                            </button>
-                            <div
-                                className={`overflow-hidden transition-all duration-500 ${
-                                    activeIndex === index ? "max-h-40" : "max-h-0"
-                                }`}>
-                                <p className="px-4 py-2 block rounded text-white bg-[#2F383G] font-medium">{qa.answer}</p>
-                            </div>
-                        </div>
-                    ))}
+                
+                <div className="mt-4">
+                    <h2 className="text-xl text-[#EC6333] font-semibold">
+                        Our Mission
+                    </h2>
+                    <p className="text-white mt-2">
+                        Our mission is to bridge the gap between students and professionals through personalized mentorship, enabling knowledge sharing and career guidance. We aim to foster a community where users can connect, share industry insights, and empower each other to achieve career success.
+                    </p>
                 </div>
 
-                <div className="mt-8">
-                    <form onSubmit={submitFeedback} className="space-y-4">
-                        <label htmlFor="feedback" className="block font-bold text-[#EC6333] bg-[#2C353D]">
-                            Don't see your question? Ask us here!
-                        </label>
-                        <textarea
-                            id="feedback"
-                            value={feedback}
-                            onChange={handleFeedbackChange}
-                            className="w-full p-3 border border-border rounded-lg bg-[#2C353D] text-white"
-                            rows={4}
-                            placeholder="Write your question here..."
-                        ></textarea>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-[#EC6333] text-white font-bold rounded-lg hover:bg-accent-hover disabled:opacity-50 transition duration-300"
-                            disabled={submittingFeedback}>
-                            {submittingFeedback ? "Submitting..." : "Submit Question"}
-                        </button>
-                    </form>
-                    {revealThank && (
-                        <p className="block font-bold text-[#EC6333] bg-[#2C353D]">
-                            Thank you for reaching out!
-                        </p>
-                    )}
+                <div className="mt-4">
+                    <h2 className="text-xl text-[#EC6333] font-semibold">
+                        Our Values
+                    </h2>
+                    <p className="text-white mt-2">
+                        We believe in the power of mentorship, inclusivity, and continuous learning. Our platform is built to create meaningful relationships between mentors and mentees, fostering growth through shared experiences and diverse perspectives. We value transparency, user privacy, and the integrity of each connection made.
+                    </p>
                 </div>
+
+                <div className="mt-4">
+                    <h2 className="text-xl text-[#EC6333] font-semibold">
+                        Our Goals
+                    </h2>
+                    <p className="text-white mt-2">
+                        Our goal is to create a user-friendly, secure platform that facilitates valuable mentorship experiences. We strive to continuously improve the platform with features that enhance matching accuracy, privacy control, and community engagement. Ultimately, we want to be the go-to platform for professional mentorship, helping students and alumni grow together.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-x-6 gap-y-6 mt-8">
+            {[
+                {
+                    name: "Peter Kang",
+                    description: "Peter works as a full-stack developer on forum features and user interactions."
+                },
+                {
+                    name: "Nick Song",
+                    description: "Nick works as a full-stack developer on profile features."
+                },
+                {
+                    name: "Matthew Sigit",
+                    description: "Matthew is the project manager, overseeing the team's progress and ensuring timely delivery of features."
+                },
+            ].map((member, index) => (
+                <div key={index} className="flex flex-col items-start px-4 border border-white p-4">
+                    <h3 className="text-[#EC6333] font-bold mb-2">{member.name}</h3>
+                    <p className="text-white">{member.description}</p>
+                </div>
+            ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 mt-4">
+            {[
+                {
+                    name: "Ethan Ling",
+                    description: "Ethan handles DevOps and deployment, automating processes and making sure the app runs smoothly in production."
+                },
+                {
+                    name: "Leo Gu",
+                    description: "Leo works on user authentication and backend integration with third-parties and builds and maintains server-side logic and APIs."
+                }
+            ].map((member, index) => (
+                <div key={index} className="flex flex-col items-start px-4 border border-white p-4">
+                    <h3 className="text-[#EC6333] font-bold mb-2">{member.name}</h3>
+                    <p className="text-white">{member.description}</p>
+                </div>
+            ))}
+        </div>
 
                 <div className="mt-6">
                     <label className="block font-bold text-[#EC6333] bg-[#2C353D]">
-                        Or, Contact Us Directly:
+                        Contact Us Directly:
                     </label>
+                    <Link legacyBehavior href="/contact">
+                        <a className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
+                            Contact Us
+                        </a>
+                    </Link>
                 </div>
             </div>
         </div>

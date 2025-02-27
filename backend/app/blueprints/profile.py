@@ -34,6 +34,7 @@ def set_profile_info():
         linkedin = request.json.get("linkedin")
         instagram = request.json.get("instagram")
         twitter = request.json.get("twitter")
+        print(two_factor_enabled)
         
         return User.update_user(
             user_id=user_id,

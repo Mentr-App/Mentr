@@ -34,14 +34,16 @@ const Profile: React.FC = () => {
     const [editableInstagram, setEditableInstagram] = useState<string>("");
     const [editableTwitter, setEditableTwitter] = useState<string>("");
     const [editableTwoFactorEnabled, setEditableTwoFactorEnabled] = useState<boolean>(false);
+    const [validationWarnings, setValidationWarnings] = useState<{ [key: string]: string }>({});
     const { logout } = useAuth();
     const router = useRouter();
-    
+
     useEffect(() => {
-        if (editableEmail.length == 0){
+        if (!editableEmail || editableEmail.length == 0) {
             setEditableTwoFactorEnabled(false);
         }
-    }, [editableEmail])
+    }, [editableEmail]);
+
     useEffect(() => {
         const loadProfile = async () => {
             try {
@@ -73,7 +75,7 @@ const Profile: React.FC = () => {
                     linkedin: userData["linkedin"],
                     instagram: userData["instagram"],
                     twitter: userData["twitter"],
-                    two_factor_enabled: userData["two_factor_enabled"]
+                    two_factor_enabled: userData["two_factor_enabled"],
                 };
                 setProfile(profileData);
                 setEditableUsername(profileData.username);
@@ -99,6 +101,24 @@ const Profile: React.FC = () => {
     }, []);
 
     const handleSaveChanges = async () => {
+        const warnings: { [key: string]: string } = {};
+
+        if (editableLinkedin && !editableLinkedin.includes("linkedin.com/in")) {
+            warnings.linkedin = "LinkedIn URL must contain 'linkedin.com/in'.";
+        }
+        if (editableInstagram && !editableInstagram.includes("instagram.com")) {
+            warnings.instagram = "Instagram URL must contain 'instagram.com'.";
+        }
+        if (editableTwitter && !editableTwitter.includes("twitter.com")) {
+            warnings.twitter = "Twitter URL must contain 'twitter.com'.";
+        }
+
+        setValidationWarnings(warnings);
+
+        if (Object.keys(warnings).length > 0) {
+            return;
+        }
+
         if (profile) {
             setProfile({
                 ...profile,
@@ -143,6 +163,9 @@ const Profile: React.FC = () => {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Failed to set profile");
             }
+
+            // Clear any previous errors
+            setError(null);
         } catch (err) {
             setError(
                 err instanceof Error ? err.message : "An error occurred"
@@ -154,13 +177,16 @@ const Profile: React.FC = () => {
     };
 
     const handleResetPassword = () => {
-        //LEO
         console.log("reset");
         router.push('/reset_password');
-
     };
 
     const handleDeleteAccount = async () => {
+        const isConfirmed = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+
+        if (!isConfirmed) {
+            return;
+        }
         try {
             const endpoint = "/api/profile/deleteProfile";
             const access_token = localStorage.getItem("access_token");
@@ -191,8 +217,31 @@ const Profile: React.FC = () => {
             const endpoint = "/api/profile/setProfile";
             const access_token = localStorage.getItem("access_token");
             const payload = {
-                [field]: "",
+                "email": editableEmail,
+                "instagram": editableInstagram,
+                "linkedin": editableLinkedin,
+                "twitter": editableTwitter,
+                "two_factor_enabled": editableTwoFactorEnabled,
             };
+            switch (field) {
+                case "email":
+                    setEditableEmail("");
+                    payload["email"] = "";
+                    payload["two_factor_enabled"] = false;
+                    break;
+                case "instagram":
+                    setEditableInstagram("");
+                    payload["instagram"] = "";
+                    break;
+                case "linkedin":
+                    setEditableLinkedin("");
+                    payload["linkedin"] = "";
+                    break;
+                case "twitter":
+                    setEditableTwitter("");
+                    payload["twitter"] = "";
+                    break;
+            }
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
@@ -228,7 +277,7 @@ const Profile: React.FC = () => {
 
     if (error)
         return (
-            <div className='text-primary-dark text-center p-4'>
+            <div className='text-red-500 text-center p-4'>
                 Error: {error}
             </div>
         );
@@ -294,7 +343,16 @@ const Profile: React.FC = () => {
                                         className='w-full bg-background text-text-primary p-2 rounded'
                                     />
                                 ) : (
-                                    <p className='text-text-primary'>{profile.email}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className='text-text-primary'>{profile.email}</p>
+                                        {profile.email && (
+                                            <button
+                                                onClick={() => handleUnlinkSocialMedia("email")}
+                                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                Unlink
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                             <div className='space-y-2'>
@@ -384,41 +442,48 @@ const Profile: React.FC = () => {
                                 </>
                             )}
                             <div className='space-y-2'>
-                            <label className='block text-text-light'>
-                                Two-Factor Authentication
-                            </label>
-                            <button
-                                onClick={(e) => {
-                                    if (isEditing && editableEmail) {
-                                        setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
-                                    }
-                                }}
-                                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
-                                    editableTwoFactorEnabled ? 'bg-primary' : 'bg-gray-300'
-                                } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={!isEditing}
-                            >
-                                <span
-                                    className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                                        editableTwoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
-                                    }`}
-                                />
-                            </button>
-                            <p className='text-text-primary'>
-                                {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
-                            </p>
-                        </div>
-                        <div className='space-y-2'>
+                                <label className='block text-text-light'>
+                                    Two-Factor Authentication
+                                </label>
+                                <button
+                                    onClick={(e) => {
+                                        if (isEditing && editableEmail) {
+                                            console.log("HELLO")
+                                            setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
+                                        }
+                                    }}
+                                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                                        editableTwoFactorEnabled ? 'bg-primary' : 'bg-gray-300'
+                                    } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={!isEditing}
+                                >
+                                    <span
+                                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                                            editableTwoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                    />
+                                </button>
+                                <p className='text-text-primary'>
+                                    {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
+                                </p>
+                            </div>
+
+                            <div className='space-y-2'>
                                 <label className='block text-text-light'>
                                     LinkedIn
                                 </label>
                                 {isEditing ? (
-                                    <input
-                                        type='text'
-                                        value={editableLinkedin}
-                                        onChange={(e) => setEditableLinkedin(e.target.value)}
-                                        className='w-full bg-background text-text-primary p-2 rounded'
-                                    />
+                                    <>
+                                        <input
+                                            type='text'
+                                            value={editableLinkedin}
+                                            onChange={(e) => setEditableLinkedin(e.target.value)}
+                                            className='w-full bg-background text-text-primary p-2 rounded'
+                                        />
+                                        {validationWarnings.linkedin && (
+                                            <p className="text-sm text-red-500">{validationWarnings.linkedin}</p>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="flex items-center gap-2">
                                         <p className='text-text-primary'>{profile.linkedin}</p>
@@ -437,12 +502,17 @@ const Profile: React.FC = () => {
                                     Instagram
                                 </label>
                                 {isEditing ? (
-                                    <input
-                                        type='text'
-                                        value={editableInstagram}
-                                        onChange={(e) => setEditableInstagram(e.target.value)}
-                                        className='w-full bg-background text-text-primary p-2 rounded'
-                                    />
+                                    <>
+                                        <input
+                                            type='text'
+                                            value={editableInstagram}
+                                            onChange={(e) => setEditableInstagram(e.target.value)}
+                                            className='w-full bg-background text-text-primary p-2 rounded'
+                                        />
+                                        {validationWarnings.instagram && (
+                                            <p className="text-sm text-red-500">{validationWarnings.instagram}</p>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="flex items-center gap-2">
                                         <p className='text-text-primary'>{profile.instagram}</p>
@@ -461,12 +531,17 @@ const Profile: React.FC = () => {
                                     Twitter
                                 </label>
                                 {isEditing ? (
-                                    <input
-                                        type='text'
-                                        value={editableTwitter}
-                                        onChange={(e) => setEditableTwitter(e.target.value)}
-                                        className='w-full bg-background text-text-primary p-2 rounded'
-                                    />
+                                    <>
+                                        <input
+                                            type='text'
+                                            value={editableTwitter}
+                                            onChange={(e) => setEditableTwitter(e.target.value)}
+                                            className='w-full bg-background text-text-primary p-2 rounded'
+                                        />
+                                        {validationWarnings.twitter && (
+                                            <p className="text-sm text-red-500">{validationWarnings.twitter}</p>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="flex items-center gap-2">
                                         <p className='text-text-primary'>{profile.twitter}</p>
