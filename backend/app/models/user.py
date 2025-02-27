@@ -78,8 +78,6 @@ class User:
         update_data = {}
         if username:
             update_data["username"] = username
-        if email:
-            update_data["email"] = email
         if userType:
             update_data["userType"] = userType
         if major:
@@ -88,8 +86,9 @@ class User:
             update_data["company"] = company
         if industry:
             update_data["industry"] = industry
-            
-        update_data["two_factor_enabled"] = two_factor_enabled
+        
+        update_data["two_factor_enabled"] = two_factor_enabled    
+        update_data["email"] = email
         update_data["linkedin"] = linkedin
         update_data["instagram"] = instagram
         update_data["twitter"] = twitter

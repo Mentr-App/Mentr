@@ -38,7 +38,7 @@ const Profile: React.FC = () => {
     const router = useRouter();
     
     useEffect(() => {
-        if (editableEmail.length == 0){
+        if (!editableEmail || editableEmail.length == 0){
             setEditableTwoFactorEnabled(false);
         }
     }, [editableEmail])
@@ -191,8 +191,31 @@ const Profile: React.FC = () => {
             const endpoint = "/api/profile/setProfile";
             const access_token = localStorage.getItem("access_token");
             const payload = {
-                [field]: "",
+                "email": editableEmail,
+                "instagram": editableInstagram,
+                "linkedin": editableLinkedin,
+                "twitter": editableTwitter,
+                "two_factor_enabled": editableTwoFactorEnabled,
             };
+            switch (field) {
+                case "email":
+                    setEditableEmail("");
+                    payload["email"] = "";
+                    payload["two_factor_enabled"] = false;
+                    break;
+                case "instagram":
+                    setEditableInstagram("");
+                    payload["instagram"] = "";
+                    break;
+                case "linkedin":
+                    setEditableLinkedin("");
+                    payload["linkedin"] = "";
+                    break;
+                case "twitter":
+                    setEditableTwitter("");
+                    payload["twitter"] = "";
+                    break;
+            }
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
@@ -294,7 +317,16 @@ const Profile: React.FC = () => {
                                         className='w-full bg-background text-text-primary p-2 rounded'
                                     />
                                 ) : (
-                                    <p className='text-text-primary'>{profile.email}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className='text-text-primary'>{profile.email}</p>
+                                        {profile.email && (
+                                            <button
+                                                onClick={() => handleUnlinkSocialMedia("email")}
+                                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                Unlink
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                             <div className='space-y-2'>
@@ -390,6 +422,7 @@ const Profile: React.FC = () => {
                             <button
                                 onClick={(e) => {
                                     if (isEditing && editableEmail) {
+                                        console.log("HELLO")
                                         setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
                                     }
                                 }}
