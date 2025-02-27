@@ -19,7 +19,11 @@ class Post:
         if not author:
             return None
 
+        new_views = post.get("views", 0) + 1
+        mongo.db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": {"views": new_views}})
+
         post["author"] = author
+        post["views"] = new_views
         post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
         return post
         
