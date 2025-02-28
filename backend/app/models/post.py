@@ -16,10 +16,15 @@ class Post:
             return None
 
         author = mongo.db.users.find_one({"_id": post["author_id"]}, {"username": 1, "_id": 1})
+        print(author)
         if not author:
-            return None
+            author = {'_id': 'deleted', 'username': 'Anonymous'}
+
+        new_views = post.get("views", 0) + 1
+        mongo.db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": {"views": new_views}})
 
         post["author"] = author
+        post["views"] = new_views
         post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
         return post
         
