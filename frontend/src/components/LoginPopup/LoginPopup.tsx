@@ -209,7 +209,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         newAnswers[index] = value;
         setSecurityAnswers(newAnswers);
     };
-
+    const placeHolderText = isLogin ? 'Username or Email' : 'Username';
     return (
         <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50'>
             <div className='bg-[#262d34] p-8 rounded-lg w-96'>
@@ -333,7 +333,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <form onSubmit={handleSubmit}>
                         <input
                             type='text'
-                            placeholder='Username'
+                            placeholder={placeHolderText}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'

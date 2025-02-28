@@ -26,6 +26,8 @@ def login():
 
     # Fetch user from database
     user = User.find_user_by_username(username)
+    if not user:
+        user = User.find_user_by_email(username)
     print(user)
     if user and bcrypt.check_password_hash(user["password"], password):
         if user.get("two_factor_enabled") == True:
@@ -119,6 +121,8 @@ def two_factor():
     number = int(request.json.get("code"))
     username = request.json.get("username")
     user = User.find_user_by_username(username)
+    if not user:
+        user = User.find_user_by_email(username)
     if user and user.get("two_factor_number") == number:
         User.scrambled_number(user)
         access_token = create_access_token(identity=str(user["_id"]), fresh=True)
