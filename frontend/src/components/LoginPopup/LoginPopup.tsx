@@ -19,7 +19,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [securityQuestions, setSecurityQuestions] = useState<string[]>([]);
-    const [userType, setUserType] = useState<"mentor" | "mentee" | null>(null);
+    const [userType, setUserType] = useState<"Mentor" | "Mentee" | null>(null);
     const [major, setMajor] = useState("");
     const [company, setCompany] = useState("");
     const [industry, setIndustry] = useState("");
@@ -35,12 +35,12 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 setError("Username, password, and user type are required");
                 return;
             }
-            if (userType === "mentee" && !major) {
-                setError("Major is required for mentees");
+            if (userType === "Mentee" && !major) {
+                setError("Major is required for Mentees");
                 return;
             }
-            if (userType === "mentor" && (!company || !industry)) {
-                setError("Company and industry are required for mentors");
+            if (userType === "Mentor" && (!company || !industry)) {
+                setError("Company and industry are required for Mentors");
                 return;
             }
             setShowSecurityQuestions(true);
@@ -55,9 +55,9 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 password, 
                 email,
                 userType,
-                major: userType === "mentee" ? major : undefined,
-                company: userType === "mentor" ? company : undefined,
-                industry: userType === "mentor" ? industry : undefined,
+                major: userType === "Mentee" ? major : undefined,
+                company: userType === "Mentor" ? company : undefined,
+                industry: userType === "Mentor" ? industry : undefined,
                 securityQuestions: signUpSecurityQuestions.map((question, index) => ({
                     question,
                     answer: securityAnswers[index]
@@ -356,19 +356,19 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         />
                         {!isLogin && (
                             <div className="mb-4">
-                                <label className="text-text-primary mb-2 block">Are you a mentor or mentee?</label>
+                                <label className="text-text-primary mb-2 block">Are you a Mentor or Mentee?</label>
                                 <select
                                     value={userType || ""}
-                                    onChange={(e) => setUserType(e.target.value as "mentor" | "mentee")}
+                                    onChange={(e) => setUserType(e.target.value as "Mentor" | "Mentee")}
                                     className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'
                                 >
                                     <option value="" disabled>Select an option</option>
-                                    <option value="mentor">Mentor</option>
-                                    <option value="mentee">Mentee</option>
+                                    <option value="Mentor">Mentor</option>
+                                    <option value="Mentee">Mentee</option>
                                 </select>
                             </div>
                         )}
-                        {!isLogin && userType === "mentee" && (
+                        {!isLogin && userType === "Mentee" && (
                             <input
                                 type='text'
                                 placeholder='Major'
@@ -377,7 +377,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                             />
                         )}
-                        {!isLogin && userType === "mentor" && (
+                        {!isLogin && userType === "Mentor" && (
                             <>
                                 <input
                                     type='text'
