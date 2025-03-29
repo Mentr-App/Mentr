@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import axios from "axios";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "POST") {
@@ -18,10 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const requestBody = JSON.stringify({
+        const requestBody = {
             title,
             content,
-        });
+        };
 
         console.log("Sending request to backend:", {
             body: requestBody,
@@ -31,35 +32,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
         });
 
-        const response = await fetch("http://localhost:8000/post", {
+        const response = await axios({
             method: "POST",
+            url: "http://localhost:8000/post",
             headers: {
                 "Content-Type": "application/json",
                 ...(authHeader && { Authorization: authHeader }),
             },
-            body: requestBody,
+            data: requestBody,
         });
 
-        const data = await response.json().catch((e) => {
-            console.error("Error parsing response:", e);
-            return null;
-        });
+        const data = response.data;
 
         // console.log("Backend response:", {
         //     status: response.status,
         //     data,
         // });
 
-        if (!response.ok) {
-            return res.status(response.status).json({
-                message: data?.message || "Failed to create post",
-                error: data?.error || "Unknown error",
-            });
-        }
-
         return res.status(201).json(data);
     } catch (error) {
         console.error("Error creating post:", error);
+
+        if (axios.isAxiosError(error)) {
+            const statusCode = error.response?.status || 500;
+            const errorData = error.response?.data || {
+                message: "Failed to create post",
+                error: "Unknown error",
+            };
+
+            return res.status(statusCode).json(errorData);
+        }
+
         return res.status(500).json({
             message: "Internal Server Error",
             error: error instanceof Error ? error.message : "Unknown error",
