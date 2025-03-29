@@ -141,9 +141,7 @@ const PostCreator: React.FC = () => {
                     type='submit'
                     disabled={isSubmitting}
                     className={`w-full py-2 px-4 mt-4 font-medium text-white rounded-md focus:outline-none focus:ring-2 ${
-                        isSubmitting
-                            ? "bg-gray-400"
-                            : "bg-indigo-600 hover:bg-indigo-700"
+                        isSubmitting ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"
                     }`}>
                     {isSubmitting ? "Submitting..." : "Create Post"}
                 </button>

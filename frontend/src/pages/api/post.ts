@@ -22,8 +22,10 @@ export default async function handler(
 
     try {
         console.log("Sending request to backend:", {
-            title,
-            content: content,
+            body: JSON.stringify({
+                title: title,
+                content: content,
+            }),
             headers: {
                 "Content-Type": "application/json",
                 Authorization: authHeader,
@@ -37,7 +39,7 @@ export default async function handler(
                 ...(authHeader && { Authorization: authHeader }),
             },
             body: JSON.stringify({
-                title,
+                title: title,
                 content: content,
             }),
         });
