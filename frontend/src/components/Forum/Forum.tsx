@@ -17,7 +17,7 @@ export interface Post {
 
 export interface AuthorObject {
     _id: string;
-    username: string
+    username: string;
 }
 
 export interface IDObject {
@@ -31,14 +31,19 @@ interface UserVotes {
 const Forum: React.FC = () => {
     const [feed, setFeed] = useState<Post[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [loadingMore, setLoadingMore] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [userVotes, setUserVotes] = useState<UserVotes>({});
     const { isAuthenticated } = useAuth();
+    const [page, setPage] = useState<number>(1);
+    const [hasMore, setHasMore] = useState<boolean>(true);
+    const [postsPerPage, setPostsPerPage] = useState<number>(50);
+    const [totalPages, setTotalPages] = useState<number>(1);
 
     // Track which layout is active (grid or list)
     const [isGridView, setIsGridView] = useState(true);
 
-    const router = useRouter()
+    const router = useRouter();
 
     const fetchUserVotes = async () => {
         if (!isAuthenticated) {
@@ -63,50 +68,92 @@ const Forum: React.FC = () => {
     };
 
     const handlePostClick = (post: Post) => {
-        console.log(post)
-        router.push("/post/" + post._id.$oid)
-    }
+        console.log(post);
+        router.push("/post/" + post._id.$oid);
+    };
 
     useEffect(() => {
         fetchUserVotes();
     }, [isAuthenticated]);
 
-    useEffect(() => {
-        const endpoint = "/api/feed";
+    const loadFeed = async (
+        isInitialLoad: boolean = false,
+        pageNumber: number = page
+    ) => {
+        // Reset to page 1 if we're not loading more and not on initial load
+        if (!isInitialLoad && !loadingMore && pageNumber === page) {
+            setPage(1);
+            pageNumber = 1;
+        }
+
+        const endpoint = `/api/feed?skip=${
+            (pageNumber - 1) * postsPerPage
+        }&limit=${postsPerPage}`;
         const access_token = localStorage.getItem("access_token");
-        const loadFeed = async () => {
-            try {
-                const response = await fetch(endpoint, {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${access_token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(
-                        errorData.message || "Something went wrong"
-                    );
-                }
-
-                const data = await response.json();
-                console.log(data);
-                setFeed(data.feed);
-            } catch (error) {
-                const errorMessage =
-                    error instanceof Error
-                        ? error.message
-                        : "An unknown error occurred";
-                setError(errorMessage);
-            } finally {
-                setLoading(false);
+        try {
+            if (isInitialLoad) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
             }
-        };
 
-        loadFeed();
-    }, []);
+            const response = await fetch(endpoint, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Something went wrong");
+            }
+
+            const data = await response.json();
+            console.log(data);
+
+            // If we get fewer posts than requested, we've reached the end
+            if (data.feed.length < postsPerPage) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
+
+            // Calculate total pages based on total_count if available, otherwise estimate
+            if (data.total_count) {
+                const pages = Math.ceil(data.total_count / postsPerPage);
+                setTotalPages(pages);
+            } else if (!hasMore) {
+                setTotalPages(pageNumber);
+            } else {
+                setTotalPages(Math.max(totalPages, pageNumber + 1));
+            }
+
+            // Update current page
+            setPage(pageNumber);
+
+            // Replace feed with new data
+            setFeed(data.feed);
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error ? error.message : "An unknown error occurred";
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    useEffect(() => {
+        loadFeed(true);
+    }, [postsPerPage]);
+
+    const handlePostsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newValue = parseInt(e.target.value);
+        setPostsPerPage(newValue);
+    };
 
     const handleVoteUpdate = (
         postId: string,
@@ -132,6 +179,60 @@ const Forum: React.FC = () => {
         );
     };
 
+    // Handle page change
+    const handlePageChange = (newPage: number) => {
+        if (newPage < 1 || newPage > totalPages || newPage === page) return;
+        loadFeed(false, newPage);
+    };
+
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+        const pageNumbers = [];
+        const maxVisiblePages = 5;
+
+        if (totalPages <= maxVisiblePages) {
+            // Show all pages if total pages are less than or equal to maxVisiblePages
+            for (let i = 1; i <= totalPages; i++) {
+                pageNumbers.push(i);
+            }
+        } else {
+            // Always include first page
+            pageNumbers.push(1);
+
+            // Calculate start and end of middle section
+            let startPage = Math.max(2, page - Math.floor(maxVisiblePages / 2) + 1);
+            let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 3);
+
+            // Adjust if we're near the end
+            if (endPage < startPage + 1) {
+                startPage = Math.max(2, totalPages - maxVisiblePages + 2);
+                endPage = totalPages - 1;
+            }
+
+            // Show ellipsis after first page if needed
+            if (startPage > 2) {
+                pageNumbers.push("...");
+            }
+
+            // Add middle pages
+            for (let i = startPage; i <= endPage; i++) {
+                pageNumbers.push(i);
+            }
+
+            // Show ellipsis before last page if needed
+            if (endPage < totalPages - 1) {
+                pageNumbers.push("...");
+            }
+
+            // Always include last page if not the same as first page
+            if (totalPages > 1) {
+                pageNumbers.push(totalPages);
+            }
+        }
+
+        return pageNumbers;
+    };
+
     if (loading) {
         return (
             <div className='flex justify-center items-center h-64'>
@@ -144,9 +245,7 @@ const Forum: React.FC = () => {
 
     if (error) {
         return (
-            <div
-                className='text-center p-4'
-                style={{ color: "var(--primary-dark)" }}>
+            <div className='text-center p-4' style={{ color: "var(--primary-dark)" }}>
                 {error}
             </div>
         );
@@ -154,9 +253,7 @@ const Forum: React.FC = () => {
 
     if (feed.length === 0) {
         return (
-            <div
-                className='text-center p-4'
-                style={{ color: "var(--text-secondary)" }}>
+            <div className='text-center p-4' style={{ color: "var(--text-secondary)" }}>
                 No posts yet
             </div>
         );
@@ -166,16 +263,41 @@ const Forum: React.FC = () => {
         <div
             className='flex-1 p-6 h-[88vh] overflow-scroll'
             style={{ backgroundColor: "var(--background)" }}>
-            {/* Segmented Toggle */}
-            <div className='flex justify-end mb-4'>
+            {/* Header Controls */}
+            <div className='flex justify-between items-center mb-4'>
+                {/* Posts Per Page Dropdown */}
+                <div className='flex items-center'>
+                    <label
+                        htmlFor='posts-per-page'
+                        className='mr-2 text-sm'
+                        style={{ color: "var(--text-primary)" }}>
+                        Posts per page:
+                    </label>
+                    <select
+                        id='posts-per-page'
+                        value={postsPerPage}
+                        onChange={handlePostsPerPageChange}
+                        className='px-2 py-1 rounded text-sm'
+                        style={{
+                            backgroundColor: "var(--secondary)",
+                            color: "var(--text-primary)",
+                            border: "1px solid var(--border)",
+                        }}>
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                </div>
+
+                {/* Grid/List View Toggle */}
                 <div className='toggle-container'>
                     {/* Grid Button */}
                     <button
                         onClick={() => setIsGridView(true)}
                         className={`toggle-button ${
-                            isGridView
-                                ? "toggle-button-active"
-                                : "toggle-button-inactive"
+                            isGridView ? "toggle-button-active" : "toggle-button-inactive"
                         }`}>
                         <svg
                             className='toggle-icon'
@@ -237,6 +359,74 @@ const Forum: React.FC = () => {
                                 onClick={() => handlePostClick(post)}
                             />
                         ))}
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className='mt-8 flex justify-center items-center'>
+                        <div className='flex items-center space-x-2 text-sm'>
+                            {/* Previous Page Button */}
+                            <button
+                                onClick={() => handlePageChange(page - 1)}
+                                disabled={page === 1 || loadingMore}
+                                className={`px-3 py-1 rounded ${
+                                    page === 1 || loadingMore
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "hover:bg-secondary-light"
+                                }`}
+                                style={{
+                                    backgroundColor: "var(--secondary)",
+                                    color: "var(--text-primary)",
+                                }}>
+                                &lt;
+                            </button>
+
+                            {/* Page Numbers */}
+                            {getPageNumbers().map((pageNum, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() =>
+                                        typeof pageNum === "number"
+                                            ? handlePageChange(pageNum)
+                                            : null
+                                    }
+                                    disabled={pageNum === "..." || loadingMore}
+                                    className={`px-3 py-1 rounded ${
+                                        pageNum === page
+                                            ? "font-bold"
+                                            : pageNum !== "..."
+                                            ? "hover:bg-secondary-light"
+                                            : ""
+                                    }`}
+                                    style={{
+                                        backgroundColor:
+                                            pageNum === page
+                                                ? "var(--primary)"
+                                                : "var(--secondary)",
+                                        color: "var(--text-primary)",
+                                        cursor: pageNum === "..." ? "default" : "pointer",
+                                    }}>
+                                    {pageNum}
+                                </button>
+                            ))}
+
+                            {/* Next Page Button */}
+                            <button
+                                onClick={() => handlePageChange(page + 1)}
+                                disabled={page === totalPages || loadingMore}
+                                className={`px-3 py-1 rounded ${
+                                    page === totalPages || loadingMore
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "hover:bg-secondary-light"
+                                }`}
+                                style={{
+                                    backgroundColor: "var(--secondary)",
+                                    color: "var(--text-primary)",
+                                }}>
+                                &gt;
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

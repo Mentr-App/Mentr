@@ -1,9 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "POST") {
         return res.status(405).json({ message: "Method Not Allowed" });
     }
@@ -21,11 +18,13 @@ export default async function handler(
     }
 
     try {
+        const requestBody = JSON.stringify({
+            title,
+            content,
+        });
+
         console.log("Sending request to backend:", {
-            body: JSON.stringify({
-                title: title,
-                content: content,
-            }),
+            body: requestBody,
             headers: {
                 "Content-Type": "application/json",
                 Authorization: authHeader,
@@ -38,10 +37,7 @@ export default async function handler(
                 "Content-Type": "application/json",
                 ...(authHeader && { Authorization: authHeader }),
             },
-            body: JSON.stringify({
-                title: title,
-                content: content,
-            }),
+            body: requestBody,
         });
 
         const data = await response.json().catch((e) => {
@@ -49,10 +45,10 @@ export default async function handler(
             return null;
         });
 
-        console.log("Backend response:", {
-            status: response.status,
-            data,
-        });
+        // console.log("Backend response:", {
+        //     status: response.status,
+        //     data,
+        // });
 
         if (!response.ok) {
             return res.status(response.status).json({

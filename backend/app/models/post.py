@@ -48,7 +48,7 @@ class Post:
         return str(post_id)
 
     @staticmethod
-    def get_feed(skip=0, limit=10, sort_by="new"):
+    def get_feed(skip=0, limit=100, sort_by="new"):
         """Fetch posts for the user feed with pagination and sorting."""
         sort_options = {
             "new": [("created_at", -1)],  # Newest posts first
@@ -57,6 +57,11 @@ class Post:
         }
         posts = mongo.db.posts.find().sort(sort_options.get(sort_by, [("created_at", -1)])).skip(skip).limit(limit)
         return [{"_id": str(post["_id"]), **post} for post in posts]
+    
+    @staticmethod
+    def get_total_posts():
+        """Get the total number of posts in the database."""
+        return mongo.db.posts.count_documents({})
 
     @staticmethod
     def add_comment(post_id, user_id, content):
