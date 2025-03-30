@@ -7,7 +7,7 @@ from app.config import config_by_name
 from app.extensions import jwt
 from app.blueprints import register_blueprints
 from app.mail import init_mail
-
+from app.image import image_handler
 
 def create_app(config_name="development"):
     app = Flask(__name__)
@@ -23,7 +23,7 @@ def create_app(config_name="development"):
     mongo.init_app(app)
     #Create restful api
     api = Api(app)
-
+    image = image_handler()
     #Register API resources
     register_blueprints(app)
     return app

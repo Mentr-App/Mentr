@@ -76,4 +76,4 @@ def set_password():
     except Exception as e:
         print("Error setting password:", str(e))
         return {"message": "Error setting password", "error": str(e)}, 500
-        
+    
