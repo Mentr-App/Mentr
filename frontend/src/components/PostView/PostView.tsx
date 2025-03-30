@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
 import CommentSection from "../CommentSection/CommentSection";
-import CommentInput from "../CommentSection/CommentSection";
+import { getRelativeTime } from "@/lib/timeUtils";
 
 interface PostViewProps {
-    post_id: string
+    post_id: string;
 }
 
 interface Post {
@@ -22,7 +21,7 @@ interface Post {
 
 interface AuthorObject {
     _id: string;
-    username: string
+    username: string;
 }
 
 interface IDObject {
@@ -33,8 +32,8 @@ interface UserVotes {
     [postId: string]: "up" | "down";
 }
 
-const PostView: React.FC<PostViewProps> = ({post_id}) => {
-    const [post, setPost] = useState<Post | null>(null)
+const PostView: React.FC<PostViewProps> = ({ post_id }) => {
+    const [post, setPost] = useState<Post | null>(null);
     const { isAuthenticated, setIsPopupVisible } = useAuth();
     const [userVotes, setUserVotes] = useState<UserVotes>({});
     const [error, setError] = useState<string | null>(null);
@@ -93,70 +92,56 @@ const PostView: React.FC<PostViewProps> = ({post_id}) => {
         }
     };
 
-    const getPost = async() => {
-        const endpoint = "/api/post/" + post_id
+    const getPost = async () => {
+        const endpoint = "/api/post/" + post_id;
         try {
             const response = await fetch(endpoint, {
                 method: "GET",
                 headers: {
-                    "Content-Type": "application/json"
-                }
-            })
+                    "Content-Type": "application/json",
+                },
+            });
 
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(
-                    errorData.message || "Something went wrong"
-                )
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Something went wrong");
             }
-
+          
             const data = await response.json()
             setPost(data.post)
             setEditText(data.post.content)
-            
         } catch (error) {
-            const errorMessage = 
-                error instanceof Error
-                    ? error.message
-                    : "An unknown error has occurred"
-                
+            const errorMessage =
+                error instanceof Error ? error.message : "An unknown error has occurred";
         }
-    }
+    };
 
     const handleVote = async (type: "up" | "down") => {
         if (!isAuthenticated) {
-            setIsPopupVisible(true)
+            setIsPopupVisible(true);
             return;
         }
 
         if (!post) {
-            return
+            return;
         }
 
         setIsLoading(true);
         try {
-            const response = await fetch(
-                `/api/vote/${post._id.$oid}?action=vote`,
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem(
-                            "access_token"
-                        )}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ vote_type: type }),
-                }
-            );
+            const response = await fetch(`/api/vote/${post._id.$oid}?action=vote`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ vote_type: type }),
+            });
 
             if (response.ok) {
                 const data = await response.json();
                 setUpvotes(data.upvotes);
                 setDownvotes(data.downvotes);
-                handleVoteUpdate(
-                    (post as Post)._id.$oid,
-                    data.vote_type, 
-                );
+                handleVoteUpdate((post as Post)._id.$oid, data.vote_type);
             }
         } catch (error) {
             console.error("Error voting on post:", error);
@@ -165,10 +150,7 @@ const PostView: React.FC<PostViewProps> = ({post_id}) => {
         }
     };
 
-    const handleVoteUpdate = (
-        postId: string,
-        newVoteType: "up" | "down" | null,
-    ) => {
+    const handleVoteUpdate = (postId: string, newVoteType: "up" | "down" | null) => {
         setUserVotes((prev) => {
             const newVotes = { ...prev };
             if (newVoteType === null) {
@@ -247,18 +229,18 @@ const PostView: React.FC<PostViewProps> = ({post_id}) => {
 
     useEffect(() => {
         if (post) {
-            setUpvotes(post.upvotes)
-            setDownvotes(post.downvotes)
+            setUpvotes(post.upvotes);
+            setDownvotes(post.downvotes);
         }
-    }, [post])
+    }, [post]);
 
     useEffect(() => {
         if (post && userVotes) {
-            setCurrentVoteType(userVotes[post._id.$oid])
+            setCurrentVoteType(userVotes[post._id.$oid]);
         }
-    }, [userVotes, post])
+    }, [userVotes, post]);
 
-    if (!post) return <></>
+    if (!post) return <></>;
 
     return (
         <div className="h-[80vh] w-screen m-5 p-6 bg-secondary-light shadow-md rounded-lg overflow-y-scroll overflow-x-hidden flex flex-col">
@@ -347,16 +329,10 @@ const PostView: React.FC<PostViewProps> = ({post_id}) => {
                             <svg
                                 xmlns='http://www.w3.org/2000/svg'
                                 viewBox='0 0 24 24'
-                                fill={
-                                    currentVoteType === "up"
-                                        ? "currentColor"
-                                        : "none"
-                                }
+                                fill={currentVoteType === "up" ? "currentColor" : "none"}
                                 stroke='currentColor'
                                 className='w-5 h-5'
-                                strokeWidth={
-                                    currentVoteType === "up" ? "0" : "2"
-                                }>
+                                strokeWidth={currentVoteType === "up" ? "0" : "2"}>
                                 <path d='M4 14h16v2H4v-2zm8-10L4 12h16L12 4z' />
                             </svg>
                             <span>{upvotes}</span>
@@ -373,29 +349,27 @@ const PostView: React.FC<PostViewProps> = ({post_id}) => {
                                 xmlns='http://www.w3.org/2000/svg'
                                 viewBox='0 0 24 24'
                                 fill={
-                                    currentVoteType === "down"
-                                        ? "currentColor"
-                                        : "none"
+                                    currentVoteType === "down" ? "currentColor" : "none"
                                 }
                                 stroke='currentColor'
                                 className='w-5 h-5'
-                                strokeWidth={
-                                    currentVoteType === "down" ? "0" : "2"
-                                }>
+                                strokeWidth={currentVoteType === "down" ? "0" : "2"}>
                                 <path d='M4 8h16v2H4V8zm8 10l8-8H4l8 8z' />
                             </svg>
                             <span>{downvotes}</span>
                         </button>
                     </div>
                 </div>
-                <div className="flex flex-col">
+                <div className='flex flex-col'>
                     <span>{post.views} views</span>
                     <span>{getRelativeTime(post.created_at)}</span>
                 </div>
             </div>
-            <CommentInput onCommentSubmit={() => console.log()}/>
-        </div>
-    )
-}
 
-export default PostView
+            {/* Using the updated CommentSection component */}
+            <CommentSection postId={post_id} />
+        </div>
+    );
+};
+
+export default PostView;

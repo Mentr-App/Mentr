@@ -4,6 +4,8 @@ from app.models.user import User
 from flask_restful import Resource
 from bson import ObjectId
 from app.database import mongo
+from app.extensions import img_handler
+import time
 
 profile_bp = Blueprint("profile", __name__)
 
@@ -76,4 +78,72 @@ def set_password():
     except Exception as e:
         print("Error setting password:", str(e))
         return {"message": "Error setting password", "error": str(e)}, 500
+    
+
+@profile_bp.route("/upload_profile_picture", methods=["POST"])
+@jwt_required()
+def upload_profile_picture():
+    try:
+        if 'file' not in request.files:
+            return {"message": "No file provided"}, 400
         
+        file = request.files['file']
+        if not file.filename:
+            return {"message": "No file selected"}, 400
+            
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+        if not file.filename.lower().rsplit('.', 1)[1] in allowed_extensions:
+            return {"message": "File type not allowed"}, 400
+            
+        user_id = get_jwt_identity()
+        print("Uploading for user:", user_id)
+        
+        user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+        print("Current user data:", user)
+        
+        if user and "profile_picture" in user:
+            print("Deleting old picture:", user["profile_picture"])
+            img_handler.delete(user["profile_picture"])
+            
+        filename = f"profile_pictures/{user_id}_{int(time.time())}.{file.filename.rsplit('.', 1)[1]}"
+        print("New filename:", filename)
+        
+        img_handler.create(filename, file)
+        print("File uploaded to storage")
+        
+        result = mongo.db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"profile_picture": filename}}
+        )
+        print("Database updated, modified count:", result.modified_count)
+        
+        return {"message": "Profile picture updated successfully", "filename": filename}, 200
+        
+    except Exception as e:
+        print(f"Error uploading profile picture: {str(e)}")
+        return {"message": "Error uploading profile picture"}, 500
+
+@profile_bp.route("/get_profile_picture", methods=["GET"])
+@jwt_required()
+def get_profile_picture():
+    try:
+        user_id = get_jwt_identity()
+        user = User.find_user_by_id(user_id)
+        
+        print("User data:", user)
+        print("Profile picture field:", user.get('profile_picture') if user else None)
+        
+        if not user or 'profile_picture' not in user:
+            return {"message": "No profile picture found"}, 404
+            
+        picture_url = img_handler.get(user['profile_picture'])
+        print("Generated URL:", picture_url)
+        
+        if not picture_url:
+            return {"message": "Profile picture not found in storage"}, 404
+            
+        return {"profile_picture_url": picture_url}, 200
+        
+    except Exception as e:
+        print("Error getting profile picture:", str(e))
+        return {"message": "Error getting profile picture", "error": str(e)}, 500

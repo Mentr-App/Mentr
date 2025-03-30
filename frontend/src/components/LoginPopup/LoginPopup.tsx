@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const signUpSecurityQuestions = [
-  "What was the name of your first pet?",
-  "What city were you born in?",
-  "What was your mother's maiden name?"
+    "What was the name of your first pet?",
+    "What city were you born in?",
+    "What was your mother's maiden name?",
 ];
 
 const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -25,11 +25,11 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [industry, setIndustry] = useState("");
     const [twoFactorCode, setTwoFactorCode] = useState("");
     const [isTwoFactorActive, setIsTwoFactorActive] = useState(false);
-     
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        
+
         if (!isLogin && !showSecurityQuestions) {
             if (!username || !password || !userType) {
                 setError("Username, password, and user type are required");
@@ -50,20 +50,22 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         const endpoint = isLogin ? "../api/login" : "../api/signup";
         const payload = isLogin
             ? { username, password }
-            : { 
-                username, 
-                password, 
-                email,
-                userType,
-                major: userType === "Mentee" ? major : undefined,
-                company: userType === "Mentor" ? company : undefined,
-                industry: userType === "Mentor" ? industry : undefined,
-                securityQuestions: signUpSecurityQuestions.map((question, index) => ({
-                    question,
-                    answer: securityAnswers[index]
-                }))
+            : {
+                  username,
+                  password,
+                  email,
+                  userType,
+                  major: userType === "Mentee" ? major : undefined,
+                  company: userType === "Mentor" ? company : undefined,
+                  industry: userType === "Mentor" ? industry : undefined,
+                  securityQuestions: signUpSecurityQuestions.map(
+                      (question, index) => ({
+                          question,
+                          answer: securityAnswers[index],
+                      })
+                  ),
               };
-        console.log(payload)
+        console.log(payload);
         try {
             const response = await fetch(endpoint, {
                 method: "POST",
@@ -79,8 +81,11 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             }
 
             const data = await response.json();
-            console.log(data.message)
-            if (data.message === 'Check your email for your two factor authentication code') {
+            console.log(data.message);
+            if (
+                data.message ===
+                "Check your email for your two factor authentication code"
+            ) {
                 setIsTwoFactorActive(true);
                 return;
             }
@@ -96,11 +101,11 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             }
         }
     };
-    
+
     const handleTwoFactorSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-    
+
         try {
             const response = await fetch("../api/two_fac", {
                 method: "POST",
@@ -109,14 +114,16 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 },
                 body: JSON.stringify({ username, code: twoFactorCode }),
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to verify 2FA code");
+                throw new Error(
+                    errorData.message || "Failed to verify 2FA code"
+                );
             }
-    
+
             const data = await response.json();
-    
+
             if (data.access_token && data.refresh_token) {
                 login(data.access_token, data.refresh_token);
                 onClose();
@@ -151,11 +158,13 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to fetch security questions");
+                throw new Error(
+                    errorData.message || "Failed to fetch security questions"
+                );
             }
 
             const data = await response.json();
-            console.log(data)
+            console.log(data);
             setSecurityQuestions(data.questions);
             setShowSecurityQuestions(true);
         } catch (err) {
@@ -172,7 +181,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         setError(null);
         setSuccessMessage(null);
 
-        if (securityAnswers.some(answer => !answer.trim())) {
+        if (securityAnswers.some((answer) => !answer.trim())) {
             setError("Please answer all security questions");
             return;
         }
@@ -188,11 +197,15 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to verify answers");
+                throw new Error(
+                    errorData.message || "Failed to verify answers"
+                );
             }
 
             const data = await response.json();
-            setSuccessMessage("A password reset link has been sent to your email.");
+            setSuccessMessage(
+                "A password reset link has been sent to your email."
+            );
             setShowSecurityQuestions(false);
             setShowForgotPassword(false);
         } catch (err) {
@@ -209,15 +222,22 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         newAnswers[index] = value;
         setSecurityAnswers(newAnswers);
     };
-    const placeHolderText = isLogin ? 'Username or Email' : 'Username';
+    const placeHolderText = isLogin ? "Username or Email" : "Username";
     return (
-        <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50'>
+        <div
+            className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50'
+            style={{ zIndex: 1000 }}>
             <div className='bg-[#262d34] p-8 rounded-lg w-96'>
                 <h2 className='text-2xl text-text-primary mb-6'>
-                    {showForgotPassword ? (showSecurityQuestions ? "Security Questions" : "Reset Password") : 
-                     isLogin ? "Login" : "Sign Up"}
+                    {showForgotPassword
+                        ? showSecurityQuestions
+                            ? "Security Questions"
+                            : "Reset Password"
+                        : isLogin
+                        ? "Login"
+                        : "Sign Up"}
                 </h2>
-                
+
                 {isTwoFactorActive ? (
                     <form onSubmit={handleTwoFactorSubmit}>
                         <input
@@ -229,102 +249,111 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         />
                         <button
                             type='submit'
-                            className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'
-                        >
+                            className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
                             Verify Code
                         </button>
                         <button
-                            type="button"
+                            type='button'
                             onClick={() => setIsTwoFactorActive(false)}
-                            className="w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200"
-                        >
+                            className='w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200'>
                             Back to Login
                         </button>
                     </form>
-                ) : (showForgotPassword ? (
+                ) : showForgotPassword ? (
                     showSecurityQuestions ? (
                         <form onSubmit={handleSecurityAnswersSubmit}>
-                        {securityQuestions.map((question, index) => (
-                            <div key={index} className="mb-4">
-                                <p className="text-text-primary mb-2">{question}</p>
-                                <input
-                                    type="text"
-                                    placeholder="Your answer"
-                                    value={securityAnswers[index] || ""}
-                                    onChange={(e) => handleSecurityAnswerChange(index, e.target.value)}
-                                    className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'
-                                />
+                            {securityQuestions.map((question, index) => (
+                                <div key={index} className='mb-4'>
+                                    <p className='text-text-primary mb-2'>
+                                        {question}
+                                    </p>
+                                    <input
+                                        type='text'
+                                        placeholder='Your answer'
+                                        value={securityAnswers[index] || ""}
+                                        onChange={(e) =>
+                                            handleSecurityAnswerChange(
+                                                index,
+                                                e.target.value
+                                            )
+                                        }
+                                        className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'
+                                    />
+                                </div>
+                            ))}
+                            <div className='flex gap-4'>
+                                <button
+                                    type='button'
+                                    onClick={() =>
+                                        setShowSecurityQuestions(false)
+                                    }
+                                    className='w-full bg-gray-500 text-text-primary px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200'>
+                                    Back
+                                </button>
+                                <button
+                                    type='submit'
+                                    className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
+                                    Verify Answers
+                                </button>
                             </div>
-                        ))}
-                        <div className="flex gap-4">
-                            <button
-                                type="button"
-                                onClick={() => setShowSecurityQuestions(false)}
-                                className='w-full bg-gray-500 text-text-primary px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200'
-                            >
-                                Back
-                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleForgotPasswordSubmit}>
+                            <input
+                                type='email'
+                                placeholder='Enter your email'
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                            />
                             <button
                                 type='submit'
-                                className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'
-                            >
-                                Verify Answers
+                                className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
+                                Get Security Questions
                             </button>
-                        </div>
-                    </form>
-                ) : (
-                    <form onSubmit={handleForgotPasswordSubmit}>
-                        <input
-                            type='email'
-                            placeholder='Enter your email'
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
-                        />
-                        <button
-                            type='submit'
-                            className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'
-                        >
-                            Get Security Questions
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setShowForgotPassword(false);
-                                setError(null);
-                                setSuccessMessage(null);
-                            }}
-                            className="w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200"
-                        >
-                            Back to Login
-                        </button>
-                    </form>
-                )) : (!isLogin && showSecurityQuestions ? (
+                            <button
+                                type='button'
+                                onClick={() => {
+                                    setShowForgotPassword(false);
+                                    setError(null);
+                                    setSuccessMessage(null);
+                                }}
+                                className='w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200'>
+                                Back to Login
+                            </button>
+                        </form>
+                    )
+                ) : !isLogin && showSecurityQuestions ? (
                     <form onSubmit={handleSubmit}>
                         {signUpSecurityQuestions.map((question, index) => (
-                            <div key={index} className="mb-4">
-                                <p className="text-text-primary mb-2">{question}</p>
+                            <div key={index} className='mb-4'>
+                                <p className='text-text-primary mb-2'>
+                                    {question}
+                                </p>
                                 <input
-                                    type="text"
-                                    placeholder="Your answer"
+                                    type='text'
+                                    placeholder='Your answer'
                                     value={securityAnswers[index]}
-                                    onChange={(e) => handleSecurityAnswerChange(index, e.target.value)}
+                                    onChange={(e) =>
+                                        handleSecurityAnswerChange(
+                                            index,
+                                            e.target.value
+                                        )
+                                    }
                                     className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'
                                 />
                             </div>
                         ))}
-                        <div className="flex gap-4">
+                        <div className='flex gap-4'>
                             <button
-                                type="button"
+                                type='button'
                                 onClick={() => setShowSecurityQuestions(false)}
-                                className='w-full bg-gray-500 text-text-primary px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200'
-                            >
+                                className='w-full bg-gray-500 text-text-primary px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200'>
                                 Back
                             </button>
                             <button
                                 type='submit'
-                                className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'
-                            >
+                                className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
                                 Complete Sign Up
                             </button>
                         </div>
@@ -355,16 +384,25 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                         />
                         {!isLogin && (
-                            <div className="mb-4">
-                                <label className="text-text-primary mb-2 block">Are you a Mentor or Mentee?</label>
+                            <div className='mb-4'>
+                                <label className='text-text-primary mb-2 block'>
+                                    Are you a Mentor or Mentee?
+                                </label>
                                 <select
                                     value={userType || ""}
-                                    onChange={(e) => setUserType(e.target.value as "Mentor" | "Mentee")}
-                                    className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'
-                                >
-                                    <option value="" disabled>Select an option</option>
-                                    <option value="Mentor">Mentor</option>
-                                    <option value="Mentee">Mentee</option>
+                                    onChange={(e) =>
+                                        setUserType(
+                                            e.target.value as
+                                                | "Mentor"
+                                                | "Mentee"
+                                        )
+                                    }
+                                    className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'>
+                                    <option value='' disabled>
+                                        Select an option
+                                    </option>
+                                    <option value='Mentor'>Mentor</option>
+                                    <option value='Mentee'>Mentee</option>
                                 </select>
                             </div>
                         )}
@@ -390,31 +428,37 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                     type='text'
                                     placeholder='Industry'
                                     value={industry}
-                                    onChange={(e) => setIndustry(e.target.value)}
+                                    onChange={(e) =>
+                                        setIndustry(e.target.value)
+                                    }
                                     className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                                 />
                             </>
                         )}
                         <button
                             type='submit'
-                            className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'
-                        >
-                            {isLogin ? "Login" : "Continue to Security Questions"}
+                            className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
+                            {isLogin
+                                ? "Login"
+                                : "Continue to Security Questions"}
                         </button>
-                        {isLogin && !showForgotPassword && !showSecurityQuestions &&(
-                            <button
-                                type="button"
-                                onClick={() => setShowForgotPassword(true)}
-                                className="w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200"
-                            >
-                                Forgot Password?
-                            </button>
-                        )}
+                        {isLogin &&
+                            !showForgotPassword &&
+                            !showSecurityQuestions && (
+                                <button
+                                    type='button'
+                                    onClick={() => setShowForgotPassword(true)}
+                                    className='w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200'>
+                                    Forgot Password?
+                                </button>
+                            )}
                     </form>
-                )))}
+                )}
 
                 {error && <p className='text-primary-dark mt-4'>{error}</p>}
-                {successMessage && <p className='text-green-500 mt-4'>{successMessage}</p>}
+                {successMessage && (
+                    <p className='text-green-500 mt-4'>{successMessage}</p>
+                )}
 
                 {!showSecurityQuestions && (
                     <p className='text-text-primary mt-4'>
@@ -426,8 +470,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             onClick={() => {
                                 setIsLogin(!isLogin);
                                 setShowSecurityQuestions(false);
-                            }}
-                        >
+                            }}>
                             {isLogin ? "Sign Up" : "Login"}
                         </span>
                     </p>
@@ -435,8 +478,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
                 <button
                     onClick={onClose}
-                    className='absolute top-4 right-4 text-text-primary text-2xl'
-                >
+                    className='absolute top-4 right-4 text-text-primary text-2xl'>
                     &times;
                 </button>
             </div>

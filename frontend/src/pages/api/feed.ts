@@ -6,24 +6,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const authHeader = req.headers.authorization || "";
-    const flaskApiUrl = "http://localhost:8000/feed"; // Replace with your Flask API endpoint
+
+    // Get pagination parameters from request query
+    const skip = req.query.skip || 0;
+    const limit = req.query.limit || 50;
+    const sort_by = req.query.sort_by || "new";
+
+    // Include pagination parameters in the URL
+    const flaskApiUrl = `http://localhost:8000/feed?skip=${skip}&limit=${limit}&sort_by=${sort_by}`;
 
     try {
         const response = await fetch(flaskApiUrl, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                ...(authHeader && { "Authorization": authHeader }) // Add auth header if available
-            }
+                ...(authHeader && { Authorization: authHeader }), // Add auth header if available
+            },
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            return res.status(response.status).json({ message: errorData.message || "Error fetching feed" });
+            return res
+                .status(response.status)
+                .json({ message: errorData.message || "Error fetching feed" });
         }
 
         const data = await response.json();
-        console.log(data)
+        // console.log(data);
         return res.status(200).json(data);
     } catch (error) {
         console.error("Error fetching feed:", error);

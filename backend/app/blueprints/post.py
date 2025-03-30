@@ -17,9 +17,7 @@ def create_post():
         title = request.json.get("title")
         content = request.json.get("content")
         author_id = get_jwt_identity()
-        print(
-            "Parsed data:", {"title": title, "content": content, "author_id": author_id}
-        )
+        print("Parsed data:", {"title": title, "content": content, "author_id": author_id})
 
         if not title or not content:
             return {"message": "Missing title or content"}, 400
@@ -173,3 +171,36 @@ def edit_post(post_id):
     except Exception as e:
         print("Error editing post:", str(e))
         return {"message": "Error editing content on post", "error" : str(e)}
+
+      
+@post_bp.route("/<post_id>/comments", methods=["GET"])
+def get_post_comments(post_id):
+    """Get all comments for a post."""
+    try:
+        comments = Post.get_comments(post_id)
+        return {"comments": comments}, 200
+    except Exception as e:
+        print("Error retrieving comments:", str(e))
+        return {"message": "Error retrieving comments", "error": str(e)}, 500
+
+      
+@post_bp.route("/<post_id>/comments", methods=["POST"])
+@jwt_required()
+def add_comment(post_id):
+    """Add a comment to a post."""
+    try:
+        user_id = get_jwt_identity()
+        content = request.json.get("content")
+        
+        if not content:
+            return {"message": "Comment content cannot be empty"}, 400
+            
+        comment = Post.add_comment(post_id, user_id, content)
+        
+        if not comment:
+            return {"message": "Failed to add comment"}, 500
+            
+        return {"message": "Comment added successfully", "comment": comment}, 201
+    except Exception as e:
+        print("Error adding comment:", str(e))
+        return {"message": "Error adding comment", "error": str(e)}, 500
