@@ -1,4 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import formidable from 'formidable';
+import fs from 'fs';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -11,57 +19,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const formData = new FormData();
-
-    const chunks: Buffer[] = [];
-    await new Promise((resolve, reject) => {
-      req.on('data', (chunk) => {
-        chunks.push(chunk);
-      });
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
-
-    const buffer = Buffer.concat(chunks);
-    const boundary = req.headers['content-type']?.split('boundary=')[1];
+    const form = formidable({});
+    const [fields, files] = await form.parse(req);
     
-    if (!boundary) {
-      return res.status(400).json({ message: 'Invalid content type' });
-    }
-
-    const parts = buffer.toString().split(`--${boundary}`);
-    let fileContent: Buffer | null = null;
-    let fileName: string | null = null;
-    let contentType: string | null = null;
-
-    for (const part of parts) {
-      if (part.includes('Content-Disposition: form-data; name="file"')) {
-        const lines = part.split('\r\n');
-        const fileNameMatch = lines[1].match(/filename="(.+)"/);
-        if (fileNameMatch) {
-          fileName = fileNameMatch[1];
-          contentType = lines[2].split(': ')[1];
-          const content = lines.slice(4, -1).join('\r\n');
-          fileContent = Buffer.from(content);
-        }
-        break;
-      }
-    }
-
-    if (!fileContent || !fileName) {
+    if (!files.file || !files.file[0]) {
       return res.status(400).json({ message: 'No file provided' });
     }
 
-    const file = new Blob([fileContent], { type: contentType || 'application/octet-stream' });
-    formData.append('file', file, fileName);
+    const file = files.file[0];
+    const formData = new FormData();
+    const fileBuffer = await fs.promises.readFile(file.filepath);
+    
+    formData.append('file', new Blob([fileBuffer]), file.originalFilename || 'image');
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/upload_profile_picture`, {
+    const response = await fetch(`http://localhost:8000/profile/upload_profile_picture`, {
       method: 'POST',
       headers: {
-        ...(authHeader && { Authorization: authHeader }),
+        Authorization: authHeader,
       },
       body: formData,
     });
+
+    await fs.promises.unlink(file.filepath);
 
     if (!response.ok) {
       const error = await response.json();

@@ -1,7 +1,8 @@
 import { ChartNoAxesColumnDecreasing } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface ProfileData {
     username: string;
@@ -17,6 +18,7 @@ interface ProfileData {
     instagram?: string;
     twitter?: string;
     linkedin?: string;
+    profile_picture?: string;
 }
 
 const Profile: React.FC = () => {
@@ -35,6 +37,7 @@ const Profile: React.FC = () => {
     const [editableTwitter, setEditableTwitter] = useState<string>("");
     const [editableTwoFactorEnabled, setEditableTwoFactorEnabled] = useState<boolean>(false);
     const [validationWarnings, setValidationWarnings] = useState<{ [key: string]: string }>({});
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth();
     const router = useRouter();
 
@@ -76,6 +79,7 @@ const Profile: React.FC = () => {
                     instagram: userData["instagram"],
                     twitter: userData["twitter"],
                     two_factor_enabled: userData["two_factor_enabled"],
+                    profile_picture: userData["profile_picture"],
                 };
                 setProfile(profileData);
                 setEditableUsername(profileData.username);
@@ -268,6 +272,42 @@ const Profile: React.FC = () => {
         }
     };
 
+    const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!event.target.files || event.target.files.length === 0) {
+            return;
+        }
+
+        const file = event.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const access_token = localStorage.getItem("access_token");
+            const response = await fetch('/api/profile/uploadProfilePicture', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${access_token}`,
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to upload profile picture');
+            }
+
+            const data = await response.json();
+            setProfile(prev => prev ? { ...prev, profile_picture: data.profile_picture_url } : null);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to upload profile picture');
+        }
+    };
+
+    const triggerFileInput = () => {
+        fileInputRef.current?.click();
+    };
+
     if (loading)
         return (
             <div className='flex justify-center items-center h-64'>
@@ -303,6 +343,37 @@ const Profile: React.FC = () => {
             </div>
 
             <div className='space-y-6'>
+                <div className="flex flex-col items-center mb-6">
+                    <div className="relative w-32 h-32 mb-4">
+                        {profile?.profile_picture ? (
+                            <Image
+                                src={profile.profile_picture}
+                                alt="Profile"
+                                className="rounded-full object-cover"
+                                fill
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                                <span className="text-4xl text-gray-400">
+                                    {profile?.username?.charAt(0)?.toUpperCase() || '?'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleProfilePictureUpload}
+                        accept="image/*"
+                        className="hidden"
+                    />
+                    <button
+                        onClick={triggerFileInput}
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                    >
+                        Change Profile Picture
+                    </button>
+                </div>
                 <div className='bg-foreground p-4 rounded'>
                     <h2 className='text-lg font-semibold text-text-primary mb-4'>
                         User Information
