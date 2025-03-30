@@ -4,6 +4,8 @@ from app.models.user import User
 from flask_restful import Resource
 from bson import ObjectId
 from app.database import mongo
+from app.extensions import img_handler
+import time
 
 profile_bp = Blueprint("profile", __name__)
 
@@ -77,3 +79,38 @@ def set_password():
         print("Error setting password:", str(e))
         return {"message": "Error setting password", "error": str(e)}, 500
     
+
+@profile_bp.route("/upload_profile_picture", methods=["POST"])
+@jwt_required()
+def upload_profile_picture():
+    try:
+        user_id = get_jwt_identity()
+        if 'file' not in request.files:
+            return {"message": "No file provided"}, 400
+            
+        file = request.files['file']
+        if not file.filename:
+            return {"message": "No file selected"}, 400
+
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+        if not file.filename.lower().rsplit('.', 1)[1] in allowed_extensions:
+            return {"message": "File type not allowed"}, 400
+
+        user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+        if user and "profile_picture" in user:
+            img_handler.delete(user["profile_picture"])
+            
+        filename = f"profile_pictures/{user_id}_{int(time.time())}.{file.filename.rsplit('.', 1)[1]}"
+        
+        img_handler.create(filename, file)
+        
+        mongo.db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"profile_picture": filename}}
+        )
+        
+        return {"message": "Profile picture updated successfully", "filename": filename}, 200
+        
+    except Exception as e:
+        print(f"Error uploading profile picture: {str(e)}")
+        return {"message": "Error uploading profile picture"}, 500

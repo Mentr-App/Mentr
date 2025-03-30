@@ -1,6 +1,5 @@
 from google.cloud import storage
 from werkzeug.utils import secure_filename
-from datetime import datetime
 
 class image_handler():
     
