@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import logo_img from "@/assets/logo.png";
@@ -8,19 +8,41 @@ import chat_img from "@/assets/chat.png";
 import create_img from "@/assets/create2.png";
 import people_img from "@/assets/people.png";
 import LoginPopup from "@/components/LoginPopup/LoginPopup";
+import Image from "next/image";
 
 const Navbar: React.FC = () => {
-    // const [isPopupVisible, setIsPopupVisible] = useState(false);
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+    const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const router = useRouter();
     const { isAuthenticated, logout, isPopupVisible, setIsPopupVisible } = useAuth();
 
+    useEffect(() => {
+        const loadProfilePicture = async () => {
+            if (isAuthenticated) {
+                try {
+                    const access_token = localStorage.getItem("access_token");
+                    const pictureResponse = await fetch("/api/profile/getProfilePicture", {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${access_token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    
+                    if (pictureResponse.ok) {
+                        const pictureData = await pictureResponse.json();
+                        setProfilePicture(pictureData.profile_picture_url);
+                    }
+                } catch (error) {
+                    console.error("Failed to load profile picture:", error);
+                }
+            }
+        };
+
+        loadProfilePicture();
+    }, [isAuthenticated]);
+
     const handleProfileClick = () => {
-        // if (isAuthenticated) {
-        //     setIsDropdownVisible(!isDropdownVisible);
-        // } else {
-        //     setIsPopupVisible(true);
-        // }
         setIsDropdownVisible(!isDropdownVisible)
     };
 
@@ -133,9 +155,9 @@ const Navbar: React.FC = () => {
             {/* User Icon and Dropdown */}
             <div className='relative'>
                 <img
-                    src={profile_img.src}
-                    alt='User'
-                    className='w-8 cursor-pointer ml-10 opacity-60 hover:opacity-100 transition-opacity duration-200'
+                    src={profilePicture || profile_img.src}
+                    alt='Profile'
+                    className='w-10 h-10 rounded-full object-cover opacity-70 hover:opacity-100 transition-opacity duration-200 cursor-pointer'
                     onClick={handleProfileClick}
                 />
                 {isDropdownVisible && (
