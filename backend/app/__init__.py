@@ -23,7 +23,6 @@ def create_app(config_name="development"):
     mongo.init_app(app)
     #Create restful api
     api = Api(app)
-    image = image_handler()
     #Register API resources
     register_blueprints(app)
     return app
