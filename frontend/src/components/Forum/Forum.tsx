@@ -153,6 +153,7 @@ const Forum: React.FC = () => {
     const handlePostsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newValue = parseInt(e.target.value);
         setPostsPerPage(newValue);
+        setPage(1);
     };
 
     const handleVoteUpdate = (
