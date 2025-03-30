@@ -144,6 +144,35 @@ def check_vote(post_id):
         return {"message": "Error getting votes on post", "error": str(e)}
 
 
+@post_bp.route("/<post_id>/edit", methods=["POST"])
+@jwt_required()
+def edit_post(post_id):
+    """Edit Post with new description"""
+    try: 
+        content = request.json.get("content")
+        mongo.db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": {"content": content}})
+        
+        post = mongo.db.posts.find_one(
+            {"_id": ObjectId(post_id)},
+        )
+        if not post:
+            return {"message": "Post not found"}, 404
+
+        print(post)
+
+        author = mongo.db.users.find_one({"_id": post["author_id"]}, {"username": 1, "_id": 1})
+        if not author:
+            author = {"_id": "deleted", "username": "Anonymous"}
+
+        post["author"] = author
+        post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
+        return {"message": "Post updated successfully", "post": post}, 200
+
+    except Exception as e:
+        print("Error editing post:", str(e))
+        return {"message": "Error editing content on post", "error" : str(e)}
+
+      
 @post_bp.route("/<post_id>/comments", methods=["GET"])
 def get_post_comments(post_id):
     """Get all comments for a post."""
@@ -154,6 +183,7 @@ def get_post_comments(post_id):
         print("Error retrieving comments:", str(e))
         return {"message": "Error retrieving comments", "error": str(e)}, 500
 
+      
 @post_bp.route("/<post_id>/comments", methods=["POST"])
 @jwt_required()
 def add_comment(post_id):
