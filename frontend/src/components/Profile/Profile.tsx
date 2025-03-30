@@ -1,6 +1,7 @@
 import { ChartNoAxesColumnDecreasing } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -39,6 +40,7 @@ const Profile: React.FC = () => {
     const [validationWarnings, setValidationWarnings] = useState<{ [key: string]: string }>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth();
+    const { updateProfilePicture } = useProfile();
     const router = useRouter();
 
     useEffect(() => {
@@ -322,6 +324,7 @@ const Profile: React.FC = () => {
             if (pictureResponse.ok) {
                 const pictureData = await pictureResponse.json();
                 setProfile(prev => prev ? { ...prev, profile_picture: pictureData.profile_picture_url } : null);
+                updateProfilePicture(pictureData.profile_picture_url);
             }
             
             setError(null);
