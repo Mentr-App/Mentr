@@ -1,5 +1,6 @@
 from google.cloud import storage
 from werkzeug.utils import secure_filename
+import datetime
 
 class image_handler():
     
@@ -22,16 +23,20 @@ class image_handler():
         return blob.exists()
     
     def create(self, filename, file):
-        blob = self.bucket.blob(filename)
-        blob.upload_from_string(
+            blob = self.bucket.blob(filename)
+            blob.upload_from_string(
             file.read(),
-            content_type=file.content_type
-        )
+                content_type=file.content_type
+            )
 
     def get(self, filename):
-        blob = self.bucket.blob(filename)
-        if not blob.exists():
-            return None
-        return blob.generate_signed_url(version="v4", method="GET", response_content_disposition="inline")
-    
-    
+            blob = self.bucket.blob(filename)
+            if not blob.exists():
+                return None
+            expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+            url = blob.generate_signed_url(
+                version="v4",
+                method="GET",
+                expiration=expiration
+            )
+            return url

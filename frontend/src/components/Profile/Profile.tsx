@@ -65,8 +65,21 @@ const Profile: React.FC = () => {
                     throw new Error(errorData.message || "Failed to find user");
                 }
                 const userData = await response.json();
-                console.log(userData["created_at"]["$date"]);
-                console.log(new Date());
+                
+                const pictureResponse = await fetch("/api/profile/getProfilePicture", {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+                
+                let profilePictureUrl = null;
+                if (pictureResponse.ok) {
+                    const pictureData = await pictureResponse.json();
+                    profilePictureUrl = pictureData.profile_picture_url;
+                }
+
                 const profileData: ProfileData = {
                     username: userData["username"],
                     email: userData["email"],
@@ -79,7 +92,7 @@ const Profile: React.FC = () => {
                     instagram: userData["instagram"],
                     twitter: userData["twitter"],
                     two_factor_enabled: userData["two_factor_enabled"],
-                    profile_picture: userData["profile_picture"],
+                    profile_picture: profilePictureUrl,
                 };
                 setProfile(profileData);
                 setEditableUsername(profileData.username);
@@ -297,7 +310,20 @@ const Profile: React.FC = () => {
             }
 
             const data = await response.json();
-            setProfile(prev => prev ? { ...prev, profile_picture: data.profile_picture_url } : null);
+
+            const pictureResponse = await fetch("/api/profile/getProfilePicture", {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            
+            if (pictureResponse.ok) {
+                const pictureData = await pictureResponse.json();
+                setProfile(prev => prev ? { ...prev, profile_picture: pictureData.profile_picture_url } : null);
+            }
+            
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to upload profile picture');
@@ -346,12 +372,16 @@ const Profile: React.FC = () => {
                 <div className="flex flex-col items-center mb-6">
                     <div className="relative w-32 h-32 mb-4">
                         {profile?.profile_picture ? (
-                            <Image
-                                src={profile.profile_picture}
-                                alt="Profile"
-                                className="rounded-full object-cover"
-                                fill
-                            />
+                            <div className="relative w-32 h-32">
+                                <Image
+                                    src={profile.profile_picture}
+                                    alt="Profile"
+                                    className="rounded-full object-cover"
+                                    fill
+                                    sizes="128px"
+                                    priority
+                                />
+                            </div>
                         ) : (
                             <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
                                 <span className="text-4xl text-gray-400">
@@ -371,7 +401,7 @@ const Profile: React.FC = () => {
                         onClick={triggerFileInput}
                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
                     >
-                        Change Profile Picture
+                        {profile?.profile_picture ? 'Change Profile Picture' : 'Add Profile Picture'}
                     </button>
                 </div>
                 <div className='bg-foreground p-4 rounded'>
