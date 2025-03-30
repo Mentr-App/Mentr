@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import logo_img from "@/assets/logo.png";
 import profile_img from "@/assets/user.png";
 import search_img from "@/assets/search.png";
@@ -12,9 +13,9 @@ import Image from "next/image";
 
 const Navbar: React.FC = () => {
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-    const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const router = useRouter();
     const { isAuthenticated, logout, isPopupVisible, setIsPopupVisible } = useAuth();
+    const { profilePicture, updateProfilePicture } = useProfile();
 
     useEffect(() => {
         const loadProfilePicture = async () => {
@@ -31,16 +32,18 @@ const Navbar: React.FC = () => {
                     
                     if (pictureResponse.ok) {
                         const pictureData = await pictureResponse.json();
-                        setProfilePicture(pictureData.profile_picture_url);
+                        updateProfilePicture(pictureData.profile_picture_url);
                     }
                 } catch (error) {
                     console.error("Failed to load profile picture:", error);
                 }
+            } else {
+                updateProfilePicture(null);
             }
         };
 
         loadProfilePicture();
-    }, [isAuthenticated]);
+    }, [isAuthenticated, updateProfilePicture]);
 
     const handleProfileClick = () => {
         setIsDropdownVisible(!isDropdownVisible)
