@@ -84,18 +84,16 @@ def set_password():
 @jwt_required()
 def upload_profile_picture():
     try:
-        user_id = get_jwt_identity()
         if 'file' not in request.files:
             return {"message": "No file provided"}, 400
-            
+        
         file = request.files['file']
         if not file.filename:
             return {"message": "No file selected"}, 400
-
         allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
         if not file.filename.lower().rsplit('.', 1)[1] in allowed_extensions:
             return {"message": "File type not allowed"}, 400
-
+        user_id = get_jwt_identity()
         user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
         if user and "profile_picture" in user:
             img_handler.delete(user["profile_picture"])
