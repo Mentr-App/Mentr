@@ -17,6 +17,7 @@ interface Post {
     downvotes: number;
     upvotes: number;
     views: number;
+    image_url?: string;
 }
 
 interface AuthorObject {
@@ -250,6 +251,15 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                         {post.title}
                     </h2>
                     <h3 className="text-white font-semibold">{post.author?.username ?? "Unknown author"}</h3>
+                    {post.image_url && (
+                        <div className="mt-4 mb-4">
+                            <img 
+                                src={post.image_url} 
+                                alt="Post content" 
+                                className="max-w-full h-auto rounded-lg"
+                            />
+                        </div>
+                    )}
                     {isEditing 
                         ? 
                         <div className="mt-5 relative flex flex-col p-4 bg-secondary rounded-lg w-[65vw]">

@@ -1,70 +1,70 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import formidable from "formidable";
+import fs from "fs";
 import axios from "axios";
+
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "POST") {
         return res.status(405).json({ message: "Method Not Allowed" });
     }
 
-    const { title, content } = req.body;
-    console.log("Request method:", req.method);
-    console.log("Request body:", req.body);
-    console.log("Request headers:", req.headers);
-    console.log("title:", title);
-    console.log("content:", content);
-    const authHeader = req.headers.authorization;
-
-    if (!title || !content) {
-        return res.status(400).json({ message: "Missing required fields" });
-    }
-
     try {
-        const requestBody = {
-            title,
-            content,
-        };
-
-        console.log("Sending request to backend:", {
-            body: requestBody,
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: authHeader,
-            },
-        });
-
-        const response = await axios({
-            method: "POST",
-            url: "http://localhost:8000/post",
-            headers: {
-                "Content-Type": "application/json",
-                ...(authHeader && { Authorization: authHeader }),
-            },
-            data: requestBody,
-        });
-
-        const data = response.data;
-
-        // console.log("Backend response:", {
-        //     status: response.status,
-        //     data,
-        // });
-
-        return res.status(201).json(data);
-    } catch (error) {
-        console.error("Error creating post:", error);
-
-        if (axios.isAxiosError(error)) {
-            const statusCode = error.response?.status || 500;
-            const errorData = error.response?.data || {
-                message: "Failed to create post",
-                error: "Unknown error",
-            };
-
-            return res.status(statusCode).json(errorData);
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ message: "Unauthorized" });
         }
 
+        const form = formidable({});
+        const [fields, files] = await form.parse(req);
+        console.log("Received from frontend:", { fields, files });
+        
+        if (!fields.title || !fields.content) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const formData = new FormData();
+        
+        formData.append('title', fields.title[0]);
+        formData.append('content', fields.content[0]);
+
+        if (files.image && files.image[0]) {
+            const file = files.image[0];
+            const fileBuffer = await fs.promises.readFile(file.filepath);
+            formData.append('image', new Blob([fileBuffer]), file.originalFilename || 'image');
+        }
+
+        try {
+            const response = await axios.post('http://localhost:8000/post', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: authHeader,
+                },
+            });
+
+            if (files.image && files.image[0]) {
+                await fs.promises.unlink(files.image[0].filepath);
+            }
+
+            return res.status(201).json(response.data);
+        } catch (axiosError) {
+            if (axios.isAxiosError(axiosError)) {
+                return res.status(axiosError.response?.status || 500).json({
+                    message: "Error from backend",
+                    error: axiosError.response?.data || axiosError.message
+                });
+            }
+            throw axiosError; 
+        }
+    } catch (error) {
+        console.error("Error creating post:", error);
         return res.status(500).json({
-            message: "Internal Server Error",
+            message: "Error creating post",
             error: error instanceof Error ? error.message : "Unknown error",
         });
     }

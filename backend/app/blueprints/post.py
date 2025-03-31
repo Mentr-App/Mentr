@@ -1,11 +1,13 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
-from flask import request, Blueprint
+from flask import request, Blueprint, current_app
 from flask_restful import Resource
 from app.models.post import Post
 from bson import ObjectId
 from app.database import mongo
 from app.extensions import img_handler
 import time
+from werkzeug.utils import secure_filename
+import os
 
 post_bp = Blueprint("post", __name__)
 
@@ -15,11 +17,10 @@ post_bp = Blueprint("post", __name__)
 def create_post():
     """Create a new post."""
     try:
-        print("Request received")
         title = request.form.get("title")
         content = request.form.get("content")
         author_id = get_jwt_identity()
-        
+        print(title, content)
         if not title or not content:
             return {"message": "Missing title or content"}, 400
 
@@ -33,13 +34,12 @@ def create_post():
 
                 timestamp = int(time.time() * 1000)
                 filename = f"post_images/{author_id}_{timestamp}_{file.filename}"
-
                 img_handler.create(filename, file)
-                image_url = img_handler.get(filename)
 
-        post_id = Post.create_post(author_id, title, content, image_url)
+        post_id = Post.create_post(author_id, title, content, filename)
         print("Post created with ID:", post_id)
         return {"message": "Post created successfully", "post_id": post_id}, 201
+
     except Exception as e:
         print("Error creating post:", str(e))
         return {"message": "Error creating post", "error": str(e)}, 500

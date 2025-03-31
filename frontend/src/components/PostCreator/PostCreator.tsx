@@ -41,14 +41,21 @@ const PostCreator: React.FC = () => {
         try {
             const endpoint = "/api/post";
             const access_token = localStorage.getItem("access_token");
-            const payload = { title, content };
+            
+
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append("content", content);
+            if (image) {
+                formData.append("image", image);
+            }
+
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${access_token}`,
-                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify(payload),
+                body: formData,
             });
 
             if (!response.ok) {
@@ -80,7 +87,6 @@ const PostCreator: React.FC = () => {
             {error && <p className='text-red-500 text-center mb-4'>{error}</p>}
 
             <form onSubmit={handleSubmit}>
-                {/* Title Input */}
                 <div className='relative mb-4'>
                     <input
                         type='text'
@@ -100,7 +106,6 @@ const PostCreator: React.FC = () => {
                     </label>
                 </div>
 
-                {/* Body Input */}
                 <div className='relative mb-4'>
                     <textarea
                         id='body'
@@ -120,12 +125,11 @@ const PostCreator: React.FC = () => {
                     </label>
                 </div>
 
-                {/* Image Input */}
                 <div className='mb-4'>
                     <label
                         htmlFor='image'
-                        className='block text-sm font-medium text-white'>
-                        Image
+                        className='block text-sm font-medium text-white mb-2'>
+                        Image (optional)
                     </label>
                     <input
                         type='file'
@@ -133,17 +137,28 @@ const PostCreator: React.FC = () => {
                         name='image'
                         accept='image/*'
                         onChange={handleImageChange}
-                        className='mt-1 block w-30 text-sm text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                        className='block w-full text-sm text-white
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-violet-600 file:text-white
+                        hover:file:bg-violet-700
+                        focus:outline-none'
                     />
+                    {image && (
+                        <p className='mt-2 text-sm text-gray-300'>
+                            Selected: {image.name}
+                        </p>
+                    )}
                 </div>
 
                 <button
                     type='submit'
                     disabled={isSubmitting}
                     className={`w-full py-2 px-4 mt-4 font-medium text-white rounded-md focus:outline-none focus:ring-2 ${
-                        isSubmitting ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"
+                        isSubmitting ? "bg-gray-400" : "bg-violet-600 hover:bg-violet-700"
                     }`}>
-                    {isSubmitting ? "Submitting..." : "Create Post"}
+                    {isSubmitting ? "Creating..." : "Create Post"}
                 </button>
             </form>
         </div>
