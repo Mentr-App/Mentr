@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import CommentSection from "../CommentSection/CommentSection";
 import { getRelativeTime } from "@/lib/timeUtils";
+import DeleteButton from "../DeleteConfirmation/DeleteConfirmationProp";
 
 interface PostViewProps {
     post_id: string;
@@ -196,6 +197,10 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
         }
     }
 
+    const handleDelete = async() => {
+        console.log("meep")
+    }
+
     const loadProfile = async () => {
         try {
             const endpoint = "/api/profile/getProfile"
@@ -311,9 +316,10 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                     }
                                     {
                                         userId === post.author_id.$oid && (
-                                            <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
-                                                Delete Post
-                                            </li>
+                                            // <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
+                                            //     Delete Post
+                                            // </li>
+                                            <DeleteButton onDelete={handleDelete} setIsDropdownVisible={setIsDropdownVisible}/>
                                         )
                                     }
                                     <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
