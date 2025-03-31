@@ -157,8 +157,10 @@ const Profile: React.FC = () => {
                 }
 
                 const data = await response.json();
-                console.log(data)
-                setUserPosts(data || []);
+                const sortedPosts = [...data].sort((a, b) => 
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                );
+                setUserPosts(sortedPosts || []);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to fetch user posts');
             } finally {
