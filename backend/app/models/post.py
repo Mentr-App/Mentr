@@ -5,6 +5,7 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity
 )
+from app.extensions import img_handler
 
 class Post:
     """Post model for handling post-related operations in MongoDB."""
@@ -25,20 +26,23 @@ class Post:
             return_document=True
         )
         
-        # Use the views from the updated document
         post["views"] = result["views"] if result else post.get("views", 0) + 1
         post["author"] = author
         post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
+
+        if "image_url" in post and post["image_url"]:
+            post["image_url"] = img_handler.get(post["image_url"].split('?')[0])  # Get fresh signed URL
+
         return post
-        
 
     @staticmethod
-    def create_post(author_id, title, content):
+    def create_post(author_id, title, content, image_url=None):
         """Insert a new post into the database."""
         post_data = {
             "author_id": ObjectId(author_id),
             "title": title,
             "content": content,
+            "image_url": image_url,
             "created_at": datetime.now(),
             "upvotes": 0,
             "downvotes": 0,
