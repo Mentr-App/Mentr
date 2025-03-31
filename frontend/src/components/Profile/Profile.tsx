@@ -360,18 +360,20 @@ const Profile: React.FC = () => {
 
     return (
         <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto'>
-            <div className='flex items-center justify-between mb-6'>
+            <div className='flex items-center justify-between mb-6 h-[42px]'>
                 <h1 className='text-2xl font-bold text-text-primary'>
                     Profile Settings
                 </h1>
-                {activeTab === 'profile' && (
-                    <button
-                        onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
-                        className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'
-                    >
-                        {isEditing ? "Save Changes" : "Edit Profile"}
-                    </button>
-                )}
+                <div className='w-[120px]'>
+                    {activeTab === 'profile' && (
+                        <button
+                            onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
+                            className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors w-full'
+                        >
+                            {isEditing ? "Save Changes" : "Edit Profile"}
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="flex flex-col items-center mb-4">
@@ -409,7 +411,6 @@ const Profile: React.FC = () => {
                     {profile?.profile_picture ? 'Change Profile Picture' : 'Add Profile Picture'}
                 </button>
 
-                
                 <div className="flex border-b border-gray-200 w-full mb-4">
                     <button
                         className={`py-2 px-4 font-medium text-base focus:outline-none ${
