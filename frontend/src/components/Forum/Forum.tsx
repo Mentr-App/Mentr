@@ -37,7 +37,7 @@ const Forum: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const [page, setPage] = useState<number>(1);
     const [hasMore, setHasMore] = useState<boolean>(true);
-    const [postsPerPage, setPostsPerPage] = useState<number>(50);
+    const [postsPerPage, setPostsPerPage] = useState<number>(25);
     const [totalPages, setTotalPages] = useState<number>(1);
 
     // Track which layout is active (grid or list)
