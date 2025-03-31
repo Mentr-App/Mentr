@@ -25,7 +25,7 @@ interface ProfileData {
 
 type ProfileTab = 'profile' | 'posts' | 'comments';
 
-interface DummyPost {
+interface Post {
     _id: { $oid: string };
     title: string;
     content: string;
@@ -54,52 +54,12 @@ const Profile: React.FC = () => {
     const [editableTwoFactorEnabled, setEditableTwoFactorEnabled] = useState<boolean>(false);
     const [validationWarnings, setValidationWarnings] = useState<{ [key: string]: string }>({});
     const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
+    const [userPosts, setUserPosts] = useState<Post[]>([]);
+    const [postsLoading, setPostsLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth();
     const { updateProfilePicture } = useProfile();
     const router = useRouter();
-
-    const [dummyPosts, setDummyPosts] = useState<DummyPost[]>([
-        {
-            _id: { $oid: "1" },
-            title: "Getting started with React",
-            content: "I'm new to React and looking for resources to learn. Any recommendations?",
-            author_id: { $oid: "2" },
-            upvotes: 15,
-            downvotes: 2,
-            comments: 7,
-            views: 1,
-            created_at: "2023-05-15T10:30:00Z"
-        },
-        {
-            _id: { $oid: "2" },
-            title: "Best practices for TypeScript",
-            content: "What are some TypeScript best practices you've found most valuable in your projects?",
-            author_id: { $oid: "1" },
-            upvotes: 42,
-            downvotes: 3,
-            comments: 12,
-            views: 3,
-            created_at: "2023-06-20T14:45:00Z"
-        },
-        {
-            _id: { $oid: "3" },
-            title: "Career advice for junior developers",
-            content: "As a junior developer, what should I focus on to advance my career?",
-            author_id: { $oid: "1" },
-            upvotes: 28,
-            downvotes: 1,
-            comments: 9,
-            views: 1,
-            created_at: "2023-07-10T09:15:00Z"
-        }
-    ]);
-
-    const [currentVotes, setCurrentVotes] = useState<Record<string, "up" | "down" | null>>({
-        "1": null,
-        "2": null,
-        "3": null
-    });
 
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
@@ -176,6 +136,38 @@ const Profile: React.FC = () => {
 
         loadProfile();
     }, []);
+
+    useEffect(() => {
+        const fetchUserPosts = async () => {
+            if (activeTab !== 'posts') return;
+            
+            try {
+                setPostsLoading(true);
+                const access_token = localStorage.getItem("access_token");
+                const response = await fetch('/api/profile/getUserPosts', {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user posts');
+                }
+
+                const data = await response.json();
+                console.log(data)
+                setUserPosts(data || []);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to fetch user posts');
+            } finally {
+                setPostsLoading(false);
+            }
+        };
+
+        fetchUserPosts();
+    }, [activeTab]);
 
     const handleSaveChanges = async () => {
         const warnings: { [key: string]: string } = {};
@@ -393,12 +385,11 @@ const Profile: React.FC = () => {
     };
 
     const handleVoteUpdate = (postId: string, voteType: "up" | "down" | null, newUpvotes: number, newDownvotes: number) => {
-        setDummyPosts(prev => prev.map(post => 
+        setUserPosts(prev => prev.map(post => 
             post._id.$oid === postId 
                 ? { ...post, upvotes: newUpvotes, downvotes: newDownvotes } 
                 : post
         ));
-        setCurrentVotes(prev => ({ ...prev, [postId]: voteType }));
     };
 
     if (loading)
@@ -772,17 +763,27 @@ const Profile: React.FC = () => {
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
                             Your Posts
                         </h2>
-                        <div className="space-y-4">
-                            {dummyPosts.map((post) => (
-                                <ForumPost
-                                    key={post._id.$oid}
-                                    post={post}
-                                    currentVoteType={null}
-                                    onVoteUpdate={() => {}}
-                                    onClick={() => {}}
-                                />
-                            ))}
-                        </div>
+                        {postsLoading ? (
+                            <div className='flex justify-center items-center h-32'>
+                                <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary'></div>
+                            </div>
+                        ) : userPosts.length > 0 ? (
+                            <div className="space-y-4">
+                                {userPosts.map((post) => (
+                                    <ForumPost
+                                        key={post._id.$oid}
+                                        post={post}
+                                        currentVoteType={null}
+                                        onVoteUpdate={handleVoteUpdate}
+                                        onClick={() => {}}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-text-secondary py-8">
+                                <p>No posts to display</p>
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -1,11 +1,12 @@
 from datetime import datetime
-from bson import ObjectId
+from bson import ObjectId, json_util
 from app.database import mongo
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity
 )
 from app.extensions import img_handler
+import json
 
 class Post:
     """Post model for handling post-related operations in MongoDB."""
@@ -112,3 +113,41 @@ class Post:
                 comment["created_at"] = comment["created_at"].isoformat()
                 
         return comments
+
+    @staticmethod
+    def get_posts_by_author(author_id):
+        """
+        Retrieves all posts by a specific author from the database
+        """
+        try:
+            author = mongo.db.users.find_one(
+                {"_id": ObjectId(author_id)},
+                {"username": 1, "_id": 1}
+            )
+            
+            if not author:
+                author = {'_id': 'deleted', 'username': 'Anonymous'}
+            
+            posts_cursor = mongo.db.posts.find({"author_id": ObjectId(author_id)})
+            
+            posts = []
+            for post in posts_cursor:
+                post['_id'] = str(post['_id'])
+                post['author_id'] = str(post['author_id'])
+                
+                if 'created_at' in post and isinstance(post['created_at'], datetime):
+                    post['created_at'] = post['created_at'].isoformat()
+                if 'image_url' in post and post['image_url']:
+                    post['image_url'] = img_handler.get(post['image_url'].split('?')[0])
+                posts.append(post)
+            
+            json_posts = json.loads(
+                json_util.dumps(posts, json_options=json_util.RELAXED_JSON_OPTIONS)
+            )
+            print(posts)
+            print(json_posts)
+            return json_posts
+            
+        except Exception as e:
+            print(f"Error fetching posts by author: {e}")
+            return []
