@@ -15,6 +15,7 @@ export interface Post {
     downvotes: number;
     upvotes: number;
     views: number;
+    comments?: number;
 }
 
 export interface AuthorObject {

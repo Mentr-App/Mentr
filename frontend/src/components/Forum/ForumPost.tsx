@@ -25,6 +25,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
     const [upvotes, setUpvotes] = useState<number>(post.upvotes || 0);
     const [downvotes, setDownvotes] = useState<number>(post.downvotes || 0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const commentsCount = post.comments || 0;
 
     const handleButtonClick = (
         event: React.MouseEvent<HTMLButtonElement>,
@@ -115,6 +116,24 @@ const ForumPost: React.FC<ForumPostProps> = ({
                             </svg>
                             <span>{downvotes}</span>
                         </button>
+                        
+                        {/* Comment Count Icon */}
+                        <div className='flex items-center space-x-1 px-2 py-1 text-gray-400'>
+                            <svg
+                                xmlns='http://www.w3.org/2000/svg'
+                                viewBox='0 0 24 24'
+                                fill='none'
+                                stroke='currentColor'
+                                className='w-5 h-5'>
+                                <path 
+                                    strokeLinecap='round' 
+                                    strokeLinejoin='round' 
+                                    strokeWidth='2'
+                                    d='M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' 
+                                />
+                            </svg>
+                            <span>{commentsCount}</span>
+                        </div>
                     </div>
                 </div>
                 <span>{getRelativeTime(post.created_at)}</span>
