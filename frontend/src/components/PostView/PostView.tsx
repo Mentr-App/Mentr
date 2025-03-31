@@ -252,7 +252,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     </h2>
                     <h3 className="text-white font-semibold">{post.author?.username ?? "Unknown author"}</h3>
                     {post.image_url && (
-                        <div className="mt-4 mb-4">
+                        <div className="mt-4 mb-4 max-w-[600px]">
                             <img 
                                 src={post.image_url} 
                                 alt="Post content" 
