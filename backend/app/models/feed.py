@@ -9,7 +9,7 @@ class Feed:
     """Feed model for handling Feed-related operations in MongoDB."""
 
     @staticmethod
-    def get_feed(skip=0, limit=50, sort_by="new"):
+    def get_feed(skip=0, limit=25, sort_by="new"):
         """Fetch Feeds for the user feed with pagination and sorting."""
         sort_options = {
             "new": [("created_at", -1)],

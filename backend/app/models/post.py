@@ -51,17 +51,7 @@ class Post:
         post_id = mongo.db.posts.insert_one(post_data).inserted_id
         return str(post_id)
 
-    @staticmethod
-    def get_feed(skip=0, limit=100, sort_by="new"):
-        """Fetch posts for the user feed with pagination and sorting."""
-        sort_options = {
-            "new": [("created_at", -1)],  # Newest posts first
-            "top": [("upvotes", -1)],  # Most upvoted posts first
-            "hot": [("comments", -1), ("upvotes", -1)],  # Most discussed posts
-        }
-        posts = mongo.db.posts.find().sort(sort_options.get(sort_by, [("created_at", -1)])).skip(skip).limit(limit)
-        return [{"_id": str(post["_id"]), **post} for post in posts]
-    
+
     @staticmethod
     def get_total_posts():
         """Get the total number of posts in the database."""
