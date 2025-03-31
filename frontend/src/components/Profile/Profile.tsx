@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import ForumPost from "../Forum/ForumPost";
 
 interface ProfileData {
     username: string;
@@ -23,6 +24,18 @@ interface ProfileData {
 }
 
 type ProfileTab = 'profile' | 'posts' | 'comments';
+
+interface DummyPost {
+    _id: { $oid: string };
+    title: string;
+    content: string;
+    author_id: { $oid: string };
+    upvotes: number;
+    downvotes: number;
+    comments: number;
+    views: number;
+    created_at: string;
+}
 
 const Profile: React.FC = () => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -45,6 +58,48 @@ const Profile: React.FC = () => {
     const { logout } = useAuth();
     const { updateProfilePicture } = useProfile();
     const router = useRouter();
+
+    const [dummyPosts, setDummyPosts] = useState<DummyPost[]>([
+        {
+            _id: { $oid: "1" },
+            title: "Getting started with React",
+            content: "I'm new to React and looking for resources to learn. Any recommendations?",
+            author_id: { $oid: "2" },
+            upvotes: 15,
+            downvotes: 2,
+            comments: 7,
+            views: 1,
+            created_at: "2023-05-15T10:30:00Z"
+        },
+        {
+            _id: { $oid: "2" },
+            title: "Best practices for TypeScript",
+            content: "What are some TypeScript best practices you've found most valuable in your projects?",
+            author_id: { $oid: "1" },
+            upvotes: 42,
+            downvotes: 3,
+            comments: 12,
+            views: 3,
+            created_at: "2023-06-20T14:45:00Z"
+        },
+        {
+            _id: { $oid: "3" },
+            title: "Career advice for junior developers",
+            content: "As a junior developer, what should I focus on to advance my career?",
+            author_id: { $oid: "1" },
+            upvotes: 28,
+            downvotes: 1,
+            comments: 9,
+            views: 1,
+            created_at: "2023-07-10T09:15:00Z"
+        }
+    ]);
+
+    const [currentVotes, setCurrentVotes] = useState<Record<string, "up" | "down" | null>>({
+        "1": null,
+        "2": null,
+        "3": null
+    });
 
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
@@ -335,6 +390,15 @@ const Profile: React.FC = () => {
 
     const triggerFileInput = () => {
         fileInputRef.current?.click();
+    };
+
+    const handleVoteUpdate = (postId: string, voteType: "up" | "down" | null, newUpvotes: number, newDownvotes: number) => {
+        setDummyPosts(prev => prev.map(post => 
+            post._id.$oid === postId 
+                ? { ...post, upvotes: newUpvotes, downvotes: newDownvotes } 
+                : post
+        ));
+        setCurrentVotes(prev => ({ ...prev, [postId]: voteType }));
     };
 
     if (loading)
@@ -708,8 +772,16 @@ const Profile: React.FC = () => {
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
                             Your Posts
                         </h2>
-                        <div className="text-center text-text-secondary py-8">
-                            <p>No posts to display</p>
+                        <div className="space-y-4">
+                            {dummyPosts.map((post) => (
+                                <ForumPost
+                                    key={post._id.$oid}
+                                    post={post}
+                                    currentVoteType={null}
+                                    onVoteUpdate={() => {}}
+                                    onClick={() => {}}
+                                />
+                            ))}
                         </div>
                     </div>
                 )}
