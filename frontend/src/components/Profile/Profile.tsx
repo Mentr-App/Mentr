@@ -393,6 +393,10 @@ const Profile: React.FC = () => {
                 : post
         ));
     };
+    const handlePostClick = (post: Post) => {
+        console.log(post);
+        router.push("/post/" + post._id);
+    };
 
     if (loading)
         return (
@@ -777,7 +781,7 @@ const Profile: React.FC = () => {
                                         post={post}
                                         currentVoteType={null}
                                         onVoteUpdate={handleVoteUpdate}
-                                        onClick={() => {}}
+                                        onClick={() => handlePostClick(post)}
                                     />
                                 ))}
                             </div>
