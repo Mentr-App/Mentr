@@ -22,14 +22,17 @@ const Navbar: React.FC = () => {
             if (isAuthenticated) {
                 try {
                     const access_token = localStorage.getItem("access_token");
-                    const pictureResponse = await fetch("/api/profile/getProfilePicture", {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${access_token}`,
-                            "Content-Type": "application/json",
-                        },
-                    });
-                    
+                    const pictureResponse = await fetch(
+                        "/api/profile/getProfilePicture",
+                        {
+                            method: "GET",
+                            headers: {
+                                Authorization: `Bearer ${access_token}`,
+                                "Content-Type": "application/json",
+                            },
+                        }
+                    );
+
                     if (pictureResponse.ok) {
                         const pictureData = await pictureResponse.json();
                         updateProfilePicture(pictureData.profile_picture_url);
@@ -46,7 +49,7 @@ const Navbar: React.FC = () => {
     }, [isAuthenticated, updateProfilePicture]);
 
     const handleProfileClick = () => {
-        setIsDropdownVisible(!isDropdownVisible)
+        setIsDropdownVisible(!isDropdownVisible);
     };
 
     const handleSignOut = () => {
@@ -137,7 +140,7 @@ const Navbar: React.FC = () => {
             </ul>
 
             {/* Search Box */}
-            <div
+            {/* <div
                 className='flex items-center px-5 py-2 rounded-full'
                 style={{ backgroundColor: "var(--foreground)" }}>
                 <input
@@ -153,7 +156,7 @@ const Navbar: React.FC = () => {
                     alt='Search'
                     className='w-6 cursor-pointer'
                 />
-            </div>
+            </div> */}
 
             {/* User Icon and Dropdown */}
             <div className='relative'>
@@ -168,16 +171,16 @@ const Navbar: React.FC = () => {
                         className='absolute right-0 mt-2 w-48 rounded-lg shadow-lg'
                         style={{ backgroundColor: "var(--foreground)" }}>
                         <ul className='py-2'>
-                            {isAuthenticated &&
-                            <li
-                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
-                                style={{
-                                    color: "var(--text-primary)",
-                                }}
-                                onClick={handleUserSettings}>
-                                User Settings
-                            </li>
-                            }           
+                            {isAuthenticated && (
+                                <li
+                                    className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                    style={{
+                                        color: "var(--text-primary)",
+                                    }}
+                                    onClick={handleUserSettings}>
+                                    User Settings
+                                </li>
+                            )}
                             <li
                                 className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
                                 style={{
@@ -210,37 +213,35 @@ const Navbar: React.FC = () => {
                                 onClick={handlePrivacyPolicy}>
                                 Privacy Policy
                             </li>
-                            {!isAuthenticated ?
-                            <li
-                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
-                                style={{
-                                    color: "var(--text-primary)",
-                                }}
-                                onClick={() => {
-                                    setIsDropdownVisible(false)
-                                    setIsPopupVisible(true)
+                            {!isAuthenticated ? (
+                                <li
+                                    className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                    style={{
+                                        color: "var(--text-primary)",
+                                    }}
+                                    onClick={() => {
+                                        setIsDropdownVisible(false);
+                                        setIsPopupVisible(true);
                                     }}>
-                                Log in
-                            </li>
-                            :
-                            <li
-                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
-                                style={{
-                                    color: "var(--text-primary)",
-                                }}
-                                onClick={handleSignOut}>
-                                Sign Out
-                            </li>
-                            }
+                                    Log in
+                                </li>
+                            ) : (
+                                <li
+                                    className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                    style={{
+                                        color: "var(--text-primary)",
+                                    }}
+                                    onClick={handleSignOut}>
+                                    Sign Out
+                                </li>
+                            )}
                         </ul>
                     </div>
                 )}
             </div>
 
             {/* Login Popup */}
-            {isPopupVisible && (
-                <LoginPopup onClose={() => setIsPopupVisible(false)} />
-            )}
+            {isPopupVisible && <LoginPopup onClose={() => setIsPopupVisible(false)} />}
         </div>
     );
 };
