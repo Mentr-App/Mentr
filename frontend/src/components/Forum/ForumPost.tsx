@@ -89,7 +89,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                                 viewBox='0 0 24 24'
                                 fill={currentVoteType === "up" ? "currentColor" : "none"}
                                 stroke='currentColor'
-                                className='w-5 h-5'
+                                className='w-4 h-4'
                                 strokeWidth={currentVoteType === "up" ? "0" : "2"}>
                                 <path d='M4 14h16v2H4v-2zm8-10L4 12h16L12 4z' />
                             </svg>
@@ -110,7 +110,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                                     currentVoteType === "down" ? "currentColor" : "none"
                                 }
                                 stroke='currentColor'
-                                className='w-5 h-5'
+                                className='w-4 h-4'
                                 strokeWidth={currentVoteType === "down" ? "0" : "2"}>
                                 <path d='M4 8h16v2H4V8zm8 10l8-8H4l8 8z' />
                             </svg>
@@ -124,7 +124,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                                 viewBox='0 0 24 24'
                                 fill='none'
                                 stroke='currentColor'
-                                className='w-5 h-5'>
+                                className='w-4 h-4'>
                                 <path 
                                     strokeLinecap='round' 
                                     strokeLinejoin='round' 
@@ -136,7 +136,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                         </div>
                     </div>
                 </div>
-                <span>{getRelativeTime(post.created_at)}</span>
+                <span className="text-xs">{getRelativeTime(post.created_at)}</span>
             </div>
         </div>
     );
