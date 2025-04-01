@@ -1,18 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRelativeTime } from "@/lib/timeUtils";
-
-interface Author {
-    _id?: string;
-    username: string;
-}
-
-interface Comment {
-    _id?: string;
-    content: string;
-    author: string | Author;
-    created_at: string;
-}
+import CommentItem from "./Comment";
+import {Comment, Author} from "./CommentInterfaces"
 
 // Helper function to get author username
 const getAuthorName = (author: string | Author): string => {
@@ -113,6 +103,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
             }
 
             const data = await response.json();
+            console.log("comments:", data)
             setComments(data.comments || []);
         } catch (error) {
             console.error("Error fetching comments:", error);
@@ -146,20 +137,8 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                 </div>
             ) : (
                 <div className='space-y-4 mb-6'>
-                    {comments.map((comment, index) => (
-                        <div
-                            key={comment._id || index}
-                            className='bg-secondary p-4 rounded-lg'>
-                            <div className='flex justify-between'>
-                                <span className='font-semibold text-white'>
-                                    {getAuthorName(comment.author)}
-                                </span>
-                                <span className='text-gray-400 text-sm'>
-                                    {getRelativeTime(comment.created_at)}
-                                </span>
-                            </div>
-                            <p className='text-white mt-2'>{comment.content}</p>
-                        </div>
+                    {comments.map((item, index) => (
+                        <CommentItem comment={item} index={index} getAuthorName={getAuthorName}/>
                     ))}
                 </div>
             )}

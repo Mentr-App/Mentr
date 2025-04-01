@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import CommentSection from "../CommentSection/CommentSection";
 import { getRelativeTime } from "@/lib/timeUtils";
 import DeleteButton from "../DeleteConfirmation/DeleteConfirmationProp";
+import TextEditor from "../TextEditor/TextEditor";
 
 interface PostViewProps {
     post_id: string;
@@ -44,9 +45,9 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [currentVoteType, setCurrentVoteType] = useState<string | null>(null)
     const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false)
-    const [userId, setUserId] = useState<string>("")
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [editText, setEditText] = useState<string>("")
+    const userId = localStorage.getItem("userId")
 
     const getRelativeTime = (dateString: string) => {
         const date = new Date(dateString);
@@ -163,15 +164,10 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             return newVotes;
         });
     };
-
-    const handleEditTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setEditText(event.target.value)
-    }
     
-    const handleEditSubmit = async () => {
+    const handlePostEditSubmit = async () => {
         if ((!isAuthenticated) || (editText === post?.content) ||
             (editText === "") || (!post)) {
-                console.log("returning")
                 return
         }
 
@@ -199,38 +195,32 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
 
     const handleDelete = async() => {
         console.log("meep")
-    }
+        if (!isAuthenticated) {
+            return
+        }
 
-    const loadProfile = async () => {
         try {
-            const endpoint = "/api/profile/getProfile"
-            const access_token = localStorage.getItem("access_token")
-            if (access_token) {
-                const response = await fetch(endpoint, {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${access_token}`,
-                        "Content-Type": "application/json"
-                    }
-                })
-
-                if (!response.ok) {
-                    const errorData = await response.json()
-                    throw new Error(errorData.message || "Failed to find user")
+            const endpoint = `/api/post/delete/${post?._id.$oid}`
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    "Content-Type": "application/json"
                 }
+            })
 
-                const userData = await response.json()
-                setUserId(userData._id.$oid)
+            if (response.ok) {
+                const data = await response.json()
+                setPost(data.post)
             }
         } catch (error) {
-            console.log(error)
+            console.error("Error deleting posts:", error)
         }
     }
 
     useEffect(() => {
         getPost()
         fetchUserVotes()
-        loadProfile()
     }, [])
 
     useEffect(() => {
@@ -267,26 +257,30 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     )}
                     {isEditing 
                         ? 
-                        <div className="mt-5 relative flex flex-col p-4 bg-secondary rounded-lg w-[65vw]">
-                            <textarea
-                                className="p-3 mb-10 border focus:outline-none border-secondary rounded-md resize-none bg-secondary text-white"
-                                value={editText}
-                                onChange={handleEditTextChange}
-                                rows={4}
-                            />
-                            {/* Flex container for buttons */}
-                            <div className="flex justify-end gap-4">
-                                <button className="px-4 py-2 text-white bg-gray-600 rounded-md hover:bg-gray-700"
-                                        onClick={() => setIsEditing(false)}>
-                                    Cancel
-                                </button>
-                                <button className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
-                                        onClick={handleEditSubmit}>
-                                    Save
-                                </button>
-                            </div>
-                        </div>
-
+                        // <div className="mt-5 relative flex flex-col p-4 bg-secondary rounded-lg w-[65vw]">
+                        //     <textarea
+                        //         className="p-3 mb-10 border focus:outline-none border-secondary rounded-md resize-none bg-secondary text-white"
+                        //         value={editText}
+                        //         onChange={handleEditTextChange}
+                        //         rows={4}
+                        //     />
+                        //     {/* Flex container for buttons */}
+                        //     <div className="flex justify-end gap-4">
+                        //         <button className="px-4 py-2 text-white bg-gray-600 rounded-md hover:bg-gray-700"
+                        //                 onClick={() => setIsEditing(false)}>
+                        //             Cancel
+                        //         </button>
+                        //         <button className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
+                        //                 onClick={handleEditSubmit}>
+                        //             Save
+                        //         </button>
+                        //     </div>
+                        // </div>
+                        <TextEditor 
+                            editText={editText} 
+                            setEditText={setEditText} 
+                            setIsEditing={setIsEditing}
+                            handleEditSubmit={handlePostEditSubmit}/>
                         :
                         <p className="text-white mt-2">{post.content}</p>}
                 </div>

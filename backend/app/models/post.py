@@ -20,6 +20,10 @@ class Post:
         if not author:
             author = {'_id': 'deleted', 'username': 'Anonymous'}
 
+        if not post["author_id"]:
+            author = {"_id": "deleted", "username": "[deleted]"}
+            post["author_id"] = {"oid": None}
+
         result = mongo.db.posts.find_one_and_update(
             {"_id": ObjectId(post_id)},
             {"$inc": {"views": 1}},
@@ -56,59 +60,125 @@ class Post:
     def get_total_posts():
         """Get the total number of posts in the database."""
         return mongo.db.posts.count_documents({})
+    
+    @staticmethod
+    def edit_post(post_id, content):
+        mongo.db.posts.update_one(
+            {"_id": ObjectId(post_id)},
+            {"$set": {
+                "content": content
+            }}
+        )
+
+        post = mongo.db.posts.find_one(
+            {"_id": ObjectId(post_id)}
+        )
+
+        if not post:
+            return None
+
+        author = mongo.db.users.find_one({"_id": post["author_id"]})
+        if not author or not post["author_id"]:
+            author = {
+                "_id": "deleted",
+                "username": "[deleted]"
+            }
+            post["author_id"] = {"oid": None}
+        
+        post["author"] = author
+        post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
+        return post        
+
+    
+    @staticmethod
+    def delete_post(post_id):
+        mongo.db.posts.update_one(
+            {"_id": ObjectId(post_id)},
+            {"$set": {
+                "author_id": None
+            }}
+        )
+
+        post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
+        if not post:
+            return None
+        
+        author = mongo.db.users.find_one({"_id": post["author_id"]}, {"username": 1, "_id": 1})
+        if not author:
+            author = {"_id": "deleted", "username": "Anonymous"}
+        
+        if not post["author_id"]:
+            author = {"_id": "deleted", "username": "[deleted]"}
+            post["author_id"] = {"oid": None}
+
+
+        post["author"] = author
+        post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
+        return post
+
+
 
     @staticmethod
     def add_comment(post_id, user_id, content):
-        """Add a comment to a post."""
-        comment = {
+        comment_data = {
             "author_id": ObjectId(user_id),
+            "post_id": ObjectId(post_id),
             "content": content,
             "created_at": datetime.now()
         }
         
-        # Add the comment to the post's comments array
-        result = mongo.db.posts.update_one(
+        result = mongo.db.comments.insert_one(comment_data).inserted_id
+        comment = mongo.db.comments.find_one({"_id": ObjectId(result)})
+        if not comment:
+            return None
+        
+        mongo.db.posts.update_one(
             {"_id": ObjectId(post_id)},
-            {
-                "$push": {"comments_list": comment},
-                "$inc": {"comments": 1}  # Increment comment count
-            }
+            {"$inc": {
+                "comments": 1
+            }}
         )
         
-        if result.modified_count == 0:
-            return None
-            
-        # Get the updated post to return the updated comments list
-        post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
-        
-        # Get author info for the comment
         author = mongo.db.users.find_one({"_id": ObjectId(user_id)}, {"username": 1})
-        latest_comment = post.get("comments_list", [])[-1]
-        latest_comment["author"] = author
-        latest_comment["created_at"] = latest_comment["created_at"].isoformat()
-        
-        return latest_comment
-        
+        comment["author"] = author
+        comment["created_at"] = comment["created_at"].isoformat()
+        return comment
+
     @staticmethod
     def get_comments(post_id):
-        """Get all comments for a post with author information."""
-        post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
-        
-        if not post or "comments_list" not in post:
+        comments = mongo.db.comments.aggregate([
+            {"$match": {"post_id": ObjectId(post_id)}},  # Filter by post ID
+            {"$sort": {"created_at": -1}},  # Sort by time (newest first)
+            {
+                "$lookup": {
+                    "from": "users",  # Join with 'users' collection
+                    "localField": "author_id",  # Field in 'comments'
+                    "foreignField": "_id",  # Corresponding field in 'users'
+                    "as": "author"
+                }
+            },
+            {"$unwind": {"path": "$author", "preserveNullAndEmptyArrays": True}},  # Convert author array to object
+            {
+                "$project": {
+                    "_id": 1,  # Keep comment ID
+                    "post_id": 1,  # Keep post ID
+                    "content": 1,  # Keep content
+                    "created_at": 1,  # Keep timestamp
+                    "author._id": 1,  # Keep only selected fields from 'author'
+                    "author.userType": 1,
+                    "author.username": 1,
+                    "author.profile_picture": 1
+                }
+            }
+        ])
+
+        if not comments:
             return []
-            
-        comments = post["comments_list"]
         
-        # Add author information to each comment
+        comments = list(comments)
+
         for comment in comments:
-            if "author_id" in comment:
-                author = mongo.db.users.find_one({"_id": comment["author_id"]}, {"username": 1})
-                comment["author"] = author["username"] if author else "Anonymous"
-            else:
-                comment["author"] = "Anonymous"
-                
-            # Format dates
             if "created_at" in comment:
                 comment["created_at"] = comment["created_at"].isoformat()
-                
+        
         return comments
