@@ -3,6 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import CommentSection from "../CommentSection/CommentSection";
 import { getRelativeTime } from "@/lib/timeUtils";
 
+const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
 interface PostViewProps {
     post_id: string;
 }
