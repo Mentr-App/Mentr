@@ -21,12 +21,13 @@ interface AuthorProfile {
     industry?: string;
 }
 
-interface Comment {
+export interface Comment {
     _id?: string;
     content: string;
     author: string | Author;
     author_id?: { $oid: string };
     created_at: string;
+    post_id?: string;
 }
 
 // Helper function to get author username

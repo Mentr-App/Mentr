@@ -151,3 +151,42 @@ class Post:
         except Exception as e:
             print(f"Error fetching posts by author: {e}")
             return []
+    
+    @staticmethod
+    def get_comments_by_author(author_id):
+        """
+        Retrieves all comments by a specific author from the database
+        """
+        try:
+            author = mongo.db.users.find_one(
+                {"_id": ObjectId(author_id)},
+                {"username": 1, "_id": 1}
+            )
+            if not author:
+                author = {'_id': 'deleted', 'username': 'Anonymous'}
+            
+            posts_cursor = mongo.db.posts.find({
+                "comments_list.author_id": ObjectId(author_id)
+            })
+            
+            comments = []
+            for post in posts_cursor:
+                post_id = str(post['_id'])
+                for comment in post.get('comments_list', []):
+                    if str(comment['author_id']) == author_id:
+                        formatted_comment = {
+                            '_id': str(comment.get('_id', '')),
+                            'content': comment['content'],
+                            'author': author['username'],
+                            'author_id': {'$oid': author_id},
+                            'created_at': comment['created_at']['$date'].isoformat() if isinstance(comment['created_at'], dict) else comment['created_at'].isoformat(),
+                            'post_id': post_id
+                        }
+                        comments.append(formatted_comment)
+            comments.sort(key=lambda x: x['created_at'], reverse=True)
+            
+            return comments
+            
+        except Exception as e:
+            print(f"Error fetching comments by author: {e}")
+            return []

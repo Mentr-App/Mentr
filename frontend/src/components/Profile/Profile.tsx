@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Post } from "../Forum/Forum";
+import { Comment } from "../CommentSection/CommentSection";
 import ForumPost from "../Forum/ForumPost";
 
 interface ProfileData {
@@ -25,18 +27,6 @@ interface ProfileData {
 
 type ProfileTab = 'profile' | 'posts' | 'comments';
 
-interface Post {
-    _id: { $oid: string };
-    title: string;
-    content: string;
-    author_id: { $oid: string };
-    upvotes: number;
-    downvotes: number;
-    comments: number;
-    views: number;
-    created_at: string;
-}
-
 const Profile: React.FC = () => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -55,7 +45,9 @@ const Profile: React.FC = () => {
     const [validationWarnings, setValidationWarnings] = useState<{ [key: string]: string }>({});
     const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
     const [userPosts, setUserPosts] = useState<Post[]>([]);
+    const [userComments, setUserComments] = useState<Comment[]>([]);
     const [postsLoading, setPostsLoading] = useState(false);
+    const [commentsLoading, setCommentsLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth();
     const { updateProfilePicture } = useProfile();
@@ -169,6 +161,40 @@ const Profile: React.FC = () => {
         };
 
         fetchUserPosts();
+    }, [activeTab]);
+
+    useEffect(() => {
+        const fetchUserComments = async () => {
+            if (activeTab !== 'comments') return;
+            
+            try {
+                setCommentsLoading(true);
+                const access_token = localStorage.getItem("access_token");
+                const response = await fetch('/api/profile/getUserComments', {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user comments');
+                }
+
+                const data = await response.json();
+                const sortedComments = [...data].sort((a, b) => 
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                );
+                setUserComments(sortedComments || []);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to fetch user comments');
+            } finally {
+                setCommentsLoading(false);
+            }
+        };
+
+        fetchUserComments();
     }, [activeTab]);
 
     const handleSaveChanges = async () => {
@@ -393,9 +419,13 @@ const Profile: React.FC = () => {
                 : post
         ));
     };
+
     const handlePostClick = (post: Post) => {
-        console.log(post);
-        router.push("/post/" + post._id);
+        router.push("/post/" + post._id.$oid);
+    };
+
+    const handleCommentClick = (postId: string) => {
+        router.push(`/post/${postId}`);
     };
 
     if (loading)
@@ -798,9 +828,35 @@ const Profile: React.FC = () => {
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
                             Your Comments
                         </h2>
-                        <div className="text-center text-text-secondary py-8">
-                            <p>No comments to display</p>
-                        </div>
+                        {commentsLoading ? (
+                            <div className='flex justify-center items-center h-32'>
+                                <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary'></div>
+                            </div>
+                        ) : userComments.length > 0 ? (
+                            <div className="space-y-4">
+                                {userComments.map((comment) => (
+                                    <div 
+                                        key={comment._id} 
+                                        className="bg-background p-4 rounded-lg cursor-pointer hover:bg-background-dark transition-colors"
+                                        onClick={() => comment.post_id && handleCommentClick(comment.post_id)}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="text-text-primary font-medium">
+                                                {profile?.username}
+                                            </h3>
+                                            <span className="text-xs text-text-secondary">
+                                                {new Date(comment.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-text-primary">{comment.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-text-secondary py-8">
+                                <p>No comments to display</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
