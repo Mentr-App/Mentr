@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRelativeTime } from "@/lib/timeUtils";
+import CommentItem from "./Comment";
+import {Comment, Author} from "./CommentInterfaces"
 
 const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-
+<!-- 
 interface Author {
     _id?: string;
     username: string;
@@ -28,7 +30,8 @@ export interface Comment {
     author_id?: { $oid: string };
     created_at: string;
     post_id?: string;
-}
+} -->
+
 
 // Helper function to get author username
 const getAuthorName = (author: string | Author): string => {
@@ -166,6 +169,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
             }
 
             const data = await response.json();
+            console.log("comments:", data)
             setComments(data.comments || []);
         } catch (error) {
             console.error("Error fetching comments:", error);
@@ -199,7 +203,11 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                 </div>
             ) : (
                 <div className='space-y-4 mb-6'>
-                    {comments.map((comment, index) => {
+                    {comments.map((item, index) => (
+                        <CommentItem comment={item} index={index} getAuthorName={getAuthorName}/>
+                    ))}
+
+<!--                     {comments.map((comment, index) => {
                         const authorId = getAuthorId(comment);
                         const authorProfile = authorId ? authorProfiles[authorId] : null;
                         
@@ -256,7 +264,8 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                                 <p className='text-white ml-11'>{comment.content}</p>
                             </div>
                         );
-                    })}
+                    })} -->
+
                 </div>
             )}
 

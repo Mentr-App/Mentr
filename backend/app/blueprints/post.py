@@ -20,7 +20,6 @@ def create_post():
         title = request.form.get("title")
         content = request.form.get("content")
         author_id = get_jwt_identity()
-        print(title, content)
         if not title or not content:
             return {"message": "Missing title or content"}, 400
 
@@ -28,7 +27,6 @@ def create_post():
         filename = None
         if 'image' in request.files:
             file = request.files['image']
-            print("file",file)
             if file.filename:
                 allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
                 if not file.filename.lower().rsplit('.', 1)[1] in allowed_extensions:
@@ -39,7 +37,6 @@ def create_post():
                 img_handler.create(filename, file)
 
         post_id = Post.create_post(author_id, title, content, filename)
-        print("Post created with ID:", post_id)
         return {"message": "Post created successfully", "post_id": post_id}, 201
 
     except Exception as e:
@@ -168,22 +165,13 @@ def edit_post(post_id):
     """Edit Post with new description"""
     try: 
         content = request.json.get("content")
-        mongo.db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": {"content": content}})
-        
-        post = mongo.db.posts.find_one(
-            {"_id": ObjectId(post_id)},
-        )
+        if not content:
+            return {"message": "Content is empty"}, 400
+
+        post = Post.edit_post(post_id, content)
         if not post:
-            return {"message": "Post not found"}, 404
+            return {"message": "Failed to edit post"}, 500
 
-        print(post)
-
-        author = mongo.db.users.find_one({"_id": post["author_id"]}, {"username": 1, "_id": 1})
-        if not author:
-            author = {"_id": "deleted", "username": "Anonymous"}
-
-        post["author"] = author
-        post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
         return {"message": "Post updated successfully", "post": post}, 200
 
     except Exception as e:
@@ -196,6 +184,7 @@ def get_post_comments(post_id):
     """Get all comments for a post."""
     try:
         comments = Post.get_comments(post_id)
+        print(comments)
         return {"comments": comments}, 200
     except Exception as e:
         print("Error retrieving comments:", str(e))
@@ -222,3 +211,15 @@ def add_comment(post_id):
     except Exception as e:
         print("Error adding comment:", str(e))
         return {"message": "Error adding comment", "error": str(e)}, 500
+
+@post_bp.route("/<post_id>/delete", methods=["POST"])
+@jwt_required()
+def delete_post(post_id):
+    try:
+        post = Post.delete_post(post_id)
+        if not post:
+            return {"message": "Failed to delete post"}, 500
+        return {"message": "Post updated successfully", "post": post}, 200
+
+    except Exception as e:
+        print("Error deleting comments:", str(e))

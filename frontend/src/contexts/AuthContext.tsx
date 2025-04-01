@@ -39,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         localStorage.setItem("access_token", accessToken);
         localStorage.setItem("refresh_token", refreshToken);
         setIsAuthenticated(true);
+        loadProfile()
         window.dispatchEvent(
             new CustomEvent("authStateChange", {
                 detail: { type: "signin" },
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const logout = () => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("userId");
         setIsAuthenticated(false);
         window.dispatchEvent(
             new CustomEvent("authStateChange", {
@@ -56,6 +58,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             })
         );
     };
+
+    const loadProfile = async () => {
+        try {
+            const endpoint = "/api/profile/getProfile"
+            const access_token = localStorage.getItem("access_token")
+            if (access_token) {
+                const response = await fetch(endpoint, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        "Content-Type": "application/json"
+                    }
+                })
+    
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    throw new Error(errorData.message || "Failed to find user")
+                }
+    
+                const userData = await response.json()
+                localStorage.setItem("userId", userData._id.$oid)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+      }
 
     return (
         <AuthContext.Provider value={{ isAuthenticated, login, logout, isPopupVisible, setIsPopupVisible }}>

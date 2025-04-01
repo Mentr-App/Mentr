@@ -327,6 +327,7 @@ const Forum: React.FC = () => {
                 post.content.toLowerCase().includes(value.toLowerCase())
         );
 
+        console.log(filteredPosts)
         setFeed(filteredPosts);
     };
 

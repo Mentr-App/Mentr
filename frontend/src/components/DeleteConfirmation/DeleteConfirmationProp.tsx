@@ -20,7 +20,7 @@ export default function DeleteButton({ onDelete, setIsDropdownVisible }: DeleteB
             </li>
 
             {isOpen && <DeleteConfirmationPopup onConfirm={()=> {
-                onDelete
+                onDelete()
                 setIsDropdownVisible(false)
             }} 
             onCancel={() => {
