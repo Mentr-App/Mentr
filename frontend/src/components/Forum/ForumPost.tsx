@@ -25,6 +25,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
     const [upvotes, setUpvotes] = useState<number>(post.upvotes || 0);
     const [downvotes, setDownvotes] = useState<number>(post.downvotes || 0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const commentsCount = post.comments || 0;
 
     const handleButtonClick = (
         event: React.MouseEvent<HTMLButtonElement>,
@@ -88,7 +89,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                                 viewBox='0 0 24 24'
                                 fill={currentVoteType === "up" ? "currentColor" : "none"}
                                 stroke='currentColor'
-                                className='w-5 h-5'
+                                className='w-4 h-4'
                                 strokeWidth={currentVoteType === "up" ? "0" : "2"}>
                                 <path d='M4 14h16v2H4v-2zm8-10L4 12h16L12 4z' />
                             </svg>
@@ -109,15 +110,33 @@ const ForumPost: React.FC<ForumPostProps> = ({
                                     currentVoteType === "down" ? "currentColor" : "none"
                                 }
                                 stroke='currentColor'
-                                className='w-5 h-5'
+                                className='w-4 h-4'
                                 strokeWidth={currentVoteType === "down" ? "0" : "2"}>
                                 <path d='M4 8h16v2H4V8zm8 10l8-8H4l8 8z' />
                             </svg>
                             <span>{downvotes}</span>
                         </button>
+                        
+                        {/* Comment Count Icon */}
+                        <div className='flex items-center space-x-1 px-2 py-1 text-gray-400'>
+                            <svg
+                                xmlns='http://www.w3.org/2000/svg'
+                                viewBox='0 0 24 24'
+                                fill='none'
+                                stroke='currentColor'
+                                className='w-4 h-4'>
+                                <path 
+                                    strokeLinecap='round' 
+                                    strokeLinejoin='round' 
+                                    strokeWidth='2'
+                                    d='M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' 
+                                />
+                            </svg>
+                            <span>{commentsCount}</span>
+                        </div>
                     </div>
                 </div>
-                <span>{getRelativeTime(post.created_at)}</span>
+                <span className="text-xs">{getRelativeTime(post.created_at)}</span>
             </div>
         </div>
     );

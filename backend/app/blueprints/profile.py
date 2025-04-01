@@ -1,6 +1,7 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from flask import request, Blueprint
 from app.models.user import User
+from app.models.post import Post
 from flask_restful import Resource
 from bson import ObjectId
 from app.database import mongo
@@ -177,3 +178,14 @@ def get_profile_info_by_id(user_id):
     except Exception as e:
         print("Error getting user info:", str(e))
         return {"message": "Error getting user info", "error": str(e)}, 500
+        
+@profile_bp.route("/get_user_posts", methods=["GET"])
+@jwt_required()
+def get_user_posts():
+    try:
+        user_id = get_jwt_identity()
+        posts = Post.get_posts_by_author(user_id)
+        return posts, 201
+    except Exception as e:
+        print("Error finding user:", str(e))
+        return {"message": "Error finding user", "error": str(e)}, 500

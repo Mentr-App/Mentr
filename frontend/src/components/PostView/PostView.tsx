@@ -3,8 +3,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import CommentSection from "../CommentSection/CommentSection";
 import { getRelativeTime } from "@/lib/timeUtils";
 
-const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-
 interface PostViewProps {
     post_id: string;
 }
@@ -209,7 +207,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
         } catch (error) {
             console.error("Error editing post:", error);
         }
-    };
+    }
 
     const loadProfile = async () => {
         try {
@@ -312,9 +310,9 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     </div>
                     {post.image_url && (
                         <div className="mt-4 mb-4">
-                            <img
-                                src={post.image_url}
-                                alt="Post content"
+                            <img 
+                                src={post.image_url} 
+                                alt="Post content" 
                                 className="max-w-full h-auto rounded-lg"
                             />
                         </div>
@@ -358,25 +356,27 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                         {isDropdownVisible && (
                             <div className="absolute right-0 mt-2 w-40 rounded-lg shadow-lg bg-secondary text-sm">
                                 <ul className="">
-                                    {userId === post.author_id.$oid && (
-                                        <li
-                                            className="px-4 py-2 cursor-pointer hover:bg-foreground"
-                                            onClick={() => {
-                                                setIsEditing(true);
-                                                if (!isEditing) {
-                                                    setEditText(post.content);
-                                                }
-                                                setIsDropdownVisible(false);
-                                            }}
-                                        >
-                                            Edit Post
-                                        </li>
-                                    )}
-                                    {userId === post.author_id.$oid && (
-                                        <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
-                                            Delete Post
-                                        </li>
-                                    )}
+                                    {
+                                        userId === post.author_id.$oid && (
+                                            <li className="px-4 py-2 cursor-pointer hover:bg-foreground"
+                                                onClick={() => {
+                                                    setIsEditing(true)
+                                                    if (!isEditing) {
+                                                        setEditText(post.content)
+                                                    }
+                                                    setIsDropdownVisible(false)
+                                                }}>
+                                                Edit Post
+                                            </li>
+                                        )
+                                    }
+                                    {
+                                        userId === post.author_id.$oid && (
+                                            <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
+                                                Delete Post
+                                            </li>
+                                        )
+                                    }
                                     <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
                                         Save Post
                                     </li>

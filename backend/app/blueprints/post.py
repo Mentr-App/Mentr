@@ -25,8 +25,10 @@ def create_post():
             return {"message": "Missing title or content"}, 400
 
         image_url = None
+        filename = None
         if 'image' in request.files:
             file = request.files['image']
+            print("file",file)
             if file.filename:
                 allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
                 if not file.filename.lower().rsplit('.', 1)[1] in allowed_extensions:
