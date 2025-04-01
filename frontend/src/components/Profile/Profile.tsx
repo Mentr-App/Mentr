@@ -421,7 +421,7 @@ const Profile: React.FC = () => {
     };
 
     const handlePostClick = (post: Post) => {
-        router.push("/post/" + post._id.$oid);
+        router.push("/post/" + post._id);
     };
 
     const handleCommentClick = (postId: string) => {
