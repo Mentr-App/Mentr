@@ -147,3 +147,33 @@ def get_profile_picture():
     except Exception as e:
         print("Error getting profile picture:", str(e))
         return {"message": "Error getting profile picture", "error": str(e)}, 500
+
+@profile_bp.route("/get_profile_info/<user_id>", methods=["GET"])
+def get_profile_info_by_id(user_id):
+    try:
+        user = User.find_user_by_id(user_id)
+            
+        if not user:
+            return {"message": "User not found"}, 404
+            
+        response = {
+            "userType": user.get("userType"),
+            "profile_picture_url": None
+        }
+        print(user["userType"])
+        if user.get("userType") == "Mentee":
+            response["major"] = user.get("major")
+        elif user.get("userType") == "Mentor":
+            response["company"] = user.get("company")
+            response["industry"] = user.get("industry")
+            
+        if 'profile_picture' in user:
+            picture_url = img_handler.get(user['profile_picture'])
+            if picture_url:
+                response["profile_picture_url"] = picture_url
+        
+        return response, 200
+        
+    except Exception as e:
+        print("Error getting user info:", str(e))
+        return {"message": "Error getting user info", "error": str(e)}, 500
