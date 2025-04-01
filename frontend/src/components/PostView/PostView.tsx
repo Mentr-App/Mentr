@@ -5,6 +5,9 @@ import { getRelativeTime } from "@/lib/timeUtils";
 import DeleteButton from "../DeleteConfirmation/DeleteConfirmationProp";
 import TextEditor from "../TextEditor/TextEditor";
 
+const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
+
 interface PostViewProps {
     post_id: string;
 }
@@ -35,6 +38,14 @@ interface UserVotes {
     [postId: string]: "up" | "down";
 }
 
+interface AuthorProfile {
+    userType: string;
+    profile_picture_url: string | null;
+    major?: string;
+    company?: string;
+    industry?: string;
+}
+
 const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const [post, setPost] = useState<Post | null>(null);
     const { isAuthenticated, setIsPopupVisible } = useAuth();
@@ -43,11 +54,14 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const [upvotes, setUpvotes] = useState<number>(0);
     const [downvotes, setDownvotes] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+
     const [currentVoteType, setCurrentVoteType] = useState<string | null>(null)
     const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false)
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [editText, setEditText] = useState<string>("")
+    const [authorProfile, setAuthorProfile] = useState<AuthorProfile | null>(null);
     const userId = localStorage.getItem("userId")
+
 
     const getRelativeTime = (dateString: string) => {
         const date = new Date(dateString);
@@ -109,10 +123,10 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Something went wrong");
             }
-          
-            const data = await response.json()
-            setPost(data.post)
-            setEditText(data.post.content)
+
+            const data = await response.json();
+            setPost(data.post);
+            setEditText(data.post.content);
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : "An unknown error has occurred";
@@ -164,34 +178,44 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             return newVotes;
         });
     };
-    
-    const handlePostEditSubmit = async () => {
-        if ((!isAuthenticated) || (editText === post?.content) ||
-            (editText === "") || (!post)) {
-                return
+
+
+    const handleEditTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setEditText(event.target.value);
+    };
+
+    const handleEditSubmit = async () => {
+        if (
+            !isAuthenticated ||
+            editText === post?.content ||
+            editText === "" ||
+            !post
+        ) {
+            return;
         }
 
         try {
-            const endpoint = `/api/post/edit/${post?._id.$oid}`
+            const endpoint = `/api/post/edit/${post?._id.$oid}`;
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({content: editText})
-            })
+                body: JSON.stringify({ content: editText }),
+            });
 
             if (response.ok) {
-                const data = await response.json()
-                console.log("edit", data)
-                setIsEditing(false)
-                setPost(data.post)
+                const data = await response.json();
+                console.log("edit", data);
+                setIsEditing(false);
+                setPost(data.post);
             }
         } catch (error) {
-            console.error("Error editing post:", error)
+            console.error("Error editing post:", error);
         }
     }
+
 
     const handleDelete = async() => {
         console.log("meep")
@@ -216,7 +240,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
         } catch (error) {
             console.error("Error deleting posts:", error)
         }
-    }
+    };
 
     useEffect(() => {
         getPost()
@@ -236,6 +260,28 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
         }
     }, [userVotes, post]);
 
+    useEffect(() => {
+        if (post?.author_id) {
+            fetchAuthorProfile(post.author_id.$oid);
+        }
+    }, [post?.author_id]);
+
+    const fetchAuthorProfile = async (authorId: string) => {
+        try {
+            console.log("Fetching profile for author:", authorId);
+            const response = await fetch(`/api/profile/${authorId}`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Received author profile data:", data);
+                setAuthorProfile(data);
+            } else {
+                console.error("Failed to fetch profile:", await response.text());
+            }
+        } catch (error) {
+            console.error("Error fetching author profile:", error);
+        }
+    };
+
     if (!post) return <></>;
 
     return (
@@ -245,9 +291,31 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     <h2 className="text-white text-2xl font-bold mt-4">
                         {post.title}
                     </h2>
-                    <h3 className="text-white font-semibold">{post.author?.username ?? "Unknown author"}</h3>
+                    <div className="flex items-center mb-4">
+                        <img
+                            src={authorProfile?.profile_picture_url || DEFAULT_PROFILE_PICTURE}
+                            alt="Author profile"
+                            className="w-10 h-10 rounded-full mr-3"
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = DEFAULT_PROFILE_PICTURE;
+                            }}
+                        />
+                        <div>
+                            <div className="font-semibold text-white">{post.author?.username}</div>
+                            <div className="text-sm text-gray-600">
+                                {authorProfile?.userType === "Mentee" ? (
+                                    <span>Student • {authorProfile.major}</span>
+                                ) : authorProfile?.userType === "Mentor" ? (
+                                    <span>
+                                        {authorProfile.company} • {authorProfile.industry}
+                                    </span>
+                                ) : null}
+                            </div>
+                        </div>
+                    </div>
                     {post.image_url && (
-                        <div className="mt-4 mb-4 max-w-[600px]">
+                        <div className="mt-4 mb-4">
                             <img 
                                 src={post.image_url} 
                                 alt="Post content" 
@@ -257,25 +325,6 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     )}
                     {isEditing 
                         ? 
-                        // <div className="mt-5 relative flex flex-col p-4 bg-secondary rounded-lg w-[65vw]">
-                        //     <textarea
-                        //         className="p-3 mb-10 border focus:outline-none border-secondary rounded-md resize-none bg-secondary text-white"
-                        //         value={editText}
-                        //         onChange={handleEditTextChange}
-                        //         rows={4}
-                        //     />
-                        //     {/* Flex container for buttons */}
-                        //     <div className="flex justify-end gap-4">
-                        //         <button className="px-4 py-2 text-white bg-gray-600 rounded-md hover:bg-gray-700"
-                        //                 onClick={() => setIsEditing(false)}>
-                        //             Cancel
-                        //         </button>
-                        //         <button className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
-                        //                 onClick={handleEditSubmit}>
-                        //             Save
-                        //         </button>
-                        //     </div>
-                        // </div>
                         <TextEditor 
                             editText={editText} 
                             setEditText={setEditText} 
@@ -286,8 +335,9 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                 </div>
                 <div>
                     <div className="relative m-5 mt-9 text-white">
-                        <button className="cursor font-bold text-2xl opacity-70 hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsDropdownVisible(!isDropdownVisible)}
+                        <button
+                            className="cursor font-bold text-2xl opacity-70 hover:opacity-100 transition-opacity duration-200"
+                            onClick={() => setIsDropdownVisible(!isDropdownVisible)}
                         >
                             &#8942;
                         </button>
@@ -310,10 +360,9 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                     }
                                     {
                                         userId === post.author_id.$oid && (
-                                            // <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
-                                            //     Delete Post
-                                            // </li>
-                                            <DeleteButton onDelete={handleDelete} setIsDropdownVisible={setIsDropdownVisible}/>
+                                            <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
+                                                Delete Post
+                                            </li>
                                         )
                                     }
                                     <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
@@ -325,9 +374,9 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     </div>
                 </div>
             </div>
-            <div className='mx-3 flex justify-between items-center text-sm text-text-light'>
-                <div className='flex items-center space-x-4'>
-                    <div className='flex items-center space-x-2'>
+            <div className="mx-3 flex justify-between items-center text-sm text-text-light">
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
                         <button
                             onClick={() => handleVote("up")}
                             disabled={isLoading}
@@ -335,15 +384,17 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                 currentVoteType === "up"
                                     ? "text-green-500"
                                     : "text-gray-400 hover:text-green-500"
-                            }`}>
+                            }`}
+                        >
                             <svg
-                                xmlns='http://www.w3.org/2000/svg'
-                                viewBox='0 0 24 24'
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
                                 fill={currentVoteType === "up" ? "currentColor" : "none"}
-                                stroke='currentColor'
-                                className='w-5 h-5'
-                                strokeWidth={currentVoteType === "up" ? "0" : "2"}>
-                                <path d='M4 14h16v2H4v-2zm8-10L4 12h16L12 4z' />
+                                stroke="currentColor"
+                                className="w-5 h-5"
+                                strokeWidth={currentVoteType === "up" ? "0" : "2"}
+                            >
+                                <path d="M4 14h16v2H4v-2zm8-10L4 12h16L12 4z" />
                             </svg>
                             <span>{upvotes}</span>
                         </button>
@@ -354,23 +405,25 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                 currentVoteType === "down"
                                     ? "text-red-500"
                                     : "text-gray-400 hover:text-red-500"
-                            }`}>
+                            }`}
+                        >
                             <svg
-                                xmlns='http://www.w3.org/2000/svg'
-                                viewBox='0 0 24 24'
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
                                 fill={
                                     currentVoteType === "down" ? "currentColor" : "none"
                                 }
-                                stroke='currentColor'
-                                className='w-5 h-5'
-                                strokeWidth={currentVoteType === "down" ? "0" : "2"}>
-                                <path d='M4 8h16v2H4V8zm8 10l8-8H4l8 8z' />
+                                stroke="currentColor"
+                                className="w-5 h-5"
+                                strokeWidth={currentVoteType === "down" ? "0" : "2"}
+                            >
+                                <path d="M4 8h16v2H4V8zm8 10l8-8H4l8 8z" />
                             </svg>
                             <span>{downvotes}</span>
                         </button>
                     </div>
                 </div>
-                <div className='flex flex-col'>
+                <div className="flex flex-col">
                     <span>{post.views} views</span>
                     <span>{getRelativeTime(post.created_at)}</span>
                 </div>

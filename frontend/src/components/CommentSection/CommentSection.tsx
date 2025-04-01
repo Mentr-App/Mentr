@@ -4,12 +4,51 @@ import { getRelativeTime } from "@/lib/timeUtils";
 import CommentItem from "./Comment";
 import {Comment, Author} from "./CommentInterfaces"
 
+const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+<!-- 
+interface Author {
+    _id?: string;
+    username: string;
+}
+
+interface IDObject {
+    $oid: string;
+}
+
+interface AuthorProfile {
+    userType: string;
+    profile_picture_url: string | null;
+    major?: string;
+    company?: string;
+    industry?: string;
+}
+
+export interface Comment {
+    _id?: string;
+    content: string;
+    author: string | Author;
+    author_id?: { $oid: string };
+    created_at: string;
+    post_id?: string;
+} -->
+
+
 // Helper function to get author username
 const getAuthorName = (author: string | Author): string => {
     if (typeof author === "string") {
         return author;
     }
     return author.username || "Anonymous";
+};
+
+const getAuthorId = (comment: Comment): string | undefined => {
+    if (comment.author_id) {
+        return comment.author_id.$oid;
+    }
+    if (typeof comment.author === "object" && comment.author._id) {
+        return comment.author._id;
+    }
+    return undefined;
 };
 
 interface CommentInputProps {
@@ -92,6 +131,33 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [authorProfiles, setAuthorProfiles] = useState<{[key: string]: AuthorProfile}>({});
+
+    const fetchAuthorProfile = async (authorId: string) => {
+        try {
+            const response = await fetch(`/api/profile/${authorId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setAuthorProfiles(prev => ({
+                    ...prev,
+                    [authorId]: data
+                }));
+            }
+        } catch (error) {
+            console.error("Error fetching author profile:", error);
+        }
+    };
+
+    useEffect(() => {
+        comments.forEach(comment => {
+            console.log("fetching author profile for comment:", comment);
+            const authorId = getAuthorId(comment);
+            console.log("authorId", authorId);
+            if (authorId && !authorProfiles[authorId]) {
+                fetchAuthorProfile(authorId);
+            }
+        });
+    }, [comments]);
 
     const fetchComments = async () => {
         try {
@@ -140,6 +206,66 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                     {comments.map((item, index) => (
                         <CommentItem comment={item} index={index} getAuthorName={getAuthorName}/>
                     ))}
+
+<!--                     {comments.map((comment, index) => {
+                        const authorId = getAuthorId(comment);
+                        const authorProfile = authorId ? authorProfiles[authorId] : null;
+                        
+                        console.log("Comment author info:", {
+                            comment_id: comment._id,
+                            author: comment.author,
+                            authorId: authorId,
+                            authorProfile: authorProfile,
+                            authorName: getAuthorName(comment.author)
+                        });
+
+                        if (authorProfile) {
+                            console.log("Author profile details:", {
+                                userType: authorProfile.userType,
+                                major: authorProfile.major,
+                                company: authorProfile.company,
+                                industry: authorProfile.industry
+                            });
+                        }
+                        
+                        return (
+                            <div
+                                key={comment._id || index}
+                                className='bg-secondary p-4 rounded-lg'
+                            >
+                                <div className="flex items-center mb-3">
+                                    <img
+                                        src={authorProfile?.profile_picture_url || DEFAULT_PROFILE_PICTURE}
+                                        alt="Author profile"
+                                        className="w-8 h-8 rounded-full mr-3"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = DEFAULT_PROFILE_PICTURE;
+                                        }}
+                                    />
+                                    <div>
+                                        <div className="font-semibold text-white">
+                                            {getAuthorName(comment.author)}
+                                        </div>
+                                        {authorProfile && (
+                                            <div className="text-xs text-gray-600">
+                                                {authorProfile.userType === "Mentee" ? (
+                                                    <span>Student • {authorProfile.major}</span>
+                                                ) : authorProfile.userType === "Mentor" ? (
+                                                    <span>{authorProfile.company} • {authorProfile.industry}</span>
+                                                ) : null}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className='text-gray-400 text-xs ml-auto'>
+                                        {getRelativeTime(comment.created_at)}
+                                    </span>
+                                </div>
+                                <p className='text-white ml-11'>{comment.content}</p>
+                            </div>
+                        );
+                    })} -->
+
                 </div>
             )}
 
