@@ -8,6 +8,8 @@ interface SearchControlsProps {
     isGridView: boolean;
     setIsGridView: (value: boolean) => void;
     isSearching: boolean;
+    sortBy: string;
+    handleSortChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const SearchControls: React.FC<SearchControlsProps> = ({
@@ -18,40 +20,77 @@ const SearchControls: React.FC<SearchControlsProps> = ({
     isGridView,
     setIsGridView,
     isSearching,
+    sortBy,
+    handleSortChange,
 }) => {
     return (
         <div className='flex flex-col md:flex-row justify-between items-center mb-6 gap-4'>
-            {/* Posts Per Page Dropdown */}
-            <div className='flex items-center'>
-                <label
-                    htmlFor='posts-per-page'
-                    className={`mr-2 text-sm font-medium ${
-                        isSearching ? "opacity-50" : ""
-                    }`}
-                    style={{ color: "var(--text-primary)" }}>
-                    Posts per page:
-                </label>
-                <select
-                    id='posts-per-page'
-                    value={postsPerPage}
-                    onChange={handlePostsPerPageChange}
-                    disabled={isSearching}
-                    className={`px-3 py-2 rounded-md text-sm shadow-sm ${
-                        isSearching
-                            ? "opacity-50 cursor-not-allowed"
-                            : "cursor-pointer hover:bg-opacity-90"
-                    }`}
-                    style={{
-                        backgroundColor: "var(--secondary)",
-                        color: "var(--text-primary)",
-                        borderColor: "var(--border)",
-                    }}>
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                </select>
+            <div className='flex items-center gap-4'>
+                {/* Posts Per Page Dropdown */}
+                <div className='flex items-center'>
+                    <label
+                        htmlFor='posts-per-page'
+                        className={`mr-2 text-sm font-medium ${
+                            isSearching ? "opacity-50" : ""
+                        }`}
+                        style={{ color: "var(--text-primary)" }}>
+                        Posts per page:
+                    </label>
+                    <select
+                        id='posts-per-page'
+                        value={postsPerPage}
+                        onChange={handlePostsPerPageChange}
+                        disabled={isSearching}
+                        className={`px-3 py-2 rounded-md text-sm shadow-sm ${
+                            isSearching
+                                ? "opacity-50 cursor-not-allowed"
+                                : "cursor-pointer hover:bg-opacity-90"
+                        }`}
+                        style={{
+                            backgroundColor: "var(--secondary)",
+                            color: "var(--text-primary)",
+                            borderColor: "var(--border)",
+                        }}>
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                </div>
+
+                {/* Sort By Dropdown - new component */}
+                <div className='flex items-center'>
+                    <label
+                        htmlFor='sort-by'
+                        className={`mr-2 text-sm font-medium ${
+                            isSearching ? "opacity-50" : ""
+                        }`}
+                        style={{ color: "var(--text-primary)" }}>
+                        Sort by:
+                    </label>
+                    <select
+                        id='sort-by'
+                        value={sortBy}
+                        onChange={handleSortChange}
+                        disabled={isSearching}
+                        className={`px-3 py-2 rounded-md text-sm shadow-sm ${
+                            isSearching
+                                ? "opacity-50 cursor-not-allowed"
+                                : "cursor-pointer hover:bg-opacity-90"
+                        }`}
+                        style={{
+                            backgroundColor: "var(--secondary)",
+                            color: "var(--text-primary)",
+                            borderColor: "var(--border)",
+                        }}>
+                        <option value='new'>Newest</option>
+                        <option value='old'>Oldest</option>
+                        <option value='top'>Most Upvoted</option>
+                        <option value='hot'>Hot</option>
+                        <option value='controversial'>Controversial</option>
+                    </select>
+                </div>
             </div>
 
             {/* Search Box */}

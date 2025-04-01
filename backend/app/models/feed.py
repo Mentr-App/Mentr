@@ -12,9 +12,11 @@ class Feed:
     def get_feed(skip=0, limit=25, sort_by="new"):
         """Fetch Feeds for the user feed with pagination and sorting."""
         sort_options = {
-            "new": [("created_at", -1)],
-            "top": [("upvotes", -1)],
-            "hot": [("comments", -1), ("upvotes", -1)],
+            "new": [("created_at", -1)],  # Newest first
+            "old": [("created_at", 1)],   # Oldest first
+            "top": [("upvotes", -1)],     # Most upvotes
+            "hot": [("comments", -1), ("upvotes", -1)],  # Most comments, then most upvotes
+            "controversial": [("downvotes", -1)],  # Most downvotes
         }
 
         pipeline = [

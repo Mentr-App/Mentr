@@ -45,6 +45,7 @@ const Forum: React.FC = () => {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [originalFeed, setOriginalFeed] = useState<Post[]>([]);
+    const [sortBy, setSortBy] = useState<string>("new"); // Add sort state
 
     // State variable to track if we're in search mode
     const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -99,7 +100,7 @@ const Forum: React.FC = () => {
 
         const endpoint = `/api/feed?skip=${
             (pageNumber - 1) * postsPerPage
-        }&limit=${postsPerPage}`;
+        }&limit=${postsPerPage}&sort_by=${sortBy}`; // Fix parameter name to match backend
         const access_token = localStorage.getItem("access_token");
 
         try {
@@ -162,10 +163,26 @@ const Forum: React.FC = () => {
         loadFeed(true);
     }, [postsPerPage]);
 
+    // Add a useEffect to reload when sort changes
+    useEffect(() => {
+        // Only reload if we're not currently searching
+        if (!isSearching) {
+            loadFeed(true, 1);
+        }
+    }, [sortBy]);
+
     const handlePostsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newValue = parseInt(e.target.value);
         setPostsPerPage(newValue);
         setPage(1);
+    };
+
+    // Add handler for sort changes
+    const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newSortValue = e.target.value;
+        setSortBy(newSortValue);
+        setPage(1); // Reset to first page when changing sort
+        loadFeed(true, 1); // Reload with the new sort option
     };
 
     const handleVoteUpdate = (
@@ -251,7 +268,7 @@ const Forum: React.FC = () => {
         setSearchLoading(true);
         try {
             // Request a very large limit to get all posts at once
-            const endpoint = `/api/feed?skip=0&limit=1000`;
+            const endpoint = `/api/feed?skip=0&limit=1000&sort_by=${sortBy}`;
             const access_token = localStorage.getItem("access_token");
 
             const response = await fetch(endpoint, {
@@ -345,6 +362,8 @@ const Forum: React.FC = () => {
                     isGridView={isGridView}
                     setIsGridView={setIsGridView}
                     isSearching={isSearching}
+                    sortBy={sortBy}
+                    handleSortChange={handleSortChange}
                 />
 
                 {/* Search Loading Indicator */}
@@ -384,6 +403,8 @@ const Forum: React.FC = () => {
                 isGridView={isGridView}
                 setIsGridView={setIsGridView}
                 isSearching={isSearching}
+                sortBy={sortBy}
+                handleSortChange={handleSortChange}
             />
 
             {/* Search Loading Indicator */}
