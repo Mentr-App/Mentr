@@ -136,15 +136,7 @@ const Profile: React.FC = () => {
             
             try {
                 setPostsLoading(true);
-                const access_token = localStorage.getItem("access_token");
                 const response = await fetch(`/api/profile/getUserPosts?username=${profile?.username}`);
-                // const response = await fetch('/api/profile/getUserPosts', {
-                //     method: 'GET',
-                //     headers: {
-                //         Authorization: `Bearer ${access_token}`,
-                //         'Content-Type': 'application/json',
-                //     },
-                // });
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch user posts');
@@ -171,14 +163,8 @@ const Profile: React.FC = () => {
             
             try {
                 setCommentsLoading(true);
-                const access_token = localStorage.getItem("access_token");
-                const response = await fetch('/api/profile/getUserComments', {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${access_token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
+                const response = await fetch(`/api/profile/getUserComments?username=${profile?.username}`);
+                
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch user comments');

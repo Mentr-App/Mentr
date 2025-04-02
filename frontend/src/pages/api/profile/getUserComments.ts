@@ -10,15 +10,13 @@ export default async function handler(
 
     console.log("Request method:", req.method);
     console.log("Request headers:", req.headers);
-    const authHeader = req.headers.authorization;
-
+    const { username } = req.query;
 
     try {
-        const response = await fetch("http://localhost:8000/profile/get_user_comments", {
+        const response = await fetch(`http://localhost:8000/profile/get_user_comments?username=${username}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                ...(authHeader && { Authorization: authHeader }),
             },
         });
 

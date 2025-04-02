@@ -191,11 +191,10 @@ def get_user_posts():
         return {"message": "Error finding user", "error": str(e)}, 500
 
 @profile_bp.route("/get_user_comments", methods=["GET"])
-@jwt_required()
 def get_user_comments():
     try:
-        user_id = get_jwt_identity()
-        comments = Comment.get_comments_by_author(user_id)
+        username = request.args.get('username')
+        comments = Comment.get_comments_by_author(username)
         return comments, 201
     except Exception as e:
         print("Error finding user:", str(e))
