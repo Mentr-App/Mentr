@@ -329,7 +329,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                             editText={editText} 
                             setEditText={setEditText} 
                             setIsEditing={setIsEditing}
-                            handleEditSubmit={handlePostEditSubmit}/>
+                            handleEditSubmit={handleEditSubmit}/>
                         :
                         <p className="text-white mt-2">{post.content}</p>}
                 </div>

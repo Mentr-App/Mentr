@@ -4,34 +4,6 @@ import { getRelativeTime } from "@/lib/timeUtils";
 import CommentItem from "./Comment";
 import {Comment, Author} from "./CommentInterfaces"
 
-const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-<!-- 
-interface Author {
-    _id?: string;
-    username: string;
-}
-
-interface IDObject {
-    $oid: string;
-}
-
-interface AuthorProfile {
-    userType: string;
-    profile_picture_url: string | null;
-    major?: string;
-    company?: string;
-    industry?: string;
-}
-
-export interface Comment {
-    _id?: string;
-    content: string;
-    author: string | Author;
-    author_id?: { $oid: string };
-    created_at: string;
-    post_id?: string;
-} -->
-
 
 // Helper function to get author username
 const getAuthorName = (author: string | Author): string => {
@@ -39,16 +11,6 @@ const getAuthorName = (author: string | Author): string => {
         return author;
     }
     return author.username || "Anonymous";
-};
-
-const getAuthorId = (comment: Comment): string | undefined => {
-    if (comment.author_id) {
-        return comment.author_id.$oid;
-    }
-    if (typeof comment.author === "object" && comment.author._id) {
-        return comment.author._id;
-    }
-    return undefined;
 };
 
 interface CommentInputProps {
@@ -131,33 +93,6 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [authorProfiles, setAuthorProfiles] = useState<{[key: string]: AuthorProfile}>({});
-
-    const fetchAuthorProfile = async (authorId: string) => {
-        try {
-            const response = await fetch(`/api/profile/${authorId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setAuthorProfiles(prev => ({
-                    ...prev,
-                    [authorId]: data
-                }));
-            }
-        } catch (error) {
-            console.error("Error fetching author profile:", error);
-        }
-    };
-
-    useEffect(() => {
-        comments.forEach(comment => {
-            console.log("fetching author profile for comment:", comment);
-            const authorId = getAuthorId(comment);
-            console.log("authorId", authorId);
-            if (authorId && !authorProfiles[authorId]) {
-                fetchAuthorProfile(authorId);
-            }
-        });
-    }, [comments]);
 
     const fetchComments = async () => {
         try {
@@ -207,7 +142,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                         <CommentItem comment={item} index={index} getAuthorName={getAuthorName}/>
                     ))}
 
-<!--                     {comments.map((comment, index) => {
+{/* <!--                     {comments.map((comment, index) => {
                         const authorId = getAuthorId(comment);
                         const authorProfile = authorId ? authorProfiles[authorId] : null;
                         
@@ -264,7 +199,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                                 <p className='text-white ml-11'>{comment.content}</p>
                             </div>
                         );
-                    })} -->
+                    })} --> */}
 
                 </div>
             )}

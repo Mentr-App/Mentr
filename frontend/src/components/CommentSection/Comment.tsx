@@ -10,6 +10,8 @@ interface CommentItemProps {
     getAuthorName: (author: string | Author) => string;
 }
 
+const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
 const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}) => {
   const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false)
   const [isEditing, setIsEditing] = useState<boolean>(false)
@@ -67,9 +69,15 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
         key={comment._id.$oid || index}
         className='relative bg-secondary p-4 rounded-lg'>
         <div className='flex justify-between'>
-            <span className='font-semibold text-white'>
-                {comment.author?.username}
-            </span>
+            <div className='flex flex-row'>
+                <img
+                    src={comment.profile_picture_url || DEFAULT_PROFILE_PICTURE}
+                    className="w-8 h-8 rounded-full mr-3"
+                />
+                <span className='font-semibold text-white'>
+                    {comment.author?.username}
+                </span>
+            </div>
             <span className='text-gray-400 text-sm'>
                 {getRelativeTime(comment.created_at)}
             </span>
@@ -85,7 +93,7 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
             />
             :
             <div className='flex justify-between'>
-            <p className='text-white mt-2'>{localComment.content}</p>
+            <p className='text-white ml-11 mt-2'>{localComment.content}</p>
             {
                 isAuthor && (
                 <button className='text-gray-400 text-xl hover:text-white'

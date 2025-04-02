@@ -11,6 +11,8 @@ export default async function handler (
     const { commentId } = req.query
     const {content} = req.body
 
+    console.log("content:",content)
+
     const authHeader = req.headers.authorization || ""
     const body = {
         commentId: commentId,
