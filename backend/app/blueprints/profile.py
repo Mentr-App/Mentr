@@ -199,3 +199,32 @@ def get_user_comments():
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
+
+
+@profile_bp.route("/public", methods=["GET"])
+def get_public_profile():
+    userID = request.args.get('userID')
+    
+    if not userID:
+        return jsonify({
+            'error': 'UserID parameter is required',
+            'example': '/profile/public?userID=nicksong04'
+        }), 400
+    
+    try:
+        user = User.find_user_by_id(userID)
+        
+        if not user:
+            return jsonify({
+                'error': 'User not found',
+                'message': f'No profile found for userID: {userID}'
+            }), 404
+        public_profile = user
+        public_profile['profile_picture'] = img_handler.get(user['profile_picture'])
+        
+        return public_profile, 200
+        
+    
+    except Exception as e:
+        print("Error finding user:", str(e))
+        return {"message": "Error finding user", "error": str(e)}, 500

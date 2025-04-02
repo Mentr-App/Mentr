@@ -11,15 +11,15 @@ import { getRelativeTime } from '@/lib/timeUtils'
 
 interface ProfileData {
     username: string;
-    email: string;
-    created_at: string;
+    email?: string;
+    created_at?: string;
     bio?: string;
     interests?: string[];
     userType?: "Mentor" | "Mentee";
     major?: string;
     company?: string;
     industry?: string;
-    two_factor_enabled: boolean;
+    two_factor_enabled?: boolean;
     instagram?: string;
     twitter?: string;
     linkedin?: string;
@@ -28,7 +28,13 @@ interface ProfileData {
 
 type ProfileTab = 'profile' | 'posts' | 'comments';
 
-const Profile: React.FC = () => {
+interface ProfileProps {
+    params?: {
+        userID?: string;
+    };
+}
+
+const Profile: React.FC<ProfileProps> = ({ params }) => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -54,6 +60,8 @@ const Profile: React.FC = () => {
     const { updateProfilePicture } = useProfile();
     const router = useRouter();
 
+    const isOwnProfile = !params?.userID;
+
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
             setEditableTwoFactorEnabled(false);
@@ -63,14 +71,22 @@ const Profile: React.FC = () => {
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                const endpoint = "/api/profile/getProfile";
-                const access_token = localStorage.getItem("access_token");
-                const response = await fetch(endpoint, {
-                    method: "GET",
-                    headers: {
+                let endpoint, headers = {};
+                
+                if (isOwnProfile) {
+                    endpoint = "/api/profile/getProfile";
+                    const access_token = localStorage.getItem("access_token");
+                    headers = {
                         Authorization: `Bearer ${access_token}`,
                         "Content-Type": "application/json",
-                    },
+                    };
+                } else {
+                    endpoint = `/api/profile/getPublicProfile?userID=${params?.userID}`;
+                }
+
+                const response = await fetch(endpoint, {
+                    method: "GET",
+                    headers: headers,
                 });
 
                 if (!response.ok) {
@@ -79,24 +95,28 @@ const Profile: React.FC = () => {
                 }
                 const userData = await response.json();
                 
-                const pictureResponse = await fetch("/api/profile/getProfilePicture", {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${access_token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-                
                 let profilePictureUrl = null;
-                if (pictureResponse.ok) {
-                    const pictureData = await pictureResponse.json();
-                    profilePictureUrl = pictureData.profile_picture_url;
+                if (isOwnProfile) {
+                    const pictureResponse = await fetch("/api/profile/getProfilePicture", {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    
+                    if (pictureResponse.ok) {
+                        const pictureData = await pictureResponse.json();
+                        profilePictureUrl = pictureData.profile_picture_url;
+                    }
+                } else {
+                    profilePictureUrl = userData.profile_picture;
                 }
 
                 const profileData: ProfileData = {
                     username: userData["username"],
-                    email: userData["email"],
-                    created_at: userData["created_at"]["$date"],
+                    email: isOwnProfile ? userData["email"] : undefined,
+                    created_at: isOwnProfile ? userData["created_at"]["$date"] : undefined,
                     userType: userData["userType"],
                     major: userData["major"],
                     company: userData["company"],
@@ -104,20 +124,24 @@ const Profile: React.FC = () => {
                     linkedin: userData["linkedin"],
                     instagram: userData["instagram"],
                     twitter: userData["twitter"],
-                    two_factor_enabled: userData["two_factor_enabled"],
+                    two_factor_enabled: isOwnProfile ? userData["two_factor_enabled"] : undefined,
                     profile_picture: profilePictureUrl,
                 };
                 setProfile(profileData);
-                setEditableUsername(profileData.username);
-                setEditableEmail(profileData.email);
-                setEditableUserType(profileData.userType || undefined);
-                setEditableMajor(profileData.major || "");
-                setEditableCompany(profileData.company || "");
-                setEditableIndustry(profileData.industry || "");
-                setEditableLinkedin(profileData.linkedin || "");
-                setEditableInstagram(profileData.instagram || "");
-                setEditableTwitter(profileData.twitter || "");
-                setEditableTwoFactorEnabled(profileData.two_factor_enabled);
+                
+                if (isOwnProfile) {
+                    setEditableUsername(profileData.username);
+                    setEditableEmail(profileData.email || "");
+                    setEditableUserType(profileData.userType || undefined);
+                    setEditableMajor(profileData.major || "");
+                    setEditableCompany(profileData.company || "");
+                    setEditableIndustry(profileData.industry || "");
+                    setEditableLinkedin(profileData.linkedin || "");
+                    setEditableInstagram(profileData.instagram || "");
+                    setEditableTwitter(profileData.twitter || "");
+                    setEditableTwoFactorEnabled(profileData.two_factor_enabled || false);
+                }
+                
                 setLoading(false);
             } catch (err) {
                 setError(
@@ -128,15 +152,15 @@ const Profile: React.FC = () => {
         };
 
         loadProfile();
-    }, []);
+    }, [params?.userID, isOwnProfile]);
 
     useEffect(() => {
         const fetchUserPosts = async () => {
-            if (activeTab !== 'posts') return;
+            if (activeTab !== 'posts' || !profile) return;
             
             try {
                 setPostsLoading(true);
-                const response = await fetch(`/api/profile/getUserPosts?username=${profile?.username}`);
+                const response = await fetch(`/api/profile/getUserPosts?username=${profile.username}`);
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch user posts');
@@ -155,17 +179,16 @@ const Profile: React.FC = () => {
         };
 
         fetchUserPosts();
-    }, [activeTab]);
+    }, [activeTab, profile]);
 
     useEffect(() => {
         const fetchUserComments = async () => {
-            if (activeTab !== 'comments') return;
+            if (activeTab !== 'comments' || !profile) return;
             
             try {
                 setCommentsLoading(true);
-                const response = await fetch(`/api/profile/getUserComments?username=${profile?.username}`);
+                const response = await fetch(`/api/profile/getUserComments?username=${profile.username}`);
                 
-
                 if (!response.ok) {
                     throw new Error('Failed to fetch user comments');
                 }
@@ -183,7 +206,7 @@ const Profile: React.FC = () => {
         };
 
         fetchUserComments();
-    }, [activeTab]);
+    }, [activeTab, profile]);
 
     const handleSaveChanges = async () => {
         const warnings: { [key: string]: string } = {};
@@ -441,18 +464,18 @@ const Profile: React.FC = () => {
         <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto'>
             <div className='flex items-center justify-between mb-6 h-[42px]'>
                 <h1 className='text-2xl font-bold text-text-primary'>
-                    Profile Settings
+                    {isOwnProfile ? 'Profile Settings' : `${profile.username}'s Profile`}
                 </h1>
-                <div className='w-[120px]'>
-                    {activeTab === 'profile' && (
+                {isOwnProfile && activeTab === 'profile' && (
+                    <div className='w-[120px]'>
                         <button
                             onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
                             className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors w-full'
                         >
                             {isEditing ? "Save Changes" : "Edit Profile"}
                         </button>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-col items-center mb-4">
@@ -476,19 +499,24 @@ const Profile: React.FC = () => {
                         </div>
                     )}
                 </div>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleProfilePictureUpload}
-                    accept="image/*"
-                    className="hidden"
-                />
-                <button
-                    onClick={triggerFileInput}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors mb-4"
-                >
-                    {profile?.profile_picture ? 'Change Profile Picture' : 'Add Profile Picture'}
-                </button>
+                
+                {isOwnProfile && (
+                    <>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleProfilePictureUpload}
+                            accept="image/*"
+                            className="hidden"
+                        />
+                        <button
+                            onClick={triggerFileInput}
+                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors mb-4"
+                        >
+                            {profile?.profile_picture ? 'Change Profile Picture' : 'Add Profile Picture'}
+                        </button>
+                    </>
+                )}
 
                 <div className="flex border-b border-gray-200 w-full mb-4">
                     <button
@@ -536,7 +564,7 @@ const Profile: React.FC = () => {
                                     <label className='block text-text-light'>
                                         Username
                                     </label>
-                                    {isEditing ? (
+                                    {isOwnProfile && isEditing ? (
                                         <input
                                             type='text'
                                             value={editableUsername}
@@ -548,95 +576,130 @@ const Profile: React.FC = () => {
                                             {profile.username}
                                         </p>
                                     )}
-                                    <button
-                                        onClick={handleResetPassword}
-                                        className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                        Reset Password
-                                    </button>
+                                    {isOwnProfile && (
+                                        <button
+                                            onClick={handleResetPassword}
+                                            className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                            Reset Password
+                                        </button>
+                                    )}
                                 </div>
-                                <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        Email
-                                    </label>
-                                    {isEditing ? (
-                                        <input
-                                            type='email'
-                                            value={editableEmail}
-                                            onChange={(e) => setEditableEmail(e.target.value)}
-                                            className='w-full bg-background text-text-primary p-2 rounded'
-                                        />
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <p className='text-text-primary'>{profile.email}</p>
-                                            {profile.email && (
-                                                <button
-                                                    onClick={() => handleUnlinkSocialMedia("email")}
-                                                    className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                                    Unlink
-                                                </button>
-                                            )}
+                                
+                                {/* Moved User Type and Major to left side for public profiles */}
+                                {!isOwnProfile && (
+                                    <>
+                                        <div className='space-y-2'>
+                                            <label className='block text-text-light'>
+                                                User Type
+                                            </label>
+                                            <p className='text-text-primary'>{profile.userType}</p>
                                         </div>
-                                    )}
-                                </div>
-                                <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        Member Since
-                                    </label>
-                                    <p className='text-text-primary'>
-                                        {new Date(
-                                            profile.created_at
-                                        ).toLocaleDateString()}
-                                    </p>
-                                    <button
-                                        onClick={handleDeleteAccount}
-                                        className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                        Delete Account
-                                    </button>
-                                </div>
-                            </div>
-                            <div className='w-1/2 space-y-4'>
-                                <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        User Type
-                                    </label>
-                                    {isEditing ? (
-                                        <select
-                                            value={editableUserType || ""}
-                                            onChange={(e) => setEditableUserType(e.target.value as "Mentor" | "Mentee")}
-                                            className='w-full bg-background text-text-primary p-2 rounded'
-                                        >
-                                            <option value="" disabled>Select user type</option>
-                                            <option value="Mentor">Mentor</option>
-                                            <option value="Mentee">Mentee</option>
-                                        </select>
-                                    ) : (
-                                        <p className='text-text-primary'>{profile.userType}</p>
-                                    )}
-                                </div>
-                                {editableUserType === "Mentee" && (
+                                        {profile.userType === "Mentee" && profile.major && (
+                                            <div className='space-y-2'>
+                                                <label className='block text-text-light'>
+                                                    Major
+                                                </label>
+                                                <p className='text-text-primary'>{profile.major}</p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {isOwnProfile && (
                                     <div className='space-y-2'>
                                         <label className='block text-text-light'>
-                                            Major
+                                            Email
                                         </label>
                                         {isEditing ? (
                                             <input
-                                                type='text'
-                                                value={editableMajor}
-                                                onChange={(e) => setEditableMajor(e.target.value)}
+                                                type='email'
+                                                value={editableEmail}
+                                                onChange={(e) => setEditableEmail(e.target.value)}
                                                 className='w-full bg-background text-text-primary p-2 rounded'
                                             />
                                         ) : (
-                                            <p className='text-text-primary'>{profile.major}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className='text-text-primary'>{profile.email}</p>
+                                                {profile.email && (
+                                                    <button
+                                                        onClick={() => handleUnlinkSocialMedia("email")}
+                                                        className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                        Unlink
+                                                    </button>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 )}
-                                {editableUserType === "Mentor" && (
+                                {isOwnProfile && profile.created_at && (
+                                    <div className='space-y-2'>
+                                        <label className='block text-text-light'>
+                                            Member Since
+                                        </label>
+                                        <p className='text-text-primary'>
+                                            {new Date(
+                                                profile.created_at
+                                            ).toLocaleDateString()}
+                                        </p>
+                                        {isOwnProfile && (
+                                            <button
+                                                onClick={handleDeleteAccount}
+                                                className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                Delete Account
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div className='w-1/2 space-y-4'>
+                                {/* Only show User Type and Major on the right for own profile */}
+                                {isOwnProfile && (
+                                    <>
+                                        <div className='space-y-2'>
+                                            <label className='block text-text-light'>
+                                                User Type
+                                            </label>
+                                            {isEditing ? (
+                                                <select
+                                                    value={editableUserType || ""}
+                                                    onChange={(e) => setEditableUserType(e.target.value as "Mentor" | "Mentee")}
+                                                    className='w-full bg-background text-text-primary p-2 rounded'
+                                                >
+                                                    <option value="" disabled>Select user type</option>
+                                                    <option value="Mentor">Mentor</option>
+                                                    <option value="Mentee">Mentee</option>
+                                                </select>
+                                            ) : (
+                                                <p className='text-text-primary'>{profile.userType}</p>
+                                            )}
+                                        </div>
+                                        {profile.userType === "Mentee" && (
+                                            <div className='space-y-2'>
+                                                <label className='block text-text-light'>
+                                                    Major
+                                                </label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type='text'
+                                                        value={editableMajor}
+                                                        onChange={(e) => setEditableMajor(e.target.value)}
+                                                        className='w-full bg-background text-text-primary p-2 rounded'
+                                                    />
+                                                ) : (
+                                                    <p className='text-text-primary'>{profile.major}</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {profile.userType === "Mentor" && (
                                     <>
                                         <div className='space-y-2'>
                                             <label className='block text-text-light'>
                                                 Company
                                             </label>
-                                            {isEditing ? (
+                                            {isOwnProfile && isEditing ? (
                                                 <input
                                                     type='text'
                                                     value={editableCompany}
@@ -651,7 +714,7 @@ const Profile: React.FC = () => {
                                             <label className='block text-text-light'>
                                                 Industry
                                             </label>
-                                            {isEditing ? (
+                                            {isOwnProfile && isEditing ? (
                                                 <input
                                                     type='text'
                                                     value={editableIndustry}
@@ -664,37 +727,39 @@ const Profile: React.FC = () => {
                                         </div>
                                     </>
                                 )}
-                                <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        Two-Factor Authentication
-                                    </label>
-                                    <button
-                                        onClick={(e) => {
-                                            if (isEditing && editableEmail) {
-                                                setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
-                                            }
-                                        }}
-                                        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
-                                            editableTwoFactorEnabled ? 'bg-primary' : 'bg-gray-300'
-                                        } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        disabled={!isEditing}
-                                    >
-                                        <span
-                                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                                                editableTwoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
-                                            }`}
-                                        />
-                                    </button>
-                                    <p className='text-text-primary'>
-                                        {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
-                                    </p>
-                                </div>
+                                {isOwnProfile && (
+                                    <div className='space-y-2'>
+                                        <label className='block text-text-light'>
+                                            Two-Factor Authentication
+                                        </label>
+                                        <button
+                                            onClick={(e) => {
+                                                if (isEditing && editableEmail) {
+                                                    setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
+                                                }
+                                            }}
+                                            className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                                                editableTwoFactorEnabled ? 'bg-primary' : 'bg-gray-300'
+                                            } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={!isEditing}
+                                        >
+                                            <span
+                                                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                                                    editableTwoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+                                                }`}
+                                            />
+                                        </button>
+                                        <p className='text-text-primary'>
+                                            {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
+                                        </p>
+                                    </div>
+                                )}
 
                                 <div className='space-y-2'>
                                     <label className='block text-text-light'>
                                         LinkedIn
                                     </label>
-                                    {isEditing ? (
+                                    {isOwnProfile && isEditing ? (
                                         <>
                                             <input
                                                 type='text'
@@ -708,8 +773,8 @@ const Profile: React.FC = () => {
                                         </>
                                     ) : (
                                         <div className="flex items-center gap-2">
-                                            <p className='text-text-primary'>{profile.linkedin}</p>
-                                            {profile.linkedin && (
+                                            <p className='text-text-primary'>{profile.linkedin || 'Not provided'}</p>
+                                            {isOwnProfile && profile.linkedin && !isEditing && (
                                                 <button
                                                     onClick={() => handleUnlinkSocialMedia("linkedin")}
                                                     className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
@@ -723,7 +788,7 @@ const Profile: React.FC = () => {
                                     <label className='block text-text-light'>
                                         Instagram
                                     </label>
-                                    {isEditing ? (
+                                    {isOwnProfile && isEditing ? (
                                         <>
                                             <input
                                                 type='text'
@@ -737,8 +802,8 @@ const Profile: React.FC = () => {
                                         </>
                                     ) : (
                                         <div className="flex items-center gap-2">
-                                            <p className='text-text-primary'>{profile.instagram}</p>
-                                            {profile.instagram && (
+                                            <p className='text-text-primary'>{profile.instagram || 'Not provided'}</p>
+                                            {isOwnProfile && profile.instagram && !isEditing && (
                                                 <button
                                                     onClick={() => handleUnlinkSocialMedia("instagram")}
                                                     className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
@@ -752,7 +817,7 @@ const Profile: React.FC = () => {
                                     <label className='block text-text-light'>
                                         Twitter
                                     </label>
-                                    {isEditing ? (
+                                    {isOwnProfile && isEditing ? (
                                         <>
                                             <input
                                                 type='text'
@@ -766,8 +831,8 @@ const Profile: React.FC = () => {
                                         </>
                                     ) : (
                                         <div className="flex items-center gap-2">
-                                            <p className='text-text-primary'>{profile.twitter}</p>
-                                            {profile.twitter && (
+                                            <p className='text-text-primary'>{profile.twitter || 'Not provided'}</p>
+                                            {isOwnProfile && profile.twitter && !isEditing && (
                                                 <button
                                                     onClick={() => handleUnlinkSocialMedia("twitter")}
                                                     className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
@@ -785,7 +850,7 @@ const Profile: React.FC = () => {
                 {activeTab === 'posts' && (
                     <div className='bg-foreground p-4 rounded'>
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
-                            Your Posts
+                            {isOwnProfile ? 'Your Posts' : `${profile.username}'s Posts`}
                         </h2>
                         {postsLoading ? (
                             <div className='flex justify-center items-center h-32'>
@@ -814,7 +879,7 @@ const Profile: React.FC = () => {
                 {activeTab === 'comments' && (
                     <div className='bg-foreground p-4 rounded'>
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
-                            Your Comments
+                            {isOwnProfile ? 'Your Comments' : `${profile.username}'s Comments`}
                         </h2>
                         {commentsLoading ? (
                             <div className='flex justify-center items-center h-32'>
