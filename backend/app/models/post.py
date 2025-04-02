@@ -131,19 +131,19 @@ class Post:
         return post if post else None
 
     @staticmethod
-    def get_posts_by_author(author_id):
+    def get_posts_by_author(username):
         """
         Retrieves all posts by a specific author from the database
         """
         try:
             author = mongo.db.users.find_one(
-                {"_id": ObjectId(author_id)},
+                {"username": ObjectId(username)},
                 {"username": 1, "_id": 1}
             )
             if not author:
                 author = {'_id': 'deleted', 'username': 'Anonymous'}
             
-            posts_cursor = mongo.db.posts.find({"author_id": ObjectId(author_id)})
+            posts_cursor = mongo.db.posts.find({"author_id": ObjectId(author["_id"])})
             
             posts = []
             for post in posts_cursor:

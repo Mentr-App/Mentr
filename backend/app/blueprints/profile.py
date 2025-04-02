@@ -181,11 +181,10 @@ def get_profile_info_by_id(user_id):
         return {"message": "Error getting user info", "error": str(e)}, 500
         
 @profile_bp.route("/get_user_posts", methods=["GET"])
-@jwt_required()
 def get_user_posts():
     try:
-        user_id = get_jwt_identity()
-        posts = Post.get_posts_by_author(user_id)
+        username = request.args.get('username')
+        posts = Post.get_posts_by_author(username)
         return posts, 201
     except Exception as e:
         print("Error finding user:", str(e))
