@@ -137,7 +137,7 @@ class Post:
         """
         try:
             author = mongo.db.users.find_one(
-                {"username": ObjectId(username)},
+                {"username": username},
                 {"username": 1, "_id": 1}
             )
             if not author:
