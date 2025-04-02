@@ -6,9 +6,10 @@ import DeleteButton from "../DeleteConfirmation/DeleteConfirmationProp";
 import TextEditor from "../TextEditor/TextEditor";
 import { Post, Author } from "../CommonInterfaces/Interfaces";
 import ProfilePicture from "../ProfilePicture/ProfilePicture";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-
 
 interface PostViewProps {
     post_id: string;
@@ -26,6 +27,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const [upvotes, setUpvotes] = useState<number>(0);
     const [downvotes, setDownvotes] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
 
     const [currentVoteType, setCurrentVoteType] = useState<string | null>(null)
     const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false)
@@ -263,7 +265,18 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                             <img 
                                 src={post.image_url} 
                                 alt="Post content" 
-                                className="max-w-full h-auto rounded-lg"
+                                className="max-w-full h-auto rounded-lg cursor-pointer"
+                                onClick={() => setIsLightboxOpen(true)}
+                            />
+                            <Lightbox
+                                open={isLightboxOpen}
+                                close={() => setIsLightboxOpen(false)}
+                                slides={[{ src: post.image_url }]}
+                                carousel={{ finite: true }}
+                                render={{ 
+                                    buttonPrev: () => null,
+                                    buttonNext: () => null
+                                }}
                             />
                         </div>
                     )}
