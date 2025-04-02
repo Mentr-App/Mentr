@@ -15,5 +15,8 @@ export interface Author {
     username: string;
     userType: string;
     profile_picture: string;
+    major: string;
+    company: string;
+    industry: string;
 }
 
