@@ -140,8 +140,19 @@ class Post:
             }}
         )
         
-        author = mongo.db.users.find_one({"_id": ObjectId(user_id)}, {"username": 1})
+        author = mongo.db.users.find_one(
+            {"_id": ObjectId(user_id)}, 
+            {
+                "username": 1, 
+                "profile_picture": 1,
+                "userType": 1,
+                "major": 1,
+                "company": 1,
+                "industry": 1
+            }
+        )
         comment["author"] = author
+        comment["profile_picture_url"] = img_handler.get(author["profile_picture"])
         comment["created_at"] = comment["created_at"].isoformat()
         return comment
 
@@ -181,6 +192,7 @@ class Post:
         for comment in comments:
             if "created_at" in comment:
                 comment["created_at"] = comment["created_at"].isoformat()
+            comment["profile_picture_url"] = img_handler.get(comment["author"]["profile_picture"])
                 
         return comments
 

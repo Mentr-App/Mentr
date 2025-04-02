@@ -3,6 +3,7 @@ export interface Comment {
     author: Author | null;
     created_at: string;
     content: string
+    profile_picture_url: string
 }
 
 export interface ObjectId {

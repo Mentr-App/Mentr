@@ -1,6 +1,7 @@
 from datetime import datetime
 from bson import ObjectId
 from app.database import mongo
+from app.extensions import img_handler
 
 class Comment:
     @staticmethod
@@ -37,7 +38,13 @@ class Comment:
             }
         ])
 
-        return list(comment)[0] if comment else None
+        # If comment exists, fix the access to the 'author' field.
+        if comment:
+            comment = list(comment)[0]
+            # Use dictionary access for 'author' field.
+            comment["profile_picture_url"] = img_handler.get(comment["author"]["profile_picture"])
+            return comment
+        return None
     
     @staticmethod
     def delete_comment(comment_id):
