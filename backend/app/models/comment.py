@@ -5,7 +5,6 @@ from app.extensions import img_handler
 from app.models.post import Post
 
 class Comment:
-    @staticmethod
     def get_comment(comment_id):
         comment = mongo.db.comments.aggregate([
             {"$match": {"_id": ObjectId(comment_id)}},  # Match the specific comment

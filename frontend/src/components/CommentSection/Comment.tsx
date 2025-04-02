@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getRelativeTime } from '@/lib/timeUtils'
 import TextEditor from '../TextEditor/TextEditor';
-import {Comment, Author} from "./CommentInterfaces"
+import {Comment, Author} from "../CommonInterfaces/Interfaces"
+import DeleteButton from '../DeleteConfirmation/DeleteConfirmationProp';
 
 interface CommentItemProps {
     comment: Comment
@@ -29,12 +30,17 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
             return
     }
 
+    const access_token = localStorage.getItem("access_token")
+    if (!access_token) {
+        return
+    }
+
     try {
         const endpoint = `/api/comment/edit/${comment._id.$oid}`
         const response = await fetch(endpoint, {
             method: "POST",
             headers: {
-                Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                Authorization: `Bearer ${access_token}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({content: editText})
@@ -49,6 +55,38 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
         console.error("Error editting comment:", error)
     }
   }
+
+
+  const handleDelete = async () => {
+    console.log("Deleting comment...");
+    const access_token = localStorage.getItem("access_token")
+    if (!access_token) {
+        return
+    }
+
+    try {
+        const response = await fetch(`/api/comment/delete/${comment._id.$oid}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${access_token}`, // Ensure authToken is defined
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error deleting comment:", errorData);
+            return;
+        }
+
+        const data = await response.json()
+        console.log(data.comment)
+        setLocalComment(data.comment)
+    } catch (error) {
+        console.error("Failed to delete comment:", error);
+    }
+  };
+
 
   const checkAuthorship = () => {
     if (userId) {
@@ -71,18 +109,18 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
         <div className='flex justify-between'>
             <div className='flex flex-row'>
                 <img
-                    src={comment.profile_picture_url || DEFAULT_PROFILE_PICTURE}
+                    src={localComment.profile_picture_url || DEFAULT_PROFILE_PICTURE}
                     className="w-10 h-10 rounded-full mr-3"
                 />
                 <div className='flex flex-col'>
                     <span className='font-semibold text-white'>
-                        {comment.author?.username}
+                        {localComment.author?.username}
                     </span>
-                    {comment.author?.userType === "Mentee" 
+                    {localComment.author?.userType === "Mentee" 
                     ?
-                        <span className='text-xs text-gray-500'>Student • {comment.author.major}</span>
+                        <span className='text-xs text-gray-500'>Student • {localComment.author.major}</span>
                     :
-                        <span className='text-xs text-gray-500'>{comment.author?.company} • {comment.author?.industry}</span>
+                        <span className='text-xs text-gray-500'>{localComment.author?.company} • {localComment.author?.industry}</span>
                     }
                 </div>
             </div>
@@ -123,7 +161,8 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
                         }}>
                             Edit
                     </li>
-                    <li className='px-4 py-2 cursor-pointer hover:bg-foreground'>Delete</li>
+                    {/* <li className='px-4 py-2 cursor-pointer hover:bg-foreground'>Delete</li> */}
+                    <DeleteButton onDelete={handleDelete} setIsDropdownVisible={setIsDropdownVisible}/>
                 </ul>
             </div>
         )}
