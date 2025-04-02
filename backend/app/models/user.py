@@ -28,7 +28,8 @@ class User:
                 "industry": industry if industry else "",
                 "major": major if major else "",
                 "two_factor_enabled": False,
-                "two_factor_number": random.randint(100000, 999999)
+                "two_factor_number": random.randint(100000, 999999),
+                "profile_picture": None
             }
         ).inserted_id
         print(user_id)

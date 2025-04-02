@@ -6,22 +6,12 @@ from flask_jwt_extended import (
     get_jwt_identity
 )
 from app.extensions import img_handler
+from app.models.util import Util
 import json
+
 
 class Post:
     """Post model for handling post-related operations in MongoDB."""
-    @staticmethod
-    def get_deleted_author_object():
-        author = {
-            "_id": {"$oid": "[deleted]"},
-            "userType": "Mentor",
-            "username": "[deleted]",
-            "profile_picture": None,
-            "major": "[deleted]",
-            "company": "[deleted]",
-            "industry": "[deleted]"
-        }
-        return author
 
     @staticmethod
     def view_post(post_id, inc_view=True):
@@ -46,13 +36,21 @@ class Post:
                     "comments": 1,
                     "views": 1,
                     "votes": 1,
-                    "author._id": 1,  # Keep only selected fields from 'author'
-                    "author.userType": 1,
-                    "author.username": 1,
-                    "author.profile_picture": 1,
-                    "author.major": 1,
-                    "author.company": 1,
-                    "author.industry": 1
+                    "author": {
+                        "$cond": {
+                            "if": {"$gt": ["$author._id", None]},  # If author exists, keep it
+                            "then": {
+                                "_id": "$author._id",
+                                "userType": "$author.userType",
+                                "username": "$author.username",
+                                "profile_picture": {"$ifNull": ["$author.profile_picture", None]},
+                                "major": "$author.major",
+                                "company": "$author.company",
+                                "industry": "$author.industry"
+                            },
+                            "else": None  # If author does not exist, set to None (removes field)
+                        }
+                    }
                 }
             }
         ])
@@ -72,14 +70,16 @@ class Post:
         post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
         author = post.get("author", None)
         if author:
-            author["profile_picture_url"] = img_handler.get(author["profile_picture"])
+            if author["profile_picture"]:
+                author["profile_picture_url"] = img_handler.get(author["profile_picture"])
+                del author["profile_picture"]
         else:
-            author = Post.get_deleted_author_object()
-            print(author)
+            author = Util.get_deleted_author_object()
         post["author"] = author
 
         if "image_url" in post and post["image_url"]:
             post["image_url"] = img_handler.get(post["image_url"].split('?')[0])  # Get fresh signed URL
+        
         
         return post
 
@@ -131,91 +131,6 @@ class Post:
         return post if post else None
 
     @staticmethod
-    def add_comment(post_id, user_id, content):
-        comment_data = {
-            "author_id": ObjectId(user_id),
-            "post_id": ObjectId(post_id),
-            "content": content,
-            "created_at": datetime.now()
-        }
-        
-        result = mongo.db.comments.insert_one(comment_data).inserted_id
-        comment = mongo.db.comments.find_one({"_id": ObjectId(result)})
-        if not comment:
-            return None
-        
-        mongo.db.posts.update_one(
-            {"_id": ObjectId(post_id)},
-            {"$inc": {
-                "comments": 1
-            }}
-        )
-        
-        author = mongo.db.users.find_one(
-            {"_id": ObjectId(user_id)}, 
-            {
-                "username": 1, 
-                "profile_picture": 1,
-                "userType": 1,
-                "major": 1,
-                "company": 1,
-                "industry": 1
-            }
-        )
-        comment["author"] = author
-        comment["profile_picture_url"] = img_handler.get(author["profile_picture"])
-        comment["created_at"] = comment["created_at"].isoformat()
-        return comment
-
-    @staticmethod
-    def get_comments(post_id):
-        comments = mongo.db.comments.aggregate([
-            {"$match": {"post_id": ObjectId(post_id)}},  # Filter by post ID
-            {"$sort": {"created_at": -1}},  # Sort by time (newest first)
-            {
-                "$lookup": {
-                    "from": "users",  # Join with 'users' collection
-                    "localField": "author_id",  # Field in 'comments'
-                    "foreignField": "_id",  # Corresponding field in 'users'
-                    "as": "author"
-                }
-            },
-            {"$unwind": {"path": "$author", "preserveNullAndEmptyArrays": True}},  # Convert author array to object
-            {
-                "$project": {
-                    "_id": 1,  # Keep comment ID
-                    "post_id": 1,  # Keep post ID
-                    "content": 1,  # Keep content
-                    "created_at": 1,  # Keep timestamp
-                    "author._id": 1,  # Keep only selected fields from 'author'
-                    "author.userType": 1,
-                    "author.username": 1,
-                    "author.profile_picture": 1,
-                    "author.major": 1,
-                    "author.company": 1,
-                    "author.industry": 1
-                }
-            }
-        ])
-
-        if not comments:
-            return []
-        
-        comments = list(comments)
-
-        for comment in comments:
-            if "created_at" in comment:
-                comment["created_at"] = comment["created_at"].isoformat()
-            author = comment.get("author", None)
-            if author:
-                comment["profile_picture_url"] = img_handler.get(comment["author"]["profile_picture"])
-            else:
-                author = Post.get_deleted_author_object()
-            comment["author"] = author
-                
-        return comments
-
-    @staticmethod
     def get_posts_by_author(author_id):
         """
         Retrieves all posts by a specific author from the database
@@ -251,40 +166,4 @@ class Post:
             
         except Exception as e:
             print(f"Error fetching posts by author: {e}")
-            return []
-    
-    @staticmethod
-    def get_comments_by_author(author_id):
-        """
-        Retrieves all comments by a specific author from the database
-        """
-        try:
-            author = mongo.db.users.find_one(
-                {"_id": ObjectId(author_id)},
-                {"username": 1, "_id": 1}
-            )
-            if not author:
-                author = {'_id': 'deleted', 'username': 'Anonymous'}
-            
-            comments_cursor = mongo.db.comments.find({
-                "author_id": ObjectId(author_id)
-            })
-            
-            comments = []
-            for comment in comments_cursor:
-                formatted_comment = {
-                    '_id': str(comment.get('_id', '')),
-                    'content': comment['content'],
-                    'author': author['username'],
-                    'author_id': {'$oid': author_id},
-                    'created_at': comment['created_at']['$date'].isoformat() if isinstance(comment['created_at'], dict) else comment['created_at'].isoformat(),
-                    'post_id': str(comment['post_id'])
-                }
-                comments.append(formatted_comment)
-            comments.sort(key=lambda x: x['created_at'], reverse=True)
-            
-            return comments
-            
-        except Exception as e:
-            print(f"Error fetching comments by author: {e}")
             return []

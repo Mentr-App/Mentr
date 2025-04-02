@@ -2,6 +2,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from flask import request, Blueprint, current_app
 from flask_restful import Resource
 from app.models.post import Post
+from app.models.comment import Comment
 from bson import ObjectId
 from app.database import mongo
 from app.extensions import img_handler
@@ -183,7 +184,7 @@ def edit_post(post_id):
 def get_post_comments(post_id):
     """Get all comments for a post."""
     try:
-        comments = Post.get_comments(post_id)
+        comments = Comment.get_comments(post_id)
         print(comments)
         return {"comments": comments}, 200
     except Exception as e:
@@ -202,7 +203,7 @@ def add_comment(post_id):
         if not content:
             return {"message": "Comment content cannot be empty"}, 400
             
-        comment = Post.add_comment(post_id, user_id, content)
+        comment = Comment.add_comment(post_id, user_id, content)
         
         if not comment:
             return {"message": "Failed to add comment"}, 500
