@@ -2,6 +2,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from flask import request, Blueprint
 from app.models.user import User
 from app.models.post import Post
+from app.models.comment import Comment
 from flask_restful import Resource
 from bson import ObjectId
 from app.database import mongo
@@ -195,7 +196,7 @@ def get_user_posts():
 def get_user_comments():
     try:
         user_id = get_jwt_identity()
-        comments = Post.get_comments_by_author(user_id)
+        comments = Comment.get_comments_by_author(user_id)
         return comments, 201
     except Exception as e:
         print("Error finding user:", str(e))
