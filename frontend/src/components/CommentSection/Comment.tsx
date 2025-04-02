@@ -4,6 +4,7 @@ import { getRelativeTime } from '@/lib/timeUtils'
 import TextEditor from '../TextEditor/TextEditor';
 import {Comment, Author} from "../CommonInterfaces/Interfaces"
 import DeleteButton from '../DeleteConfirmation/DeleteConfirmationProp';
+import ProfilePicture from '../ProfilePicture/ProfilePicture';
 
 interface CommentItemProps {
     comment: Comment
@@ -108,10 +109,7 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
         className='relative bg-secondary p-4 rounded-lg'>
         <div className='flex justify-between'>
             <div className='flex flex-row'>
-                <img
-                    src={localComment.profile_picture_url || DEFAULT_PROFILE_PICTURE}
-                    className="w-10 h-10 rounded-full mr-3"
-                />
+                <ProfilePicture profilePicture={comment.profile_picture_url} userId={comment.author?._id.$oid}/>
                 <div className='flex flex-col'>
                     <span className='font-semibold text-white'>
                         {localComment.author?.username}
