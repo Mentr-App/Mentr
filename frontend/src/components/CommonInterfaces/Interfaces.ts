@@ -7,6 +7,7 @@ export interface Comment {
     author: Author | null;
     created_at: string;
     content: string
+    post_id?: string;
     profile_picture_url: string
 }
 

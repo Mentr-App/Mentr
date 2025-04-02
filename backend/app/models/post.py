@@ -140,7 +140,6 @@ class Post:
                 {"_id": ObjectId(author_id)},
                 {"username": 1, "_id": 1}
             )
-            
             if not author:
                 author = {'_id': 'deleted', 'username': 'Anonymous'}
             
@@ -150,6 +149,7 @@ class Post:
             for post in posts_cursor:
                 post['_id'] = str(post['_id'])
                 post['author_id'] = str(post['author_id'])
+                post['author'] = str(author["username"])
                 
                 if 'created_at' in post and isinstance(post['created_at'], datetime):
                     post['created_at'] = post['created_at'].isoformat()
@@ -167,4 +167,3 @@ class Post:
         except Exception as e:
             print(f"Error fetching posts by author: {e}")
             return []
-    
