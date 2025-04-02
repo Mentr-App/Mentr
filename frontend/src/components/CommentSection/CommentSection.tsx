@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRelativeTime } from "@/lib/timeUtils";
 import CommentItem from "./Comment";
-import {Comment, Author} from "./CommentInterfaces"
+import {Comment, Author} from "../CommonInterfaces/Interfaces"
 
 
 // Helper function to get author username
@@ -104,7 +104,6 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
             }
 
             const data = await response.json();
-            console.log("comments:", data)
             setComments(data.comments || []);
         } catch (error) {
             console.error("Error fetching comments:", error);
@@ -141,66 +140,6 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                     {comments.map((item, index) => (
                         <CommentItem comment={item} index={index} getAuthorName={getAuthorName}/>
                     ))}
-
-{/* <!--                     {comments.map((comment, index) => {
-                        const authorId = getAuthorId(comment);
-                        const authorProfile = authorId ? authorProfiles[authorId] : null;
-                        
-                        console.log("Comment author info:", {
-                            comment_id: comment._id,
-                            author: comment.author,
-                            authorId: authorId,
-                            authorProfile: authorProfile,
-                            authorName: getAuthorName(comment.author)
-                        });
-
-                        if (authorProfile) {
-                            console.log("Author profile details:", {
-                                userType: authorProfile.userType,
-                                major: authorProfile.major,
-                                company: authorProfile.company,
-                                industry: authorProfile.industry
-                            });
-                        }
-                        
-                        return (
-                            <div
-                                key={comment._id || index}
-                                className='bg-secondary p-4 rounded-lg'
-                            >
-                                <div className="flex items-center mb-3">
-                                    <img
-                                        src={authorProfile?.profile_picture_url || DEFAULT_PROFILE_PICTURE}
-                                        alt="Author profile"
-                                        className="w-8 h-8 rounded-full mr-3"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.src = DEFAULT_PROFILE_PICTURE;
-                                        }}
-                                    />
-                                    <div>
-                                        <div className="font-semibold text-white">
-                                            {getAuthorName(comment.author)}
-                                        </div>
-                                        {authorProfile && (
-                                            <div className="text-xs text-gray-600">
-                                                {authorProfile.userType === "Mentee" ? (
-                                                    <span>Student • {authorProfile.major}</span>
-                                                ) : authorProfile.userType === "Mentor" ? (
-                                                    <span>{authorProfile.company} • {authorProfile.industry}</span>
-                                                ) : null}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <span className='text-gray-400 text-xs ml-auto'>
-                                        {getRelativeTime(comment.created_at)}
-                                    </span>
-                                </div>
-                                <p className='text-white ml-11'>{comment.content}</p>
-                            </div>
-                        );
-                    })} --> */}
-
                 </div>
             )}
 

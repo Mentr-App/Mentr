@@ -2,17 +2,11 @@ from datetime import datetime
 from bson import ObjectId
 from app.database import mongo
 from app.extensions import img_handler
+from app.models.post import Post
 
 class Comment:
     @staticmethod
-    def edit_comment(comment_id, content):
-        mongo.db.comments.update_one(
-            {"_id": ObjectId(comment_id)},
-            {"$set": {
-                "content": content
-            }}
-        )
-
+    def get_comment(comment_id):
         comment = mongo.db.comments.aggregate([
             {"$match": {"_id": ObjectId(comment_id)}},  # Match the specific comment
             {
@@ -41,13 +35,30 @@ class Comment:
             }
         ])
 
-        # If comment exists, fix the access to the 'author' field.
-        if comment:
-            comment = list(comment)[0]
-            # Use dictionary access for 'author' field.
+        comment = list(comment)[0]
+        if not comment:
+            return None
+        
+        author = comment.get("author", None)
+        if author:
             comment["profile_picture_url"] = img_handler.get(comment["author"]["profile_picture"])
-            return comment
-        return None
+        else:
+            author = Post.get_deleted_author_object()
+        comment["author"] = author
+
+        return comment
+
+    @staticmethod
+    def edit_comment(comment_id, content):
+        mongo.db.comments.update_one(
+            {"_id": ObjectId(comment_id)},
+            {"$set": {
+                "content": content
+            }}
+        )
+
+        comment = Comment.get_comment(comment_id)
+        return comment
     
     @staticmethod
     def delete_comment(comment_id):
@@ -58,11 +69,5 @@ class Comment:
             }}
         )
 
-        comment = mongo.db.comments.find_one(
-            {"_id": ObjectId(comment_id)}
-        )
-
-        if not comment:
-            return None
-        
+        comment = Comment.get_comment(comment_id)
         return comment
