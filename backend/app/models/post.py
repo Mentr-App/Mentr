@@ -13,7 +13,7 @@ class Post:
     @staticmethod
     def get_deleted_author_object():
         author = {
-            "_id": {"$oid": None},
+            "_id": {"$oid": "[deleted]"},
             "userType": "Mentor",
             "username": "[deleted]",
             "profile_picture": None,
