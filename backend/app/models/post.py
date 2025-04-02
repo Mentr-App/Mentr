@@ -225,7 +225,6 @@ class Post:
                 {"_id": ObjectId(author_id)},
                 {"username": 1, "_id": 1}
             )
-            
             if not author:
                 author = {'_id': 'deleted', 'username': 'Anonymous'}
             
@@ -235,6 +234,7 @@ class Post:
             for post in posts_cursor:
                 post['_id'] = str(post['_id'])
                 post['author_id'] = str(post['author_id'])
+                post['author'] = str(author["username"])
                 
                 if 'created_at' in post and isinstance(post['created_at'], datetime):
                     post['created_at'] = post['created_at'].isoformat()
@@ -266,24 +266,21 @@ class Post:
             if not author:
                 author = {'_id': 'deleted', 'username': 'Anonymous'}
             
-            posts_cursor = mongo.db.posts.find({
-                "comments_list.author_id": ObjectId(author_id)
+            comments_cursor = mongo.db.comments.find({
+                "author_id": ObjectId(author_id)
             })
             
             comments = []
-            for post in posts_cursor:
-                post_id = str(post['_id'])
-                for comment in post.get('comments_list', []):
-                    if str(comment['author_id']) == author_id:
-                        formatted_comment = {
-                            '_id': str(comment.get('_id', '')),
-                            'content': comment['content'],
-                            'author': author['username'],
-                            'author_id': {'$oid': author_id},
-                            'created_at': comment['created_at']['$date'].isoformat() if isinstance(comment['created_at'], dict) else comment['created_at'].isoformat(),
-                            'post_id': post_id
-                        }
-                        comments.append(formatted_comment)
+            for comment in comments_cursor:
+                formatted_comment = {
+                    '_id': str(comment.get('_id', '')),
+                    'content': comment['content'],
+                    'author': author['username'],
+                    'author_id': {'$oid': author_id},
+                    'created_at': comment['created_at']['$date'].isoformat() if isinstance(comment['created_at'], dict) else comment['created_at'].isoformat(),
+                    'post_id': str(comment['post_id'])
+                }
+                comments.append(formatted_comment)
             comments.sort(key=lambda x: x['created_at'], reverse=True)
             
             return comments

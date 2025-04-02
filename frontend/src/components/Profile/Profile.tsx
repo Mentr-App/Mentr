@@ -5,8 +5,9 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Post } from "../Forum/Forum";
-import { Comment } from "../CommentSection/CommentSection";
+import { Comment } from "../CommonInterfaces/Interfaces";
 import ForumPost from "../Forum/ForumPost";
+import { getRelativeTime } from '@/lib/timeUtils'
 
 interface ProfileData {
     username: string;
@@ -836,7 +837,7 @@ const Profile: React.FC = () => {
                             <div className="space-y-4">
                                 {userComments.map((comment) => (
                                     <div 
-                                        key={comment._id} 
+                                        key={comment._id.$oid} 
                                         className="bg-background p-4 rounded-lg cursor-pointer hover:bg-background-dark transition-colors"
                                         onClick={() => comment.post_id && handleCommentClick(comment.post_id)}
                                     >
@@ -845,7 +846,7 @@ const Profile: React.FC = () => {
                                                 {profile?.username}
                                             </h3>
                                             <span className="text-xs text-text-secondary">
-                                                {new Date(comment.created_at).toLocaleDateString()}
+                                                {getRelativeTime(comment.created_at)}
                                             </span>
                                         </div>
                                         <p className="text-text-primary">{comment.content}</p>
