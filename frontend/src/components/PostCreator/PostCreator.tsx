@@ -8,6 +8,7 @@ const PostCreator: React.FC = () => {
     const [title, setTitle] = useState<string>("");
     const [content, setContent] = useState<string>("");
     const [image, setImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +25,10 @@ const PostCreator: React.FC = () => {
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setImage(e.target.files[0]);
+            const file = e.target.files[0];
+            setImage(file);
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
         }
     };
 
@@ -66,6 +70,7 @@ const PostCreator: React.FC = () => {
             setTitle("");
             setContent("");
             setImage(null);
+            setImagePreview(null);
             router.push("/");
         } catch (err) {
             setError(
@@ -124,6 +129,17 @@ const PostCreator: React.FC = () => {
                         Body <span className='text-red-500'>*</span>
                     </label>
                 </div>
+
+                {imagePreview && (
+                    <div className="mb-4">
+                        <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="max-w-full h-auto rounded-lg shadow-sm"
+                            style={{ maxHeight: '300px' }}
+                        />
+                    </div>
+                )}
 
                 <div className='mb-4'>
                     <label
