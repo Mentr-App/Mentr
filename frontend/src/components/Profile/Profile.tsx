@@ -137,13 +137,14 @@ const Profile: React.FC = () => {
             try {
                 setPostsLoading(true);
                 const access_token = localStorage.getItem("access_token");
-                const response = await fetch('/api/profile/getUserPosts', {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${access_token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
+                const response = await fetch(`/api/profile/getUserPosts?username=${profile?.username}`);
+                // const response = await fetch('/api/profile/getUserPosts', {
+                //     method: 'GET',
+                //     headers: {
+                //         Authorization: `Bearer ${access_token}`,
+                //         'Content-Type': 'application/json',
+                //     },
+                // });
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch user posts');
