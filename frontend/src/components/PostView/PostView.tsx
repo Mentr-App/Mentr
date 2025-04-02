@@ -4,6 +4,7 @@ import CommentSection from "../CommentSection/CommentSection";
 import { getRelativeTime } from "@/lib/timeUtils";
 import DeleteButton from "../DeleteConfirmation/DeleteConfirmationProp";
 import TextEditor from "../TextEditor/TextEditor";
+import { Post, Author } from "../CommonInterfaces/Interfaces";
 
 const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
@@ -12,38 +13,8 @@ interface PostViewProps {
     post_id: string;
 }
 
-interface Post {
-    _id: IDObject;
-    title: string;
-    content: string;
-    author?: AuthorObject | undefined;
-    author_id: IDObject;
-    created_at: string;
-    downvotes: number;
-    upvotes: number;
-    views: number;
-    image_url?: string;
-}
-
-interface AuthorObject {
-    _id: string;
-    username: string;
-}
-
-interface IDObject {
-    $oid: string;
-}
-
 interface UserVotes {
     [postId: string]: "up" | "down";
-}
-
-interface AuthorProfile {
-    userType: string;
-    profile_picture_url: string | null;
-    major?: string;
-    company?: string;
-    industry?: string;
 }
 
 const PostView: React.FC<PostViewProps> = ({ post_id }) => {
@@ -59,7 +30,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false)
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [editText, setEditText] = useState<string>("")
-    const [authorProfile, setAuthorProfile] = useState<AuthorProfile | null>(null);
+    const [authorProfile, setAuthorProfile] = useState<Author | null>(null);
     const userId = localStorage.getItem("userId")
 
 
@@ -125,6 +96,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             }
 
             const data = await response.json();
+            console.log(data.post)
             setPost(data.post);
             setEditText(data.post.content);
         } catch (error) {
@@ -177,11 +149,6 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             }
             return newVotes;
         });
-    };
-
-
-    const handleEditTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setEditText(event.target.value);
     };
 
     const handleEditSubmit = async () => {
@@ -261,26 +228,10 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     }, [userVotes, post]);
 
     useEffect(() => {
-        if (post?.author_id) {
-            fetchAuthorProfile(post.author_id.$oid);
+        if (post?.author) {
+            setAuthorProfile(post.author)
         }
-    }, [post?.author_id]);
-
-    const fetchAuthorProfile = async (authorId: string) => {
-        try {
-            console.log("Fetching profile for author:", authorId);
-            const response = await fetch(`/api/profile/${authorId}`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log("Received author profile data:", data);
-                setAuthorProfile(data);
-            } else {
-                console.error("Failed to fetch profile:", await response.text());
-            }
-        } catch (error) {
-            console.error("Error fetching author profile:", error);
-        }
-    };
+    }, [post]);
 
     if (!post) return <></>;
 
@@ -345,7 +296,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                             <div className="absolute right-0 mt-2 w-40 rounded-lg shadow-lg bg-secondary text-sm">
                                 <ul className="">
                                     {
-                                        userId === post.author_id.$oid && (
+                                        userId === post.author?._id.$oid && (
                                             <li className="px-4 py-2 cursor-pointer hover:bg-foreground"
                                                 onClick={() => {
                                                     setIsEditing(true)
@@ -359,10 +310,11 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                         )
                                     }
                                     {
-                                        userId === post.author_id.$oid && (
-                                            <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
-                                                Delete Post
-                                            </li>
+                                        userId === post.author?._id.$oid && (
+                                            // <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
+                                            //     Delete Post
+                                            // </li>
+                                            <DeleteButton onDelete={handleDelete} setIsDropdownVisible={setIsDropdownVisible}/>
                                         )
                                     }
                                     <li className="px-4 py-2 cursor-pointer hover:bg-foreground">

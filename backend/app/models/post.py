@@ -10,34 +10,77 @@ import json
 
 class Post:
     """Post model for handling post-related operations in MongoDB."""
+    @staticmethod
+    def get_deleted_author_object():
+        author = {
+            "_id": {"$oid": None},
+            "userType": "Mentor",
+            "username": "[deleted]",
+            "profile_picture": None,
+            "major": "[deleted]",
+            "company": "[deleted]",
+            "industry": "[deleted]"
+        }
+        return author
 
     @staticmethod
-    def view_post(post_id):
-        post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
+    def view_post(post_id, inc_view=True):
+        post = mongo.db.posts.aggregate([
+            {"$match": {"_id": ObjectId(post_id)}},
+            {"$lookup": {
+                "from": "users",  # Join with 'users' collection
+                "localField": "author_id",  # Field in 'comments'
+                "foreignField": "_id",  # Corresponding field in 'users'
+                "as": "author"
+            }},
+            {"$unwind": {"path": "$author", "preserveNullAndEmptyArrays": True}},  # Convert author array to object
+            {
+                "$project": {
+                    "_id": 1,  # Keep post ID
+                    "title": 1,
+                    "content": 1,  # Keep content
+                    "image_url": 1,
+                    "created_at": 1,  # Keep timestamp
+                    "upvotes": 1,
+                    "downvotes": 1,
+                    "comments": 1,
+                    "views": 1,
+                    "votes": 1,
+                    "author._id": 1,  # Keep only selected fields from 'author'
+                    "author.userType": 1,
+                    "author.username": 1,
+                    "author.profile_picture": 1,
+                    "author.major": 1,
+                    "author.company": 1,
+                    "author.industry": 1
+                }
+            }
+        ])
+        post = list(post)[0]
+
         if not post:
             return None
 
-        author = mongo.db.users.find_one({"_id": post["author_id"]}, {"username": 1, "_id": 1})
-        if not author:
-            author = {'_id': 'deleted', 'username': 'Anonymous'}
-
-        if not post["author_id"]:
-            author = {"_id": "deleted", "username": "[deleted]"}
-            post["author_id"] = {"oid": None}
-
-        result = mongo.db.posts.find_one_and_update(
-            {"_id": ObjectId(post_id)},
-            {"$inc": {"views": 1}},
-            return_document=True
-        )
+        if inc_view:
+            result = mongo.db.posts.find_one_and_update(
+                {"_id": ObjectId(post_id)},
+                {"$inc": {"views": 1}},
+                return_document=True
+            )
+            post["views"] = result["views"] if result else post.get("views", 0) + 1
         
-        post["views"] = result["views"] if result else post.get("views", 0) + 1
-        post["author"] = author
         post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
+        author = post.get("author", None)
+        if author:
+            author["profile_picture_url"] = img_handler.get(author["profile_picture"])
+        else:
+            author = Post.get_deleted_author_object()
+            print(author)
+        post["author"] = author
 
         if "image_url" in post and post["image_url"]:
             post["image_url"] = img_handler.get(post["image_url"].split('?')[0])  # Get fresh signed URL
-
+        
         return post
 
     @staticmethod
@@ -71,24 +114,8 @@ class Post:
             }}
         )
 
-        post = mongo.db.posts.find_one(
-            {"_id": ObjectId(post_id)}
-        )
-
-        if not post:
-            return None
-
-        author = mongo.db.users.find_one({"_id": post["author_id"]})
-        if not author or not post["author_id"]:
-            author = {
-                "_id": "deleted",
-                "username": "[deleted]"
-            }
-            post["author_id"] = {"oid": None}
-        
-        post["author"] = author
-        post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
-        return post        
+        post = Post.view_post(post_id, inc_view=False)
+        return post if post else None
 
     
     @staticmethod
@@ -100,24 +127,8 @@ class Post:
             }}
         )
 
-        post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
-        if not post:
-            return None
-        
-        author = mongo.db.users.find_one({"_id": post["author_id"]}, {"username": 1, "_id": 1})
-        if not author:
-            author = {"_id": "deleted", "username": "Anonymous"}
-        
-        if not post["author_id"]:
-            author = {"_id": "deleted", "username": "[deleted]"}
-            post["author_id"] = {"oid": None}
-
-
-        post["author"] = author
-        post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
-        return post
-
-
+        post = Post.view_post(post_id, inc_view=False)
+        return post if post else None
 
     @staticmethod
     def add_comment(post_id, user_id, content):
@@ -195,7 +206,12 @@ class Post:
         for comment in comments:
             if "created_at" in comment:
                 comment["created_at"] = comment["created_at"].isoformat()
-            comment["profile_picture_url"] = img_handler.get(comment["author"]["profile_picture"])
+            author = comment.get("author", None)
+            if author:
+                comment["profile_picture_url"] = img_handler.get(comment["author"]["profile_picture"])
+            else:
+                author = Post.get_deleted_author_object()
+            comment["author"] = author
                 
         return comments
 
