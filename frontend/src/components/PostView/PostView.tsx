@@ -5,6 +5,7 @@ import { getRelativeTime } from "@/lib/timeUtils";
 import DeleteButton from "../DeleteConfirmation/DeleteConfirmationProp";
 import TextEditor from "../TextEditor/TextEditor";
 import { Post, Author } from "../CommonInterfaces/Interfaces";
+import ProfilePicture from "../ProfilePicture/ProfilePicture";
 
 const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
@@ -243,15 +244,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                         {post.title}
                     </h2>
                     <div className="flex items-center mb-4">
-                        <img
-                            src={authorProfile?.profile_picture_url || DEFAULT_PROFILE_PICTURE}
-                            alt="Author profile"
-                            className="w-10 h-10 rounded-full mr-3"
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = DEFAULT_PROFILE_PICTURE;
-                            }}
-                        />
+                        <ProfilePicture profilePicture={post.author?.profile_picture_url} userId={post.author?._id.$oid}/>
                         <div>
                             <div className="font-semibold text-white">{post.author?.username}</div>
                             <div className="text-sm text-gray-600">
