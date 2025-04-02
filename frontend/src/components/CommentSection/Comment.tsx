@@ -72,11 +72,19 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
             <div className='flex flex-row'>
                 <img
                     src={comment.profile_picture_url || DEFAULT_PROFILE_PICTURE}
-                    className="w-8 h-8 rounded-full mr-3"
+                    className="w-10 h-10 rounded-full mr-3"
                 />
-                <span className='font-semibold text-white'>
-                    {comment.author?.username}
-                </span>
+                <div className='flex flex-col'>
+                    <span className='font-semibold text-white'>
+                        {comment.author?.username}
+                    </span>
+                    {comment.author?.userType === "Mentee" 
+                    ?
+                        <span className='text-xs text-gray-500'>Student • {comment.author.major}</span>
+                    :
+                        <span className='text-xs text-gray-500'>{comment.author?.company} • {comment.author?.industry}</span>
+                    }
+                </div>
             </div>
             <span className='text-gray-400 text-sm'>
                 {getRelativeTime(comment.created_at)}
@@ -93,7 +101,7 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
             />
             :
             <div className='flex justify-between'>
-            <p className='text-white ml-11 mt-2'>{localComment.content}</p>
+            <p className='text-white ml-14 mt-2'>{localComment.content}</p>
             {
                 isAuthor && (
                 <button className='text-gray-400 text-xl hover:text-white'

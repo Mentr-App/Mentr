@@ -33,7 +33,10 @@ class Comment:
                     "author._id": 1,  # Select only required fields from 'author'
                     "author.userType": 1,
                     "author.username": 1,
-                    "author.profile_picture": 1
+                    "author.profile_picture": 1,
+                    "author.major": 1,
+                    "author.company": 1,
+                    "author.industry": 1
                 }
             }
         ])
