@@ -68,51 +68,54 @@ const About: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-3 gap-x-6 gap-y-6 mt-8">
-            {[
-                {
-                    name: "Peter Kang",
-                    description: "Peter works as a full-stack developer on forum features and user interactions."
-                },
-                {
-                    name: "Nick Song",
-                    description: "Nick works as a full-stack developer on profile features."
-                },
-                {
-                    name: "Matthew Sigit",
-                    description: "Matthew is the project manager, overseeing the team's progress and ensuring timely delivery of features."
-                },
-            ].map((member, index) => (
-                <div key={index} className="flex flex-col items-start px-4 border border-white p-4">
-                    <h3 className="text-[#EC6333] font-bold mb-2">{member.name}</h3>
-                    <p className="text-white">{member.description}</p>
+                    {[
+                        {
+                            name: "Peter Kang",
+                            description: "Peter works as a full-stack developer on forum features and user interactions."
+                        },
+                        {
+                            name: "Nick Song",
+                            description: "Nick works as a full-stack developer on profile features."
+                        },
+                        {
+                            name: "Matthew Sigit",
+                            description: "Matthew is the project manager, overseeing the team's progress and ensuring timely delivery of features."
+                        },
+                    ].map((member, index) => (
+                        <div key={index} className="flex flex-col items-start px-4 border border-white p-4">
+                            <h3 className="text-[#EC6333] font-bold mb-2">{member.name}</h3>
+                            <p className="text-white">{member.description}</p>
+                        </div>
+                    ))}
                 </div>
-            ))}
-        </div>
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-6 mt-4">
-            {[
-                {
-                    name: "Ethan Ling",
-                    description: "Ethan handles DevOps and deployment, automating processes and making sure the app runs smoothly in production."
-                },
-                {
-                    name: "Leo Gu",
-                    description: "Leo works on user authentication and backend integration with third-parties and builds and maintains server-side logic and APIs."
-                }
-            ].map((member, index) => (
-                <div key={index} className="flex flex-col items-start px-4 border border-white p-4">
-                    <h3 className="text-[#EC6333] font-bold mb-2">{member.name}</h3>
-                    <p className="text-white">{member.description}</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-6 mt-4">
+                    {[
+                        {
+                            name: "Ethan Ling",
+                            description: "Ethan handles DevOps and deployment, automating processes and making sure the app runs smoothly in production."
+                        },
+                        {
+                            name: "Leo Gu",
+                            description: "Leo works on user authentication and backend integration with third-parties and builds and maintains server-side logic and APIs."
+                        }
+                    ].map((member, index) => (
+                        <div key={index} className="flex flex-col items-start px-4 border border-white p-4">
+                            <h3 className="text-[#EC6333] font-bold mb-2">{member.name}</h3>
+                            <p className="text-white">{member.description}</p>
+                        </div>
+                    ))}
                 </div>
-            ))}
-        </div>
 
                 <div className="mt-6">
                     <label className="block font-bold text-[#EC6333] bg-[#2C353D]">
                         Contact Us Directly:
                     </label>
                     <Link legacyBehavior href="/contact">
-                        <a className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
+                        <a
+                            className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300"
+                            title="Go to the Contact page to send us a message"
+                        >
                             Contact Us
                         </a>
                     </Link>
