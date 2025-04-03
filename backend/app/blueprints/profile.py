@@ -229,3 +229,53 @@ def get_public_profile():
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
+
+@profile_bp.route("/add_to_block_list", methods=["POST"])
+@jwt_required()
+def add_to_block_list():
+    try:
+        blocked_user_id = request.json.get("blockedUserID")
+        current_user_id = get_jwt_identity()
+        if blocked_user_id == current_user_id:
+            return {"message": "Users cannot block themselves"}, 400
+
+        result = mongo.db.users.update_one(
+            {"_id": ObjectId(current_user_id)},
+            {"$addToSet": {"block_list": blocked_user_id}} 
+        )
+        
+        if result.modified_count == 0:
+            return {"message": "User not found or already blocked"}, 400
+            
+        return {"message": f"Successfully blocked user {blocked_user_id}"}, 200
+        
+    except Exception as e:
+        print("Error blocking user:", str(e))
+        return {"message": "Error blocking user", "error": str(e)}, 500
+
+@profile_bp.route("/get_block_list", methods=["GET"])
+@jwt_required()
+def get_block_list():
+    try:
+        user_id = get_jwt_identity()
+        user = User.find_user_by_id(user_id)
+        ret = {}
+        
+        blocked_users = user.get('block_list', [])
+        blocking_users = []
+        
+        user_cursor = mongo.db.users.find({})
+        for other_user in user_cursor:
+            if user_id in other_user.get('block_list', []):
+                blocking_users.append(str(other_user['_id']))
+        
+        all_blocked = list(set(blocked_users + blocking_users))
+        
+        ret['blocked'] = blocked_users
+        ret['blocking'] = blocking_users
+        ret['all_block'] = all_blocked
+        
+        return ret, 200
+    except Exception as e:
+        print("Error finding user:", str(e))
+        return {"message": "Error finding user", "error": str(e)}, 500

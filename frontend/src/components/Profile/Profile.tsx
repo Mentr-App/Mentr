@@ -55,6 +55,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const [userComments, setUserComments] = useState<Comment[]>([]);
     const [postsLoading, setPostsLoading] = useState(false);
     const [commentsLoading, setCommentsLoading] = useState(false);
+    const [blocklist, setBlocklist] = useState<{blocked: string[], blocking: string[], all_block: string[]}>({blocked: [], blocking: [], all_block: []});
+    const [checkingBlockStatus, setCheckingBlockStatus] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth();
     const { updateProfilePicture } = useProfile();
@@ -62,12 +64,49 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
     const isOwnProfile = !params?.userID;
     const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+    const isLoggedIn = localStorage.getItem("access_token") !== null;
 
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
             setEditableTwoFactorEnabled(false);
         }
     }, [editableEmail]);
+
+    useEffect(() => {
+        const fetchBlocklist = async () => {
+            if (isOwnProfile) {
+                setCheckingBlockStatus(false);
+                return;
+            }
+
+            try {
+                const access_token = localStorage.getItem("access_token");
+                if (!access_token) {
+                    setCheckingBlockStatus(false);
+                    return;
+                }
+
+                const response = await fetch("/api/profile/getBlockList", {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setBlocklist(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch blocklist:", err);
+            } finally {
+                setCheckingBlockStatus(false);
+            }
+        };
+
+        fetchBlocklist();
+    }, [params?.userID, isOwnProfile]);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -432,6 +471,102 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         router.push(`/post/${postId}`);
     };
 
+    const handleBlockUser = async () => {
+        if (!params?.userID) return;
+        
+        const isConfirmed = window.confirm(`Are you sure you want to block ${profile?.username}? You won't be able to see their posts or comments.`);
+        
+        if (!isConfirmed) {
+            return;
+        }
+        
+        try {
+            const endpoint = "/api/profile/addToBlocklist";
+            const access_token = localStorage.getItem("access_token");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    blockedUserID: params.userID
+                }),
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to block user");
+            }
+    
+            router.push("/");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An error occurred while blocking the user");
+        }
+    };
+
+    const handleUnblockUser = async () => {
+        if (!params?.userID) return;
+        
+        try {
+            const endpoint = "/api/profile/removeFromBlocklist";
+            const access_token = localStorage.getItem("access_token");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    unblockedUserID: params.userID
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to unblock user");
+            }
+
+            window.location.reload();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An error occurred while unblocking the user");
+        }
+    };
+
+    if (!isOwnProfile && !checkingBlockStatus) {
+        if (blocklist.blocked.includes(params?.userID || "")) {
+            return (
+                <div className="bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center">
+                    <h1 className="text-2xl font-bold text-text-primary mb-4">
+                        You've blocked this user
+                    </h1>
+                    <p className="text-text-secondary mb-6">
+                        You won't see any content from this user while they're blocked.
+                    </p>
+                    <button
+                        onClick={handleUnblockUser}
+                        className="px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors"
+                    >
+                        Unblock User
+                    </button>
+                </div>
+            );
+        }
+        
+        if (blocklist.blocking.includes(params?.userID || "")) {
+            return (
+                <div className="bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center">
+                    <h1 className="text-2xl font-bold text-text-primary mb-4">
+                        You've been blocked by this user
+                    </h1>
+                    <p className="text-text-secondary">
+                        You can't view this profile because the user has blocked you.
+                    </p>
+                </div>
+            );
+        }
+    }
+
     if (loading) return (
         <div className='flex justify-center items-center h-64'>
             <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
@@ -452,16 +587,26 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 <h1 className='text-2xl font-bold text-text-primary'>
                     {isOwnProfile ? 'Profile Settings' : `${profile.username}'s Profile`}
                 </h1>
-                {isOwnProfile && activeTab === 'profile' && (
-                    <div className='w-[120px]'>
+                <div className="flex gap-2">
+                    {!isOwnProfile && isLoggedIn && (
                         <button
-                            onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
-                            className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors w-full'
+                            onClick={handleBlockUser}
+                            className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'
                         >
-                            {isEditing ? "Save Changes" : "Edit Profile"}
+                            Block
                         </button>
-                    </div>
-                )}
+                    )}
+                    {isOwnProfile && activeTab === 'profile' && (
+                        <div className='w-[120px]'>
+                            <button
+                                onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
+                                className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors w-full'
+                            >
+                                {isEditing ? "Save Changes" : "Edit Profile"}
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
             
             <div className="flex flex-col items-center mb-4">
