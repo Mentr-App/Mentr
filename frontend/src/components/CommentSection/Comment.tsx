@@ -90,12 +90,6 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
     }
   };
 
-  const handleAuthorClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (comment.author && comment.author._id?.$oid && comment.author._id.$oid !== "[deleted]") {
-        router.push(`/profile/${comment.author._id.$oid}`);
-    }
-  }
 
   const checkAuthorship = () => {
     if (userId) {
@@ -117,10 +111,9 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
         className='relative bg-secondary p-4 rounded-lg'>
         <div className='flex justify-between'>
             <div className='flex flex-row'>
-                <ProfilePicture profilePicture={comment.profile_picture_url} userId={comment.author?._id.$oid}/>
+                <ProfilePicture profilePicture={localComment.profile_picture_url} userId={localComment.author?._id.$oid}/>
                 <div className='flex flex-col'>
-                    <span className='font-semibold text-white'
-                    onClick={handleAuthorClick}>
+                    <span className='font-semibold text-white'>
                         {localComment.author?.username}
                     </span>
                     {localComment.author?.userType === "Mentee" 
@@ -132,7 +125,7 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
                 </div>
             </div>
             <span className='text-gray-400 text-sm'>
-                {getRelativeTime(comment.created_at)}
+                {getRelativeTime(localComment.created_at)}
             </span>
         </div>
         {
