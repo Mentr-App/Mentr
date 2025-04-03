@@ -5,20 +5,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    console.log("Request method:", req.method);
-    console.log("Request headers:", req.headers);
-    console.log("Request body:", req.body);
-
-    const { feedback } = req.body;
+    const { feedback, name, anonymous, userId } = req.body;
 
     try {
-        //HOW DOES OUR FLASK BACKEND WORK LOL
         const response = await fetch('http://localhost:8000/feedback', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ feedback })
+            body: JSON.stringify({ feedback, name, anonymous, userId })
         });
 
         const data = await response.json();

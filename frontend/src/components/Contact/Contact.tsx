@@ -1,53 +1,113 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext"; // Adjust as needed
 
 const Contact = () => {
+    const { isAuthenticated } = useAuth();
+
     const [feedback, setFeedback] = useState<string>("");
+    const [name, setName] = useState<string>("");
+    const [profileName, setProfileName] = useState<string>("Anonymous");
+    const [anonymous, setAnonymous] = useState<boolean>(false);
     const [submittingFeedback, setSubmittingFeedback] = useState<boolean>(false);
-    const [revealThank, setRevealThank] = useState<boolean>(false);
+    const [confirmationMsg, setConfirmationMsg] = useState<string>("");
+    const [profileLoaded, setProfileLoaded] = useState<boolean>(!isAuthenticated); // assume true if not logged in
+
+
+    // Fetch profile name if authenticated
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem("access_token");
+                if (!token) return;
+    
+                const res = await fetch("/api/profile/getProfile", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+    
+                if (res.ok) {
+                    const data = await res.json();
+                    setProfileName(data.username || "Anonymous");
+                }
+            } catch (err) {
+                console.error("Failed to load profile name");
+            } finally {
+                setProfileLoaded(true);
+            }
+        };
+    
+        if (isAuthenticated) fetchProfile();
+    }, [isAuthenticated]);
 
     const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
-                event.preventDefault();
-                setSubmittingFeedback(true);
-        
-                try {
-                    const response = await fetch("/api/feedback", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ feedback }),
-                    });
-        
-                    if (!response.ok) throw new Error("Failed to submit feedback");
-                    setRevealThank(true);
-                } catch (error: any) {
-                    alert(error.message || "An unknown error occurred");
-                } finally {
-                    setSubmittingFeedback(false);
-                    setFeedback("");
-                }
+        event.preventDefault();
+    
+        if (isAuthenticated && !profileLoaded && !anonymous) {
+            alert("Please wait — loading your profile...");
+            return;
+        }
+    
+        setSubmittingFeedback(true);
+    
+        try {
+            const userId = localStorage.getItem("userId");
+    
+            const payload: any = {
+                feedback,
+                anonymous,
             };
-
-    const handleFeedbackChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setFeedback(event.target.value);
+    
+            if (anonymous) {
+                payload.name = "Anonymous";
+            } else if (isAuthenticated) {
+                payload.name = profileName || "Anonymous";
+            } else {
+                payload.name = name || "Anonymous";
+            }
+    
+            if (isAuthenticated && !anonymous) {
+                payload.userId = userId;
+            }
+    
+            const response = await fetch("/api/feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+    
+            if (!response.ok) throw new Error("Failed to submit feedback");
+    
+            if (anonymous || (!isAuthenticated && !name)) {
+                setConfirmationMsg("Feedback submitted anonymously.");
+            } else if (!anonymous && !isAuthenticated && name) {
+                setConfirmationMsg(`Feedback submitted under the name "${name}".`);
+            } else {
+                setConfirmationMsg("Feedback submitted under your profile.");
+            }
+        } catch (error: any) {
+            alert(error.message || "An unknown error occurred");
+        } finally {
+            setSubmittingFeedback(false);
+            setFeedback("");
+            setName("");
+            setAnonymous(false);
+        }
     };
 
     return (
         <div className="min-h-screen bg-secondary rounded flex flex-col items-center justify-center py-10">
             <div className="bg-[#2C353D] rounded-lg shadow-lg p-8 max-w-3xl w-full">
-                <h1 className="text-4xl text-center text-[#EC6333] font-bold">
-                    Contact Us
-                </h1>
+                <h1 className="text-4xl text-center text-[#EC6333] font-bold">Contact Us</h1>
 
                 <div className="mt-12 space-y-10">
-                    {/* Social Media Links */}
+                    {/* Social Media Links (unchanged) */}
                     <div className="bg-secondary p-8 rounded-xl shadow-lg">
-                        <h2 className="text-lg text-[#EC6333] font-bold">
-                            Reach Out to Us On Social Media!
-                        </h2>
-
+                        <h2 className="text-lg text-[#EC6333] font-bold">Reach Out to Us On Social Media!</h2>
                         <div className="flex-container">
-                                <div className="flex-child">
-                                    <div className="up">
-                                        <a href="https://www.instagram.com/pkang323/" target="_blank" rel="noopener noreferrer">
+                            <div className="flex-child">
+                                <div className="up">
+                                <a href="https://www.instagram.com/pkang323/" target="_blank" rel="noopener noreferrer">
                                             <button className="card1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0,0,256,256" width="60px" height="60px" fill="#EC6333" fill-rule="nonzero" className="instagram"><g fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none"><g transform="scale(8,8)"><path d="M11.46875,5c-3.55078,0 -6.46875,2.91406 -6.46875,6.46875v9.0625c0,3.55078 2.91406,6.46875 6.46875,6.46875h9.0625c3.55078,0 6.46875,-2.91406 6.46875,-6.46875v-9.0625c0,-3.55078 -2.91406,-6.46875 -6.46875,-6.46875zM11.46875,7h9.0625c2.47266,0 4.46875,1.99609 4.46875,4.46875v9.0625c0,2.47266 -1.99609,4.46875 -4.46875,4.46875h-9.0625c-2.47266,0 -4.46875,-1.99609 -4.46875,-4.46875v-9.0625c0,-2.47266 1.99609,-4.46875 4.46875,-4.46875zM21.90625,9.1875c-0.50391,0 -0.90625,0.40234 -0.90625,0.90625c0,0.50391 0.40234,0.90625 0.90625,0.90625c0.50391,0 0.90625,-0.40234 0.90625,-0.90625c0,-0.50391 -0.40234,-0.90625 -0.90625,-0.90625zM16,10c-3.30078,0 -6,2.69922 -6,6c0,3.30078 2.69922,6 6,6c3.30078,0 6,-2.69922 6,-6c0,-3.30078 -2.69922,-6 -6,-6zM16,12c2.22266,0 4,1.77734 4,4c0,2.22266 -1.77734,4 -4,4c-2.22266,0 -4,-1.77734 -4,-4c0,-2.22266 1.77734,-4 4,-4z"></path></g></g></svg>
                                             </button>
@@ -69,38 +129,62 @@ const Contact = () => {
 </svg>
                                             </button>
                                         </a>
-                                    </div>
                                 </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Feedback Form */}
+                    {/* Feedback Form or Confirmation */}
                     <div className="bg-secondary p-8 rounded-xl shadow-lg">
                         <div className="mt-8">
-                        <form onSubmit={submitFeedback} className="space-y-4">
-                            <label htmlFor="feedback" className="text-xl block font-bold text-[#EC6333] bg-secondary">
-                                Alternatively, Contact Us Here!
-                            </label>
-                            <textarea
-                                id="feedback"
-                                value={feedback}
-                                onChange={handleFeedbackChange}
-                                className="w-full p-3 border border-border rounded-lg bg-[#2C353D] text-white"
-                                rows={4}
-                                placeholder="Write your message here..."
-                            ></textarea>
-                            <button
-                                type="submit"
-                                className="px-4 py-2 bg-[#EC6333] text-white font-bold rounded-lg hover:bg-accent-hover disabled:opacity-50 transition duration-300"
-                                disabled={submittingFeedback}>
-                                {submittingFeedback ? "Submitting..." : "Submit Message"}
-                            </button>
-                        </form>
-                        {revealThank && (
-                            <p className="block font-bold text-[#EC6333] bg-[#2C353D]">
-                                Thank you for reaching out!
-                            </p>
-                        )}
+                            {confirmationMsg ? (
+                                <p className="mt-4 block font-bold text-[#EC6333] bg-[#2C353D] p-4 rounded">
+                                    {confirmationMsg}
+                                </p>
+                            ) : (
+                                <form onSubmit={submitFeedback} className="space-y-4">
+                                    <label htmlFor="feedback" className="text-xl block font-bold text-[#EC6333]">
+                                        Alternatively, Contact Us Here!
+                                    </label>
+                                    <textarea
+                                        id="feedback"
+                                        value={feedback}
+                                        onChange={(e) => setFeedback(e.target.value)}
+                                        className="w-full p-3 border border-border rounded-lg bg-[#2C353D] text-white"
+                                        rows={4}
+                                        placeholder="Write your message here..."
+                                        required
+                                    ></textarea>
+
+                                    {!isAuthenticated && (
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            disabled={anonymous}
+                                            placeholder="Enter your name (optional)"
+                                            className="w-full p-3 border border-border rounded-lg bg-[#2C353D] text-white"
+                                        />
+                                    )}
+
+                                    <label className="flex items-center space-x-2 text-white">
+                                        <input
+                                            type="checkbox"
+                                            checked={anonymous}
+                                            onChange={(e) => setAnonymous(e.target.checked)}
+                                        />
+                                        <span>Submit anonymously</span>
+                                    </label>
+
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-[#EC6333] text-white font-bold rounded-lg hover:bg-accent-hover disabled:opacity-50 transition duration-300"
+                                        disabled={submittingFeedback}
+                                    >
+                                        {submittingFeedback ? "Submitting..." : "Submit Message"}
+                                    </button>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
