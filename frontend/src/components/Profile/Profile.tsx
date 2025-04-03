@@ -144,9 +144,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 
                 setLoading(false);
             } catch (err) {
-                setError(
-                    err instanceof Error ? err.message : "An error occurred"
-                );
+                setError(err instanceof Error ? err.message : "An error occurred");
                 setLoading(false);
             }
         };
@@ -274,9 +272,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
             setError(null);
         } catch (err) {
-            setError(
-                err instanceof Error ? err.message : "An error occurred"
-            );
+            setError(err instanceof Error ? err.message : "An error occurred");
             setLoading(false);
         }
 
@@ -309,9 +305,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 throw new Error(errorData.message || "Failed to delete profile");
             }
         } catch (err) {
-            setError(
-                err instanceof Error ? err.message : "An error occurred"
-            );
+            setError(err instanceof Error ? err.message : "An error occurred");
             setLoading(false);
         }
         logout();
@@ -367,9 +361,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 [field]: "",
             }));
         } catch (err) {
-            setError(
-                err instanceof Error ? err.message : "An error occurred"
-            );
+            setError(err instanceof Error ? err.message : "An error occurred");
         }
     };
 
@@ -439,26 +431,19 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         router.push(`/post/${postId}`);
     };
 
-    if (loading)
-        return (
-            <div className='flex justify-center items-center h-64'>
-                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
-            </div>
-        );
+    if (loading) return (
+        <div className='flex justify-center items-center h-64'>
+            <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
+        </div>
+    );
 
-    if (error)
-        return (
-            <div className='text-red-500 text-center p-4'>
-                Error: {error}
-            </div>
-        );
+    if (error) return (
+        <div className='text-red-500 text-center p-4'>Error: {error}</div>
+    );
 
-    if (!profile)
-        return (
-            <div className='text-text-secondary text-center p-4'>
-                Profile not found
-            </div>
-        );
+    if (!profile) return (
+        <div className='text-text-secondary text-center p-4'>Profile not found</div>
+    );
 
     return (
         <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto'>
@@ -555,15 +540,11 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
             <div className='space-y-4'>
                 {activeTab === 'profile' && (
                     <div className='bg-foreground p-4 rounded'>
-                        <h2 className='text-lg font-semibold text-text-primary mb-4'>
-                            User Information
-                        </h2>
+                        <h2 className='text-lg font-semibold text-text-primary mb-4'>User Information</h2>
                         <div className='flex space-x-6'>
                             <div className='w-1/2 space-y-4'>
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        Username
-                                    </label>
+                                    <label className='block text-text-light'>Username</label>
                                     {isOwnProfile && isEditing ? (
                                         <input
                                             type='text'
@@ -572,9 +553,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             className='w-full bg-background text-text-primary p-2 rounded'
                                         />
                                     ) : (
-                                        <p className='text-text-primary'>
-                                            {profile.username}
-                                        </p>
+                                        <p className='text-text-primary'>{profile.username}</p>
                                     )}
                                     {isOwnProfile && (
                                         <button
@@ -585,21 +564,28 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                     )}
                                 </div>
                                 
-                                {/* Moved User Type and Major to left side for public profiles */}
                                 {!isOwnProfile && (
                                     <>
                                         <div className='space-y-2'>
-                                            <label className='block text-text-light'>
-                                                User Type
-                                            </label>
+                                            <label className='block text-text-light'>User Type</label>
                                             <p className='text-text-primary'>{profile.userType}</p>
                                         </div>
                                         {profile.userType === "Mentee" && profile.major && (
                                             <div className='space-y-2'>
-                                                <label className='block text-text-light'>
-                                                    Major
-                                                </label>
+                                                <label className='block text-text-light'>Major</label>
                                                 <p className='text-text-primary'>{profile.major}</p>
+                                            </div>
+                                        )}
+                                        {profile.userType === "Mentor" && profile.company && (
+                                            <div className='space-y-2'>
+                                                <label className='block text-text-light'>Company</label>
+                                                <p className='text-text-primary'>{profile.company}</p>
+                                            </div>
+                                        )}
+                                        {profile.userType === "Mentor" && profile.industry && (
+                                            <div className='space-y-2'>
+                                                <label className='block text-text-light'>Industry</label>
+                                                <p className='text-text-primary'>{profile.industry}</p>
                                             </div>
                                         )}
                                     </>
@@ -607,9 +593,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
                                 {isOwnProfile && (
                                     <div className='space-y-2'>
-                                        <label className='block text-text-light'>
-                                            Email
-                                        </label>
+                                        <label className='block text-text-light'>Email</label>
                                         {isEditing ? (
                                             <input
                                                 type='email'
@@ -633,13 +617,9 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 )}
                                 {isOwnProfile && profile.created_at && (
                                     <div className='space-y-2'>
-                                        <label className='block text-text-light'>
-                                            Member Since
-                                        </label>
+                                        <label className='block text-text-light'>Member Since</label>
                                         <p className='text-text-primary'>
-                                            {new Date(
-                                                profile.created_at
-                                            ).toLocaleDateString()}
+                                            {new Date(profile.created_at).toLocaleDateString()}
                                         </p>
                                         {isOwnProfile && (
                                             <button
@@ -652,13 +632,10 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 )}
                             </div>
                             <div className='w-1/2 space-y-4'>
-                                {/* Only show User Type and Major on the right for own profile */}
                                 {isOwnProfile && (
                                     <>
                                         <div className='space-y-2'>
-                                            <label className='block text-text-light'>
-                                                User Type
-                                            </label>
+                                            <label className='block text-text-light'>User Type</label>
                                             {isEditing ? (
                                                 <select
                                                     value={editableUserType || ""}
@@ -675,9 +652,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         </div>
                                         {profile.userType === "Mentee" && (
                                             <div className='space-y-2'>
-                                                <label className='block text-text-light'>
-                                                    Major
-                                                </label>
+                                                <label className='block text-text-light'>Major</label>
                                                 {isEditing ? (
                                                     <input
                                                         type='text'
@@ -690,48 +665,42 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                 )}
                                             </div>
                                         )}
+                                        {profile.userType === "Mentor" && (
+                                            <>
+                                                <div className='space-y-2'>
+                                                    <label className='block text-text-light'>Company</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type='text'
+                                                            value={editableCompany}
+                                                            onChange={(e) => setEditableCompany(e.target.value)}
+                                                            className='w-full bg-background text-text-primary p-2 rounded'
+                                                        />
+                                                    ) : (
+                                                        <p className='text-text-primary'>{profile.company}</p>
+                                                    )}
+                                                </div>
+                                                <div className='space-y-2'>
+                                                    <label className='block text-text-light'>Industry</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type='text'
+                                                            value={editableIndustry}
+                                                            onChange={(e) => setEditableIndustry(e.target.value)}
+                                                            className='w-full bg-background text-text-primary p-2 rounded'
+                                                        />
+                                                    ) : (
+                                                        <p className='text-text-primary'>{profile.industry}</p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
                                     </>
                                 )}
 
-                                {profile.userType === "Mentor" && (
-                                    <>
-                                        <div className='space-y-2'>
-                                            <label className='block text-text-light'>
-                                                Company
-                                            </label>
-                                            {isOwnProfile && isEditing ? (
-                                                <input
-                                                    type='text'
-                                                    value={editableCompany}
-                                                    onChange={(e) => setEditableCompany(e.target.value)}
-                                                    className='w-full bg-background text-text-primary p-2 rounded'
-                                                />
-                                            ) : (
-                                                <p className='text-text-primary'>{profile.company}</p>
-                                            )}
-                                        </div>
-                                        <div className='space-y-2'>
-                                            <label className='block text-text-light'>
-                                                Industry
-                                            </label>
-                                            {isOwnProfile && isEditing ? (
-                                                <input
-                                                    type='text'
-                                                    value={editableIndustry}
-                                                    onChange={(e) => setEditableIndustry(e.target.value)}
-                                                    className='w-full bg-background text-text-primary p-2 rounded'
-                                                />
-                                            ) : (
-                                                <p className='text-text-primary'>{profile.industry}</p>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
                                 {isOwnProfile && (
                                     <div className='space-y-2'>
-                                        <label className='block text-text-light'>
-                                            Two-Factor Authentication
-                                        </label>
+                                        <label className='block text-text-light'>Two-Factor Authentication</label>
                                         <button
                                             onClick={(e) => {
                                                 if (isEditing && editableEmail) {
@@ -756,9 +725,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 )}
 
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        LinkedIn
-                                    </label>
+                                    <label className='block text-text-light'>LinkedIn</label>
                                     {isOwnProfile && isEditing ? (
                                         <>
                                             <input
@@ -785,9 +752,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                     )}
                                 </div>
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        Instagram
-                                    </label>
+                                    <label className='block text-text-light'>Instagram</label>
                                     {isOwnProfile && isEditing ? (
                                         <>
                                             <input
@@ -814,9 +779,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                     )}
                                 </div>
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>
-                                        Twitter
-                                    </label>
+                                    <label className='block text-text-light'>Twitter</label>
                                     {isOwnProfile && isEditing ? (
                                         <>
                                             <input

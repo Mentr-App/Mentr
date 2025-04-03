@@ -5,6 +5,7 @@ import TextEditor from '../TextEditor/TextEditor';
 import {Comment, Author} from "../CommonInterfaces/Interfaces"
 import DeleteButton from '../DeleteConfirmation/DeleteConfirmationProp';
 import ProfilePicture from '../ProfilePicture/ProfilePicture';
+import { useRouter } from 'next/navigation';
 
 interface CommentItemProps {
     comment: Comment
@@ -21,6 +22,7 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
   const [editText, setEditText] = useState<string>(localComment.content)
   const [isAuthor, setIsAuthor] = useState<boolean>(false)
   const {isAuthenticated} = useAuth()
+  const router = useRouter()
 
   const userId = localStorage.getItem("userId")
   
@@ -88,6 +90,12 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
     }
   };
 
+  const handleAuthorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (comment.author && comment.author._id?.$oid && comment.author._id.$oid !== "[deleted]") {
+        router.push(`/profile/${comment.author._id.$oid}`);
+    }
+  }
 
   const checkAuthorship = () => {
     if (userId) {
@@ -111,7 +119,8 @@ const CommentItem: React.FC<CommentItemProps> = ({comment, index, getAuthorName}
             <div className='flex flex-row'>
                 <ProfilePicture profilePicture={comment.profile_picture_url} userId={comment.author?._id.$oid}/>
                 <div className='flex flex-col'>
-                    <span className='font-semibold text-white'>
+                    <span className='font-semibold text-white'
+                    onClick={handleAuthorClick}>
                         {localComment.author?.username}
                     </span>
                     {localComment.author?.userType === "Mentee" 
