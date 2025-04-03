@@ -8,6 +8,7 @@ import { Post, Author } from "../CommonInterfaces/Interfaces";
 import ProfilePicture from "../ProfilePicture/ProfilePicture";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import { useRouter } from 'next/navigation';
 
 const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
@@ -35,6 +36,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const [editText, setEditText] = useState<string>("")
     const [authorProfile, setAuthorProfile] = useState<Author | null>(null);
     const userId = localStorage.getItem("userId")
+    const router = useRouter()
 
 
     const getRelativeTime = (dateString: string) => {
@@ -211,7 +213,12 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             console.error("Error deleting posts:", error)
         }
     };
-
+    const handleAuthorClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (post && post.author && post.author._id?.$oid && post.author._id.$oid !== "[deleted]") {
+            router.push(`/profile/${post.author._id.$oid}`);
+        }
+    }
     useEffect(() => {
         getPost()
         fetchUserVotes()
@@ -248,7 +255,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     <div className="flex items-center mb-4">
                         <ProfilePicture profilePicture={post.author?.profile_picture_url} userId={post.author?._id.$oid}/>
                         <div>
-                            <div className="font-semibold text-white">{post.author?.username}</div>
+                            <div className="font-semibold text-white" onClick={handleAuthorClick}>{post.author?.username}</div>
                             <div className="text-sm text-gray-600">
                                 {authorProfile?.userType === "Mentee" ? (
                                     <span>Student • {authorProfile.major}</span>
