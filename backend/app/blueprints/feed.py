@@ -13,7 +13,7 @@ def get_feed():
     skip = request.args.get('skip', default=0, type=int)
     limit = request.args.get('limit', default=25, type=int)
     sort_by = request.args.get('sort_by', default='new', type=str)
-    
+        
     feed_result = Feed.get_feed(skip=skip, limit=limit, sort_by=sort_by)
     total_count = Post.get_total_posts()
     
