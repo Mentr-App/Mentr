@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/mentr-images/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.gravatar.com',
+        port: '',
+        pathname: '/avatar/**',
+      },
     ],
   },
 };

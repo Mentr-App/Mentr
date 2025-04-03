@@ -220,8 +220,9 @@ def get_public_profile():
                 'message': f'No profile found for userID: {userID}'
             }), 404
         public_profile = user
-        public_profile['profile_picture'] = img_handler.get(user['profile_picture'])
-        
+        if "profile_picture" in public_profile and public_profile['profile_picture'] != None:
+            public_profile['profile_picture'] = img_handler.get(user['profile_picture'])
+
         return public_profile, 200
         
     

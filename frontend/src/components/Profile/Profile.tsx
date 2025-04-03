@@ -61,6 +61,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const router = useRouter();
 
     const isOwnProfile = !params?.userID;
+    const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
@@ -462,27 +463,19 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     </div>
                 )}
             </div>
-
+            
             <div className="flex flex-col items-center mb-4">
                 <div className="relative w-32 h-32 mb-4">
-                    {profile?.profile_picture ? (
-                        <div className="relative w-32 h-32">
-                            <Image
-                                src={profile.profile_picture}
-                                alt="Profile"
-                                className="rounded-full object-cover"
-                                fill
-                                sizes="128px"
-                                priority
-                            />
-                        </div>
-                    ) : (
-                        <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-4xl text-gray-400">
-                                {profile?.username?.charAt(0)?.toUpperCase() || '?'}
-                            </span>
-                        </div>
-                    )}
+                    <div className="relative w-32 h-32">
+                        <Image
+                            src={profile.profile_picture || DEFAULT_PROFILE_PICTURE}
+                            alt="Profile"
+                            className="rounded-full object-cover"
+                            fill
+                            sizes="128px"
+                            priority
+                        />
+                    </div>
                 </div>
                 
                 {isOwnProfile && (
