@@ -31,6 +31,11 @@ interface UserVotes {
     [postId: string]: "up" | "down";
 }
 
+interface Blocklist {
+    blocked: string[];
+    blocking: string[];
+}
+
 const Forum: React.FC = () => {
     const [feed, setFeed] = useState<Post[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -45,17 +50,35 @@ const Forum: React.FC = () => {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [originalFeed, setOriginalFeed] = useState<Post[]>([]);
-    const [sortBy, setSortBy] = useState<string>("new"); // Add sort state
-
-    // State variable to track if we're in search mode
+    const [sortBy, setSortBy] = useState<string>("new");
     const [isSearching, setIsSearching] = useState<boolean>(false);
-    // State to store all posts for search
     const [allPosts, setAllPosts] = useState<Post[]>([]);
-
-    // Track which layout is active (grid or list)
     const [isGridView, setIsGridView] = useState(true);
+    const [blocklist, setBlocklist] = useState<Blocklist>({ blocked: [], blocking: [] });
 
     const router = useRouter();
+
+    const fetchBlocklist = async () => {
+        if (!isAuthenticated) return;
+        
+        try {
+            const response = await fetch("/api/profile/getBlockList", {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setBlocklist({
+                    blocked: data.blocked || [],
+                    blocking: data.blocking || []
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching blocklist:", error);
+        }
+    };
 
     const fetchUserVotes = async () => {
         if (!isAuthenticated) {
@@ -80,27 +103,21 @@ const Forum: React.FC = () => {
     };
 
     const handlePostClick = (post: Post) => {
-        console.log(post);
         router.push("/post/" + post._id.$oid);
     };
 
     useEffect(() => {
         fetchUserVotes();
+        fetchBlocklist();
     }, [isAuthenticated]);
 
-    const loadFeed = async (
-        isInitialLoad: boolean = false,
-        pageNumber: number = page
-    ) => {
-        // Reset to page 1 if we're not loading more and not on initial load
+    const loadFeed = async (isInitialLoad: boolean = false, pageNumber: number = page) => {
         if (!isInitialLoad && !loadingMore && pageNumber === page) {
             setPage(1);
             pageNumber = 1;
         }
 
-        const endpoint = `/api/feed?skip=${
-            (pageNumber - 1) * postsPerPage
-        }&limit=${postsPerPage}&sort_by=${sortBy}`; // Fix parameter name to match backend
+        const endpoint = `/api/feed?skip=${(pageNumber - 1) * postsPerPage}&limit=${postsPerPage}&sort_by=${sortBy}`;
         const access_token = localStorage.getItem("access_token");
 
         try {
@@ -124,16 +141,13 @@ const Forum: React.FC = () => {
             }
 
             const data = await response.json();
-            console.log(data);
 
-            // If we get fewer posts than requested, we've reached the end
             if (data.feed.length < postsPerPage) {
                 setHasMore(false);
             } else {
                 setHasMore(true);
             }
 
-            // Calculate total pages based on total_count if available, otherwise estimate
             if (data.total_count) {
                 const pages = Math.ceil(data.total_count / postsPerPage);
                 setTotalPages(pages);
@@ -143,15 +157,11 @@ const Forum: React.FC = () => {
                 setTotalPages(Math.max(totalPages, pageNumber + 1));
             }
 
-            // Update current page
             setPage(pageNumber);
-
-            // Replace feed with new data
             setFeed(data.feed);
-            setOriginalFeed(data.feed); // Store original feed for search
+            setOriginalFeed(data.feed);
         } catch (error) {
-            const errorMessage =
-                error instanceof Error ? error.message : "An unknown error occurred";
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -163,9 +173,7 @@ const Forum: React.FC = () => {
         loadFeed(true);
     }, [postsPerPage]);
 
-    // Add a useEffect to reload when sort changes
     useEffect(() => {
-        // Only reload if we're not currently searching
         if (!isSearching) {
             loadFeed(true, 1);
         }
@@ -177,20 +185,14 @@ const Forum: React.FC = () => {
         setPage(1);
     };
 
-    // Add handler for sort changes
     const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newSortValue = e.target.value;
         setSortBy(newSortValue);
-        setPage(1); // Reset to first page when changing sort
-        loadFeed(true, 1); // Reload with the new sort option
+        setPage(1);
+        loadFeed(true, 1);
     };
 
-    const handleVoteUpdate = (
-        postId: string,
-        newVoteType: "up" | "down" | null,
-        newUpvotes: number,
-        newDownvotes: number
-    ) => {
+    const handleVoteUpdate = (postId: string, newVoteType: "up" | "down" | null, newUpvotes: number, newDownvotes: number) => {
         setUserVotes((prev) => {
             const newVotes = { ...prev };
             if (newVoteType === null) {
@@ -209,52 +211,42 @@ const Forum: React.FC = () => {
         );
     };
 
-    // Handle page change
     const handlePageChange = (newPage: number) => {
         if (newPage < 1 || newPage > totalPages || newPage === page) return;
         loadFeed(false, newPage);
     };
 
-    // Generate page numbers for pagination
     const getPageNumbers = () => {
         const pageNumbers = [];
         const maxVisiblePages = 5;
 
         if (totalPages <= maxVisiblePages) {
-            // Show all pages if total pages are less than or equal to maxVisiblePages
             for (let i = 1; i <= totalPages; i++) {
                 pageNumbers.push(i);
             }
         } else {
-            // Always include first page
             pageNumbers.push(1);
 
-            // Calculate start and end of middle section
             let startPage = Math.max(2, page - Math.floor(maxVisiblePages / 2) + 1);
             let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 3);
 
-            // Adjust if we're near the end
             if (endPage < startPage + 1) {
                 startPage = Math.max(2, totalPages - maxVisiblePages + 2);
                 endPage = totalPages - 1;
             }
 
-            // Show ellipsis after first page if needed
             if (startPage > 2) {
                 pageNumbers.push("...");
             }
 
-            // Add middle pages
             for (let i = startPage; i <= endPage; i++) {
                 pageNumbers.push(i);
             }
 
-            // Show ellipsis before last page if needed
             if (endPage < totalPages - 1) {
                 pageNumbers.push("...");
             }
 
-            // Always include last page if not the same as first page
             if (totalPages > 1) {
                 pageNumbers.push(totalPages);
             }
@@ -262,12 +254,34 @@ const Forum: React.FC = () => {
 
         return pageNumbers;
     };
+    
+    const isBlockedPost = (post: Post): boolean => {
+        console.log("post" + post.title + post.author_id?.$oid)
+        console.log(blocklist.blocked)
+        console.log(blocklist.blocking)
+        if (!isAuthenticated || !post.author_id?.$oid) return false;
+        
+        const authorId = post.author_id.$oid;
+        return blocklist.blocked.includes(authorId) || blocklist.blocking.includes(authorId);
+    };
+
+    const getFilteredFeed = (posts: Post[]): Post[] => {
+        return posts.map(post => {
+            if (isBlockedPost(post)) {
+                return {
+                    ...post,
+                    title: "Blocked Content",
+                    content: "[blocked]",
+                    author: "Blocked User"
+                };
+            }
+            return post;
+        });
+    };
 
     const fetchAllPosts = async () => {
-        // Use searchLoading instead of main loading
         setSearchLoading(true);
         try {
-            // Request a very large limit to get all posts at once
             const endpoint = `/api/feed?skip=0&limit=1000&sort_by=${sortBy}`;
             const access_token = localStorage.getItem("access_token");
 
@@ -288,8 +302,7 @@ const Forum: React.FC = () => {
             setAllPosts(data.feed);
             return data.feed;
         } catch (error) {
-            const errorMessage =
-                error instanceof Error ? error.message : "An unknown error occurred";
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
             setError(errorMessage);
             return [];
         } finally {
@@ -302,32 +315,23 @@ const Forum: React.FC = () => {
         setSearchQuery(value);
 
         if (value === "") {
-            // Reset to original feed without triggering main loading state
             setIsSearching(false);
-
-            // If we have the original feed cached, use it
             if (originalFeed.length > 0) {
                 setFeed(originalFeed);
             } else {
-                // Otherwise load the feed again
                 loadFeed(true);
             }
             return;
         }
 
         setIsSearching(true);
-
-        // If this is the first search or we don't have all posts yet, fetch them
         const postsToSearch = allPosts.length > 0 ? allPosts : await fetchAllPosts();
-
-        // Filter based on search query
         const filteredPosts = postsToSearch.filter(
             (post: Post) =>
                 post.title.toLowerCase().includes(value.toLowerCase()) ||
                 post.content.toLowerCase().includes(value.toLowerCase())
         );
 
-        console.log(filteredPosts)
         setFeed(filteredPosts);
     };
 
@@ -354,7 +358,6 @@ const Forum: React.FC = () => {
             <div
                 className='flex-1 p-6 h-[88vh]'
                 style={{ backgroundColor: "var(--background)" }}>
-                {/* Search Controls */}
                 <SearchControls
                     postsPerPage={postsPerPage}
                     handlePostsPerPageChange={handlePostsPerPageChange}
@@ -367,7 +370,6 @@ const Forum: React.FC = () => {
                     handleSortChange={handleSortChange}
                 />
 
-                {/* Search Loading Indicator */}
                 {searchLoading && (
                     <div className='text-center mt-4'>
                         <div
@@ -379,7 +381,6 @@ const Forum: React.FC = () => {
                     </div>
                 )}
 
-                {/* No posts message */}
                 {!searchLoading && (
                     <div
                         className='text-center p-4'
@@ -395,7 +396,6 @@ const Forum: React.FC = () => {
         <div
             className='flex-1 p-6 h-[88vh] overflow-scroll'
             style={{ backgroundColor: "var(--background)" }}>
-            {/* Search Controls */}
             <SearchControls
                 postsPerPage={postsPerPage}
                 handlePostsPerPageChange={handlePostsPerPageChange}
@@ -408,7 +408,6 @@ const Forum: React.FC = () => {
                 handleSortChange={handleSortChange}
             />
 
-            {/* Search Loading Indicator */}
             {searchLoading && (
                 <div className='text-center my-4'>
                     <div
@@ -422,11 +421,10 @@ const Forum: React.FC = () => {
 
             {!searchLoading && (
                 <div className='flex-1 overflow-y-scroll px-6 pb-6'>
-                    {/* Integrated ForumContent */}
                     {isGridView ? (
                         <div className='max-w-7xl mx-auto'>
                             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-                                {feed.map((post) => (
+                                {getFilteredFeed(feed).map((post) => (
                                     <ForumPost
                                         key={post._id.$oid}
                                         post={post}
@@ -439,7 +437,7 @@ const Forum: React.FC = () => {
                         </div>
                     ) : (
                         <div className='max-w-3xl mx-auto space-y-6 overflow-scroll'>
-                            {feed.map((post) => (
+                            {getFilteredFeed(feed).map((post) => (
                                 <ForumPost
                                     key={post._id.$oid}
                                     post={post}
@@ -451,7 +449,6 @@ const Forum: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Pagination Controls - hide when searching */}
                     {totalPages > 1 && !isSearching && (
                         <Pagination
                             currentPage={page}
