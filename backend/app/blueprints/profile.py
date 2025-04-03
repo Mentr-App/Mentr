@@ -253,6 +253,32 @@ def add_to_block_list():
         print("Error blocking user:", str(e))
         return {"message": "Error blocking user", "error": str(e)}, 500
 
+@profile_bp.route("/remove_from_block_list", methods=["POST"])
+@jwt_required()
+def remove_from_block_list():
+    try:
+        blocked_user_id = request.json.get("blockedUserID")
+        current_user_id = get_jwt_identity()
+        if blocked_user_id == current_user_id:
+            return {"message": "Users cannot unblock themselves"}, 400
+        
+        print(blocked_user_id)
+        print(current_user_id)
+
+        result = mongo.db.users.update_one(
+            {"_id": ObjectId(current_user_id)},
+            {"$pull": {"block_list": blocked_user_id}} 
+        )
+        
+        if result.modified_count == 0:
+            return {"message": "User not found or already unblocked"}, 400
+            
+        return {"message": f"Successfully unblocked user {blocked_user_id}"}, 200
+        
+    except Exception as e:
+        print("Error unblocking user:", str(e))
+        return {"message": "Error unblocking user", "error": str(e)}, 500
+
 @profile_bp.route("/get_block_list", methods=["GET"])
 @jwt_required()
 def get_block_list():

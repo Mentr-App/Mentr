@@ -518,7 +518,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    unblockedUserID: params.userID
+                    blockedUserID: params.userID
                 }),
             });
 
@@ -527,7 +527,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 throw new Error(errorData.message || "Failed to unblock user");
             }
 
-            window.location.reload();
+            router.push("/");
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred while unblocking the user");
         }
