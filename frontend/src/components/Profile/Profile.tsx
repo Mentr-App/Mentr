@@ -26,7 +26,7 @@ interface ProfileData {
     profile_picture?: string;
 }
 
-type ProfileTab = 'profile' | 'posts' | 'comments';
+type ProfileTab = 'profile' | 'posts' | 'comments' | 'savedposts';
 
 interface ProfileProps {
     params?: {
@@ -65,12 +65,40 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const isOwnProfile = !params?.userID;
     const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
     const isLoggedIn = localStorage.getItem("access_token") !== null;
+    const [userSavedPosts, setUserSavedPosts] = useState<Post[]>([]);
 
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
             setEditableTwoFactorEnabled(false);
         }
     }, [editableEmail]);
+
+    useEffect(() => {
+        const fetchSavedPosts = async () => {
+            if (activeTab !== 'savedposts' || !profile) return;
+    
+            try {
+                const userId = localStorage.getItem("userId");
+                const response = await fetch(`http://localhost:8000/saved_post/get/?userId=${userId}`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    }
+                });
+    
+                if (!response.ok) throw new Error('Failed to fetch saved posts');
+                
+                const data = await response.json();
+                setUserSavedPosts(data.savedPosts || []);
+            } catch (err) {
+                console.error("Error fetching saved posts:", err);
+            }
+        };
+    
+        fetchSavedPosts();
+    }, [activeTab, profile]);
+    
+
 
     useEffect(() => {
         const fetchBlocklist = async () => {
@@ -672,6 +700,16 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     >
                         Comments
                     </button>
+                    <button
+                        className={`py-2 px-4 font-medium text-base focus:outline-none ${
+                            activeTab === 'savedposts' 
+                                ? 'border-b-2 border-primary text-primary' 
+                                : 'text-text-secondary hover:text-text-primary'
+                        }`}
+                        onClick={() => setActiveTab('savedposts')}
+                    >
+                        Saved Posts
+                    </button>
                 </div>
             </div>
 
@@ -1009,6 +1047,65 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                         ) : (
                             <div className="text-center text-text-secondary py-8">
                                 <p>No comments to display</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'savedposts' && (
+                    <div className='bg-foreground p-4 rounded'>
+                        <h2 className='text-lg font-semibold text-text-primary mb-4'>
+                            {isOwnProfile ? 'Your Saved Posts' : `${profile.username}'s Saved Posts`}
+                        </h2>
+                        {postsLoading ? (
+                            <div className='flex justify-center items-center h-32'>
+                                <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary'></div>
+                            </div>
+                        ) : userSavedPosts.length > 0 ? (
+                            <div className="space-y-4">
+                                {userSavedPosts.map((post) => (
+                                    <div key={post._id.$oid} className="space-y-2">
+                                        <ForumPost
+                                            post={post}
+                                            currentVoteType={null}
+                                            onVoteUpdate={handleVoteUpdate}
+                                            onClick={() => handlePostClick(post)}
+                                            hideDate={true}
+                                        />
+                                        <div className="text-right">
+                                            <button
+                                                className="text-sm text-red-500 hover:text-red-700 underline"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    try {
+                                                        const userId = localStorage.getItem("userId");
+                                                        await fetch(`http://localhost:8000/saved_post/unsave/`, {
+                                                            method: "DELETE",
+                                                            headers: {
+                                                              "Content-Type": "application/json",
+                                                            },
+                                                            body: JSON.stringify({
+                                                              userId: localStorage.getItem("userId"),
+                                                              postId: post._id?.$oid || post._id,
+                                                            }),
+                                                          });
+                                                          setUserSavedPosts(prev =>
+                                                            prev.filter(p => (p._id?.$oid || p._id) !== (post._id?.$oid || post._id))
+                                                          );
+                                                    } catch (err) {
+                                                        console.error("Failed to unsave post:", err);
+                                                    }
+                                                }}
+                                            >
+                                                Unsave Post
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-text-secondary py-8">
+                                <p>No posts to display</p>
                             </div>
                         )}
                     </div>
