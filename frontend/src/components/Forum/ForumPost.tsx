@@ -14,6 +14,8 @@ interface ForumPostProps {
     ) => void;
     onClick: () => void;
     hideDate?: boolean;
+    pinned?: boolean;
+    setPinned?: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const ForumPost: React.FC<ForumPostProps> = ({
@@ -22,12 +24,16 @@ const ForumPost: React.FC<ForumPostProps> = ({
     onVoteUpdate,
     onClick,
     hideDate = false,
+    pinned = false,
+    setPinned
 }) => {
     const { isAuthenticated, setIsPopupVisible } = useAuth();
     const [upvotes, setUpvotes] = useState<number>(post.upvotes || 0);
     const [downvotes, setDownvotes] = useState<number>(post.downvotes || 0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [localPinned, setLocalPinned] = useState(pinned)
     const commentsCount = post.comments || 0;
+    const userId = localStorage.getItem("userId")
 
     const handleButtonClick = (
         event: React.MouseEvent<HTMLButtonElement>,
@@ -36,6 +42,36 @@ const ForumPost: React.FC<ForumPostProps> = ({
         event.stopPropagation();
         handleVote(voteType);
     };
+
+    const handleUnpin = async () => {
+        if (!isAuthenticated || !userId || !post) {
+            return
+        }
+
+        try {
+            const endpoint = `/api/post/unpin/${post._id.$oid}`
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    "Content-Type": "application/json"
+                },
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                console.log(data)
+                const pinned_posts = data.user.pinned_posts
+                console.log(pinned_posts)
+                setLocalPinned(false)
+                if (setPinned) {
+                    setPinned(pinned_posts);   
+                }
+            }
+        } catch (error) {
+            console.error("Error pinning post:", error)
+        }
+    }
 
     const handleVote = async (type: "up" | "down") => {
         if (!isAuthenticated) {
@@ -71,7 +107,21 @@ const ForumPost: React.FC<ForumPostProps> = ({
         <div
             onClick={onClick}
             className='bg-secondary-light rounded-lg shadow-lg p-6 hover:bg-gray-500 ease-in-out transition duration-300 cursor-pointer'>
-            <h2 className='text-xl font-semibold text-text-primary mb-2'>{post.title}</h2>
+            <div className="flex flex-row justify-between">
+                <h2 className='text-xl font-semibold text-text-primary mb-2'>{post.title}</h2>
+                {localPinned
+                ?
+                    <button className="text-white text-xs hover:text-orange-500 ease-in-out transitoin duration-300"
+                            onClick={(event) => {
+                                event.stopPropagation()
+                                handleUnpin()
+                            }}>
+                        unpin
+                    </button>
+                :
+                    <></>
+                }
+            </div>
             <p className='text-text-secondary mb-4'>{post.content}</p>
             <div className='flex justify-between items-center text-sm text-text-light'>
                 <div className='flex items-center space-x-4'>

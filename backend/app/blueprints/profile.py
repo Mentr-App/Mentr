@@ -102,8 +102,9 @@ def upload_profile_picture():
         
         user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
         print("Current user data:", user)
+        print("profile_picture" in user)
         
-        if user and "profile_picture" in user:
+        if user and "profile_picture" in user and user["profile_picture"]:
             print("Deleting old picture:", user["profile_picture"])
             img_handler.delete(user["profile_picture"])
             
