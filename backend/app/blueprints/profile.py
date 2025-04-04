@@ -305,3 +305,17 @@ def get_block_list():
     except Exception as e:
         print("Error finding user:", str(e))
         return {"message": "Error finding user", "error": str(e)}, 500
+
+@profile_bp.route('/get_pinned', methods=["GET"])
+@jwt_required()
+def get_pinned():
+    try:
+        user_id = get_jwt_identity()
+        pinned_posts = User.get_pinned(user_id)
+        print("pinned:",pinned_posts)
+        if not pinned_posts:
+            return {"message": "Error getting pinned posts"}, 500
+        return {"message": "Got pinned posts successfully", "pinned_posts": pinned_posts}, 200
+    except Exception as e:
+        print("Error getting pinned posts:", str(e))
+        return {"message": "Error getting pinned posts", "error:": str(e)}, 500

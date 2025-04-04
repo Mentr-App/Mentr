@@ -168,7 +168,7 @@ const Navbar: React.FC = () => {
                 />
                 {isDropdownVisible && (
                     <div
-                        className='absolute right-0 mt-2 w-48 rounded-lg shadow-lg'
+                        className='absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50'
                         style={{ backgroundColor: "var(--foreground)" }}>
                         <ul className='py-2'>
                             {isAuthenticated && (

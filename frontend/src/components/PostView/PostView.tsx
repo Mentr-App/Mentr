@@ -33,6 +33,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const [authorProfile, setAuthorProfile] = useState<Author | null>(null);
     const [blocklist, setBlocklist] = useState<{blocked: string[], blocking: string[]}>({blocked: [], blocking: []});
     const [isUnblocking, setIsUnblocking] = useState(false);
+    const [pinned, setPinned] = useState(false)
     const userId = localStorage.getItem("userId");
     const router = useRouter();
 
@@ -57,6 +58,35 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             console.error("Error fetching blocklist:", error);
         }
     };
+
+    const fetchUserPinned = async () => {
+        if (!isAuthenticated || !userId) {
+            return
+        }
+
+        try {
+            const endpoint = "/api/profile/getPinned"
+            const response = await fetch(endpoint, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    "Content-Type": "application/json",
+                }
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                const pinned_posts = data.pinned_posts
+                console.log(pinned_posts, post?._id.$oid, pinned_posts.includes(post?._id.$oid))
+                if ((post) && (pinned_posts.includes(post?._id.$oid))) {
+                    console.log(true)
+                    setPinned(true)
+                }
+                console.log(data)
+            }
+        } catch (error) {
+            console.error("error getting pinned:", error)
+        }
+    }
 
     const fetchUserVotes = async () => {
         if (!isAuthenticated) {
@@ -137,6 +167,56 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
         }
     };
 
+    const handlePin = async () => {
+        if (!isAuthenticated || !post || !userId) {
+            return
+        }
+
+        try {
+            const endpoint = `/api/post/pin/${post._id.$oid}`
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    "Content-Type": "application/json"
+                },
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                setPinned(true)
+                console.log(data)
+            }
+        } catch (error) {
+            console.error("Error pinning post:", error)
+        }
+    }
+
+    const handleUnpin = async () => {
+        if (!isAuthenticated || !userId || !post) {
+            return
+        }
+
+        try {
+            const endpoint = `/api/post/unpin/${post._id.$oid}`
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    "Content-Type": "application/json"
+                },
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                console.log(data)
+                setPinned(false)
+            }
+        } catch (error) {
+            console.error("Error pinning post:", error)
+        }
+    }
+
     const handleEditSubmit = async () => {
         if (!isAuthenticated || !post || editText === post.content || editText === "") {
             return;
@@ -192,6 +272,10 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             router.push(`/profile/${post.author._id.$oid}`);
         }
     }
+
+    useEffect(() => {
+        fetchUserPinned()
+    }, [pinned, post])
 
     useEffect(() => {
         getPost();
@@ -327,9 +411,19 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                     {userId === post.author?._id.$oid && (
                                         <DeleteButton onDelete={handleDelete} setIsDropdownVisible={setIsDropdownVisible}/>
                                     )}
-                                    <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
-                                        Save Post
-                                    </li>
+                                    {userId && isAuthenticated && (
+                                        <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
+                                            Save Post
+                                        </li>
+                                    )} 
+                                    {userId && isAuthenticated && (
+                                        <li
+                                            className="px-4 py-2 cursor-pointer hover:bg-foreground"
+                                            onClick={pinned ? handleUnpin : handlePin}
+                                        >
+                                            {pinned ? 'Unpin Post' : 'Pin Post'}
+                                        </li>
+                                    )}
                                 </ul>
                             </div>
                         )}

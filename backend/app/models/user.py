@@ -131,3 +131,8 @@ class User:
     @staticmethod
     def scrambled_number(user):
         mongo.db.users.update_one({'_id': user['_id']},{'$set': {'two_factor_number': random.randint(100000, 999999)}})
+
+    @staticmethod
+    def get_pinned(user_id):
+        user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+        return user.get("pinned_posts", None) if user else None

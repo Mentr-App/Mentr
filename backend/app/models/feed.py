@@ -26,9 +26,6 @@ class Feed:
             print(f"Invalid sort_by value: {sort_by}, defaulting to 'new'")
             sort_by = "new"
 
-        print(f"Sorting by: {sort_by}")
-        print(f"Sort options: {sort_options[sort_by]}")
-
         # MongoDB pipeline
         pipeline = [
             {"$sort": dict(sort_options[sort_by])},  # Apply the sorting
@@ -58,7 +55,6 @@ class Feed:
 
         # Fetch posts using aggregation
         posts = list(mongo.db.posts.aggregate(pipeline))
-        print(posts)
         json_posts = json.loads(
             json_util.dumps(posts, json_options=json_util.RELAXED_JSON_OPTIONS)
         )

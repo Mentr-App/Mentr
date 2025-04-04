@@ -167,3 +167,22 @@ class Post:
         except Exception as e:
             print(f"Error fetching posts by author: {e}")
             return []
+
+    @staticmethod
+    def pin_post(post_id, user_id, pin=True):
+        if pin:
+            mongo.db.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$push": {"pinned_posts": post_id}}
+            )
+        else:
+            mongo.db.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$pull": {"pinned_posts": post_id}}
+            )
+
+        user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return None
+        return user
+
