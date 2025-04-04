@@ -28,7 +28,7 @@ export interface IDObject {
     $oid: string;
 }
 
-interface UserVotes {
+export interface UserVotes {
     [postId: string]: "up" | "down";
 }
 
@@ -419,7 +419,8 @@ const Forum: React.FC = () => {
             )}
 
             {!searchLoading && (
-                <div className='flex-1 overflow-y-scroll px-6 pb-6'>
+                <div className='flex-1 px-6 pb-6'>
+                    <PinnedSection userVotes={userVotes} posts={getFilteredFeed(feed)} isGridView={isGridView} searchLoading={searchLoading} handlePostClick={handlePostClick} handleVoteUpdate={handleVoteUpdate}/>
                     {isGridView ? (
                         <div className='max-w-7xl mx-auto'>
                             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -436,7 +437,7 @@ const Forum: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className='max-w-3xl mx-auto space-y-6 overflow-scroll'>
+                        <div className='max-w-3xl mx-auto space-y-6'>
                             {getFilteredFeed(feed).map((post) => (
                                 <ForumPost
                                     key={post._id.$oid}
