@@ -323,6 +323,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     useEffect(() => {
         if (post?.author) {
             setAuthorProfile(post.author);
+            console.log(post.author)
         }
     }, [post]);
 
@@ -366,7 +367,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                         {post.title}
                     </h2>
                     <div className="flex items-center mb-4">
-                        <ProfilePicture profilePicture={post.author?.profile_picture_url} userId={post.author?._id.$oid}/>
+                        <ProfilePicture profilePicture={authorProfile?.profile_picture_url} userId={authorProfile?._id.$oid}/>
                         <div>
                             <div className="font-semibold text-white" onClick={handleAuthorClick} title="Click to view author profile">
                                 {post.author?.username}

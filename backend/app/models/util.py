@@ -20,11 +20,11 @@ class Util:
     @staticmethod
     def get_anonymous_author_object():
         return {
-            "_id": None,
+            "_id": {"$oid": "[anonymous]"},
             "username": "Anonymous User",
             "profile_picture_url": None,
-            "userType": None,
-            "major": None,
-            "company": None,
-            "industry": None
+            "userType": "Mentor",
+            "major": "Unknown",
+            "company": "Unknown",
+            "industry": "Unknown"
         }
