@@ -11,6 +11,7 @@ const PostCreator: React.FC = () => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [anonymous, setAnonymous] = useState<boolean>(false);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -50,6 +51,7 @@ const PostCreator: React.FC = () => {
             const formData = new FormData();
             formData.append("title", title);
             formData.append("content", content);
+            formData.append("anonymous", String(anonymous));
             if (image) {
                 formData.append("image", image);
             }
@@ -169,6 +171,20 @@ const PostCreator: React.FC = () => {
                             Selected: {image.name}
                         </p>
                     )}
+                </div>
+
+                <div className='mb-4'>
+                    <label className='inline-flex items-center text-white'>
+                        <input
+                            type='checkbox'
+                            id='anonymous'
+                            name='anonymous'
+                            checked={anonymous}
+                            onChange={(e) => setAnonymous(e.target.checked)}
+                            className='form-checkbox h-4 w-4 text-violet-600 border-gray-300 rounded'
+                        />
+                        <span className='ml-2'>Post anonymously</span>
+                    </label>
                 </div>
 
                 <button
