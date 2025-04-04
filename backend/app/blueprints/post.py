@@ -222,7 +222,7 @@ def delete_post(post_id):
         post = Post.delete_post(post_id)
         if not post:
             return {"message": "Failed to delete post"}, 500
-        return {"message": "Post updated successfully", "post": post}, 200
+        return {"message": "Post deleted successfully", "post": post}, 200
 
     except Exception as e:
         print("Error deleting post:", str(e))
