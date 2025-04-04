@@ -118,6 +118,7 @@ const Forum: React.FC = () => {
         }
 
         const endpoint = `/api/feed?skip=${(pageNumber - 1) * postsPerPage}&limit=${postsPerPage}&sort_by=${sortBy}`;
+        console.log(endpoint)
         const access_token = localStorage.getItem("access_token");
 
         try {
@@ -141,6 +142,7 @@ const Forum: React.FC = () => {
             }
 
             const data = await response.json();
+            console.log(data.feed)
 
             if (data.feed.length < postsPerPage) {
                 setHasMore(false);
@@ -187,9 +189,9 @@ const Forum: React.FC = () => {
 
     const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newSortValue = e.target.value;
+        console.log(newSortValue)
         setSortBy(newSortValue);
         setPage(1);
-        loadFeed(true, 1);
     };
 
     const handleVoteUpdate = (postId: string, newVoteType: "up" | "down" | null, newUpvotes: number, newDownvotes: number) => {
@@ -256,9 +258,6 @@ const Forum: React.FC = () => {
     };
     
     const isBlockedPost = (post: Post): boolean => {
-        console.log("post" + post.title + post.author_id?.$oid)
-        console.log(blocklist.blocked)
-        console.log(blocklist.blocking)
         if (!isAuthenticated || !post.author_id?.$oid) return false;
         
         const authorId = post.author_id.$oid;
@@ -299,6 +298,7 @@ const Forum: React.FC = () => {
             }
 
             const data = await response.json();
+            console.log(data.feed)
             setAllPosts(data.feed);
             return data.feed;
         } catch (error) {

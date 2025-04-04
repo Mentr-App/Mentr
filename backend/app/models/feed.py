@@ -11,6 +11,8 @@ class Feed:
     @staticmethod
     def get_feed(skip=0, limit=25, sort_by="new"):
         """Fetch Feeds for the user feed with pagination and sorting."""
+        
+        # Sorting options
         sort_options = {
             "new": [("created_at", -1)],  # Newest first
             "old": [("created_at", 1)],   # Oldest first
@@ -19,8 +21,17 @@ class Feed:
             "controversial": [("downvotes", -1)],  # Most downvotes
         }
 
+        # Check if sort_by is valid, otherwise fall back to default "new"
+        if sort_by not in sort_options:
+            print(f"Invalid sort_by value: {sort_by}, defaulting to 'new'")
+            sort_by = "new"
+
+        print(f"Sorting by: {sort_by}")
+        print(f"Sort options: {sort_options[sort_by]}")
+
+        # MongoDB pipeline
         pipeline = [
-            {"$sort": dict(sort_options.get(sort_by, [("created_at", -1)]))},
+            {"$sort": dict(sort_options[sort_by])},  # Apply the sorting
             {"$skip": skip},
             {"$limit": limit},
             {
@@ -45,7 +56,9 @@ class Feed:
             {"$project": {"author_info": 0}},
         ]
 
+        # Fetch posts using aggregation
         posts = list(mongo.db.posts.aggregate(pipeline))
+        print(posts)
         json_posts = json.loads(
             json_util.dumps(posts, json_options=json_util.RELAXED_JSON_OPTIONS)
         )
