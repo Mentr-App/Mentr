@@ -105,6 +105,7 @@ const Navbar: React.FC = () => {
                 alt='Logo'
                 className='w-40 cursor-pointer'
                 onClick={handleLogoClick}
+                title="Go to homepage"
             />
 
             {/* Navigation Icons */}
@@ -116,6 +117,7 @@ const Navbar: React.FC = () => {
                         src={people_img.src}
                         alt='People'
                         className='w-10 opacity-70 hover:opacity-100 transition-opacity duration-200'
+                        title="Mentr Matching"
                     />
                 </li>
                 <li
@@ -125,6 +127,7 @@ const Navbar: React.FC = () => {
                         src={chat_img.src}
                         alt='Chat'
                         className='w-10 opacity-70 hover:opacity-100 transition-opacity duration-200'
+                        title="Chat"
                     />
                 </li>
                 <li
@@ -135,6 +138,7 @@ const Navbar: React.FC = () => {
                         alt='Create'
                         onClick={handleCreatePost}
                         className='w-10 opacity-70 hover:opacity-100 transition-opacity duration-200'
+                        title="Create Post"
                     />
                 </li>
             </ul>
@@ -165,6 +169,7 @@ const Navbar: React.FC = () => {
                     alt='Profile'
                     className='w-10 h-10 rounded-full object-cover opacity-70 hover:opacity-100 transition-opacity duration-200 cursor-pointer'
                     onClick={handleProfileClick}
+                    title="View More Pages"
                 />
                 {isDropdownVisible && (
                     <div
@@ -177,6 +182,7 @@ const Navbar: React.FC = () => {
                                     style={{
                                         color: "var(--text-primary)",
                                     }}
+                                    title="Click to view your profile"
                                     onClick={handleUserSettings}>
                                     User Settings
                                 </li>
@@ -186,6 +192,7 @@ const Navbar: React.FC = () => {
                                 style={{
                                     color: "var(--text-primary)",
                                 }}
+                                title="Click to view FAQ"
                                 onClick={handleFAQ}>
                                 Frequently Asked Questions
                             </li>
@@ -194,6 +201,7 @@ const Navbar: React.FC = () => {
                                 style={{
                                     color: "var(--text-primary)",
                                 }}
+                                title="Click to view about us"
                                 onClick={handleAbout}>
                                 About Us
                             </li>
@@ -202,6 +210,7 @@ const Navbar: React.FC = () => {
                                 style={{
                                     color: "var(--text-primary)",
                                 }}
+                                title="Click to contact us"
                                 onClick={handleContact}>
                                 Contact Us
                             </li>
@@ -210,6 +219,7 @@ const Navbar: React.FC = () => {
                                 style={{
                                     color: "var(--text-primary)",
                                 }}
+                                title="Click to view privacy policy"
                                 onClick={handlePrivacyPolicy}>
                                 Privacy Policy
                             </li>
@@ -219,6 +229,7 @@ const Navbar: React.FC = () => {
                                     style={{
                                         color: "var(--text-primary)",
                                     }}
+                                    title="Click to log in"
                                     onClick={() => {
                                         setIsDropdownVisible(false);
                                         setIsPopupVisible(true);
@@ -231,6 +242,7 @@ const Navbar: React.FC = () => {
                                     style={{
                                         color: "var(--text-primary)",
                                     }}
+                                    title="Click to log out"
                                     onClick={handleSignOut}>
                                     Sign Out
                                 </li>

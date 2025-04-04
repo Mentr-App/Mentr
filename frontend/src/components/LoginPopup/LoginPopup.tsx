@@ -246,14 +246,17 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             value={twoFactorCode}
                             onChange={(e) => setTwoFactorCode(e.target.value)}
                             className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
+                            title="2FA code input"
                         />
                         <button
                             type='submit'
+                            title="Submit 2FA code"
                             className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
                             Verify Code
                         </button>
                         <button
                             type='button'
+                            title="Back to login"
                             onClick={() => setIsTwoFactorActive(false)}
                             className='w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200'>
                             Back to Login
@@ -269,6 +272,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                     </p>
                                     <input
                                         type='text'
+                                        title="Security question answer input"
                                         placeholder='Your answer'
                                         value={securityAnswers[index] || ""}
                                         onChange={(e) =>
@@ -284,6 +288,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             <div className='flex gap-4'>
                                 <button
                                     type='button'
+                                    title="Click to go back to forgot password"
                                     onClick={() =>
                                         setShowSecurityQuestions(false)
                                     }
@@ -292,6 +297,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 </button>
                                 <button
                                     type='submit'
+                                    title="Submit security question answers"
                                     className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
                                     Verify Answers
                                 </button>
@@ -303,16 +309,19 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 type='email'
                                 placeholder='Enter your email'
                                 value={email}
+                                title="Email input"
                                 onChange={(e) => setEmail(e.target.value)}
                                 className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                             />
                             <button
                                 type='submit'
+                                title="Get security questions"
                                 className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
                                 Get Security Questions
                             </button>
                             <button
                                 type='button'
+                                title="Click to go back to login"
                                 onClick={() => {
                                     setShowForgotPassword(false);
                                     setError(null);
@@ -333,6 +342,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 <input
                                     type='text'
                                     placeholder='Your answer'
+                                    title="Security question answer input"
                                     value={securityAnswers[index]}
                                     onChange={(e) =>
                                         handleSecurityAnswerChange(
@@ -347,12 +357,14 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         <div className='flex gap-4'>
                             <button
                                 type='button'
+                                title='Click to go back to sign up'
                                 onClick={() => setShowSecurityQuestions(false)}
                                 className='w-full bg-gray-500 text-text-primary px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200'>
                                 Back
                             </button>
                             <button
                                 type='submit'
+                                title='Click to sign up'
                                 className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
                                 Complete Sign Up
                             </button>
@@ -364,6 +376,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             type='text'
                             placeholder={placeHolderText}
                             value={username}
+                            title="Input username"
                             onChange={(e) => setUsername(e.target.value)}
                             className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
                         />
@@ -371,6 +384,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             <input
                                 type='email'
                                 placeholder='Email (optional)'
+                                title="Input email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
@@ -379,6 +393,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         <input
                             type='password'
                             placeholder='Password'
+                            title="Input password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded mb-4 outline-none'
@@ -398,6 +413,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                         )
                                     }
                                     className='w-full bg-[#2C353D] text-text-primary px-4 py-2 rounded outline-none'>
+
                                     <option value='' disabled>
                                         Select an option
                                     </option>
@@ -437,6 +453,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         )}
                         <button
                             type='submit'
+                            title="Click to login or sign up"
                             className='w-full bg-primary text-text-primary px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200'>
                             {isLogin
                                 ? "Login"
@@ -447,6 +464,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             !showSecurityQuestions && (
                                 <button
                                     type='button'
+                                    title="Click to reset password"
                                     onClick={() => setShowForgotPassword(true)}
                                     className='w-full text-primary mt-2 hover:text-primary-dark transition-colors duration-200'>
                                     Forgot Password?
@@ -478,6 +496,7 @@ const LoginPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
                 <button
                     onClick={onClose}
+                    title="Close the popup"
                     className='absolute top-4 right-4 text-text-primary text-2xl'>
                     &times;
                 </button>

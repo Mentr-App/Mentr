@@ -11,6 +11,7 @@ const PostCreator: React.FC = () => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [anonymous, setAnonymous] = useState<boolean>(false);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -50,6 +51,7 @@ const PostCreator: React.FC = () => {
             const formData = new FormData();
             formData.append("title", title);
             formData.append("content", content);
+            formData.append("anonymous", String(anonymous));
             if (image) {
                 formData.append("image", image);
             }
@@ -98,6 +100,7 @@ const PostCreator: React.FC = () => {
                         id='title'
                         name='title'
                         value={title}
+                        title="Title of the post"
                         onChange={handleInputChange}
                         required
                         className='peer mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -115,6 +118,7 @@ const PostCreator: React.FC = () => {
                     <textarea
                         id='body'
                         name='body'
+                        title="Content of the post"
                         value={content}
                         onChange={handleInputChange}
                         required
@@ -135,6 +139,7 @@ const PostCreator: React.FC = () => {
                         <img
                             src={imagePreview}
                             alt="Preview"
+                            title="Preview of the selected image"
                             className="max-w-full h-auto rounded-lg shadow-sm"
                             style={{ maxHeight: '300px' }}
                         />
@@ -168,8 +173,23 @@ const PostCreator: React.FC = () => {
                     )}
                 </div>
 
+                <div className='mb-4'>
+                    <label className='inline-flex items-center text-white'>
+                        <input
+                            type='checkbox'
+                            id='anonymous'
+                            name='anonymous'
+                            checked={anonymous}
+                            onChange={(e) => setAnonymous(e.target.checked)}
+                            className='form-checkbox h-4 w-4 text-violet-600 border-gray-300 rounded'
+                        />
+                        <span className='ml-2'>Post anonymously</span>
+                    </label>
+                </div>
+
                 <button
                     type='submit'
+                    title="Click to create post"
                     disabled={isSubmitting}
                     className={`w-full py-2 px-4 mt-4 font-medium text-white rounded-md focus:outline-none focus:ring-2 ${
                         isSubmitting ? "bg-gray-400" : "bg-violet-600 hover:bg-violet-700"

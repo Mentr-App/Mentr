@@ -21,6 +21,7 @@ def create_post():
         title = request.form.get("title")
         content = request.form.get("content")
         author_id = get_jwt_identity()
+        anonymous = request.form.get("anonymous", "false").lower() == "true"
         if not title or not content:
             return {"message": "Missing title or content"}, 400
 
@@ -37,7 +38,8 @@ def create_post():
                 filename = f"post_images/{author_id}_{timestamp}_{file.filename}"
                 img_handler.create(filename, file)
 
-        post_id = Post.create_post(author_id, title, content, filename)
+        post_id = Post.create_post(author_id, title, content, filename, anonymous)
+
         return {"message": "Post created successfully", "post_id": post_id}, 201
 
     except Exception as e:

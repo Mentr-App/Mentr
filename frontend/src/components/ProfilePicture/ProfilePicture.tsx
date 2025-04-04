@@ -27,6 +27,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
       alt="Profile Picture"
       className="w-10 h-10 rounded-full mr-3 cursor-pointer"
       onClick={handleClick}
+      title="Profile Picture"
     />
   );
 };

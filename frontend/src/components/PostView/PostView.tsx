@@ -339,6 +339,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                 <p className="text-gray-400 mb-6">You won't see content from users you've blocked.</p>
                 <button
                     onClick={handleRouteUser}
+                    title="View user profile"
                     disabled={isUnblocking}
                     className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors"
                 >
@@ -367,7 +368,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                     <div className="flex items-center mb-4">
                         <ProfilePicture profilePicture={post.author?.profile_picture_url} userId={post.author?._id.$oid}/>
                         <div>
-                            <div className="font-semibold text-white" onClick={handleAuthorClick}>
+                            <div className="font-semibold text-white" onClick={handleAuthorClick} title="Click to view author profile">
                                 {post.author?.username}
                             </div>
                             <div className="text-sm text-gray-600">
@@ -387,6 +388,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                 src={post.image_url} 
                                 alt="Post content" 
                                 className="max-w-full h-auto rounded-lg cursor-pointer"
+                                title="Click to view image"
                                 onClick={() => setIsLightboxOpen(true)}
                             />
                             <Lightbox
@@ -415,6 +417,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                         <button
                             className="cursor font-bold text-2xl opacity-70 hover:opacity-100 transition-opacity duration-200"
                             onClick={() => setIsDropdownVisible(!isDropdownVisible)}
+                            title="Toggle post options"
                         >
                             &#8942;
                         </button>
@@ -424,6 +427,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                     {userId === post.author?._id.$oid && (
                                         <li 
                                             className="px-4 py-2 cursor-pointer hover:bg-foreground"
+                                            title="Click to edit post"
                                             onClick={() => {
                                                 setIsEditing(true);
                                                 setIsDropdownVisible(false);
@@ -437,6 +441,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                     )}
                                     {userId && isAuthenticated && (
                                         <li className="px-4 py-2 cursor-pointer hover:bg-foreground"
+                                        title="Click to save post"
                                             onClick={() => {
                                               handleSavePost();
                                               setIsDropdownVisible(false)
@@ -448,6 +453,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                         <li
                                             className="px-4 py-2 cursor-pointer hover:bg-foreground"
                                             onClick={pinned ? handleUnpin : handlePin}
+                                            title="Click to pin/unpin post"
                                         >
                                             {pinned ? 'Unpin Post' : 'Pin Post'}
                                         </li>
@@ -462,6 +468,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                         <button
+                            title="Click to upvote"
                             onClick={() => handleVote("up")}
                             disabled={isLoading}
                             className={`flex items-center space-x-1 px-2 py-1 rounded transition-colors ${
@@ -484,6 +491,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                         </button>
                         <button
                             onClick={() => handleVote("down")}
+                            title="Click to downvote"
                             disabled={isLoading}
                             className={`flex items-center space-x-1 px-2 py-1 rounded transition-colors ${
                                 currentVoteType === "down"

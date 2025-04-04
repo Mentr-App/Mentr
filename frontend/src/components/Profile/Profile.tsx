@@ -619,6 +619,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     {!isOwnProfile && isLoggedIn && (
                         <button
                             onClick={handleBlockUser}
+                            title="Click to block this user"
                             className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'
                         >
                             Block
@@ -627,6 +628,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     {isOwnProfile && activeTab === 'profile' && (
                         <div className='w-[120px]'>
                             <button
+                                title="Click to modify your profile"
                                 onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
                                 className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors w-full'
                             >
@@ -662,6 +664,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                         />
                         <button
                             onClick={triggerFileInput}
+                            title="Click to upload a new profile picture"
                             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors mb-4"
                         >
                             {profile?.profile_picture ? 'Change Profile Picture' : 'Add Profile Picture'}
@@ -676,6 +679,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 ? 'border-b-2 border-primary text-primary' 
                                 : 'text-text-secondary hover:text-text-primary'
                         }`}
+                        title="Click to view your profile"
                         onClick={() => setActiveTab('profile')}
                     >
                         Profile
@@ -687,6 +691,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 : 'text-text-secondary hover:text-text-primary'
                         }`}
                         onClick={() => setActiveTab('posts')}
+                        title="Click to view your posts"
                     >
                         Posts
                     </button>
@@ -697,6 +702,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 : 'text-text-secondary hover:text-text-primary'
                         }`}
                         onClick={() => setActiveTab('comments')}
+                        title="Click to view your comments"
                     >
                         Comments
                     </button>
@@ -707,6 +713,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 : 'text-text-secondary hover:text-text-primary'
                         }`}
                         onClick={() => setActiveTab('savedposts')}
+                        title="Click to view your saved posts"
                     >
                         Saved Posts
                     </button>
@@ -724,6 +731,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                     {isOwnProfile && isEditing ? (
                                         <input
                                             type='text'
+                                            title="Click to edit your username"
                                             value={editableUsername}
                                             onChange={(e) => setEditableUsername(e.target.value)}
                                             className='w-full bg-background text-text-primary p-2 rounded'
@@ -734,6 +742,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                     {isOwnProfile && (
                                         <button
                                             onClick={handleResetPassword}
+                                            title="Click to reset your password"
                                             className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                             Reset Password
                                         </button>
@@ -773,6 +782,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         {isEditing ? (
                                             <input
                                                 type='email'
+                                                title="Edit your email"
                                                 value={editableEmail}
                                                 onChange={(e) => setEditableEmail(e.target.value)}
                                                 className='w-full bg-background text-text-primary p-2 rounded'
@@ -782,6 +792,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                 <p className='text-text-primary'>{profile.email}</p>
                                                 {profile.email && (
                                                     <button
+                                                        title="Click to unlink your email"
                                                         onClick={() => handleUnlinkSocialMedia("email")}
                                                         className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                                         Unlink
@@ -800,6 +811,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         {isOwnProfile && (
                                             <button
                                                 onClick={handleDeleteAccount}
+                                                title="Click to delete your account"
                                                 className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                                 Delete Account
                                             </button>
@@ -815,6 +827,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             {isEditing ? (
                                                 <select
                                                     value={editableUserType || ""}
+                                                    title="Click to edit your user type"
                                                     onChange={(e) => setEditableUserType(e.target.value as "Mentor" | "Mentee")}
                                                     className='w-full bg-background text-text-primary p-2 rounded'
                                                 >
@@ -832,6 +845,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                 {isEditing ? (
                                                     <input
                                                         type='text'
+                                                        title="Click to edit your major"
                                                         value={editableMajor}
                                                         onChange={(e) => setEditableMajor(e.target.value)}
                                                         className='w-full bg-background text-text-primary p-2 rounded'
@@ -848,6 +862,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                     {isEditing ? (
                                                         <input
                                                             type='text'
+                                                            title="Click to edit your company"
                                                             value={editableCompany}
                                                             onChange={(e) => setEditableCompany(e.target.value)}
                                                             className='w-full bg-background text-text-primary p-2 rounded'
@@ -861,6 +876,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                     {isEditing ? (
                                                         <input
                                                             type='text'
+                                                            title="Click to edit your industry"
                                                             value={editableIndustry}
                                                             onChange={(e) => setEditableIndustry(e.target.value)}
                                                             className='w-full bg-background text-text-primary p-2 rounded'
@@ -895,6 +911,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             />
                                         </button>
                                         <p className='text-text-primary'>
+                                            title="Click to toggle two-factor authentication"
                                             {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
                                         </p>
                                     </div>
@@ -906,6 +923,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         <>
                                             <input
                                                 type='text'
+                                                title="Click to edit your LinkedIn URL"
                                                 value={editableLinkedin}
                                                 onChange={(e) => setEditableLinkedin(e.target.value)}
                                                 className='w-full bg-background text-text-primary p-2 rounded'
@@ -919,6 +937,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             <p className='text-text-primary'>{profile.linkedin || 'Not provided'}</p>
                                             {isOwnProfile && profile.linkedin && !isEditing && (
                                                 <button
+                                                    title="Click to unlink your LinkedIn account"
                                                     onClick={() => handleUnlinkSocialMedia("linkedin")}
                                                     className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                                     Unlink
@@ -933,6 +952,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         <>
                                             <input
                                                 type='text'
+                                                title="Click to edit your Instagram URL"
                                                 value={editableInstagram}
                                                 onChange={(e) => setEditableInstagram(e.target.value)}
                                                 className='w-full bg-background text-text-primary p-2 rounded'
@@ -947,6 +967,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             {isOwnProfile && profile.instagram && !isEditing && (
                                                 <button
                                                     onClick={() => handleUnlinkSocialMedia("instagram")}
+                                                    title="Click to unlink your Instagram account"
                                                     className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                                     Unlink
                                                 </button>
@@ -961,6 +982,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             <input
                                                 type='text'
                                                 value={editableTwitter}
+                                                title="Click to edit your Twitter URL"
                                                 onChange={(e) => setEditableTwitter(e.target.value)}
                                                 className='w-full bg-background text-text-primary p-2 rounded'
                                             />
@@ -974,6 +996,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             {isOwnProfile && profile.twitter && !isEditing && (
                                                 <button
                                                     onClick={() => handleUnlinkSocialMedia("twitter")}
+                                                    title="Click to unlink your Twitter account"
                                                     className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                                     Unlink
                                                 </button>
@@ -1004,6 +1027,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         currentVoteType={null}
                                         onVoteUpdate={handleVoteUpdate}
                                         onClick={() => handlePostClick(post)}
+                                        title="Click to view this post"
                                     />
                                 ))}
                             </div>
@@ -1031,6 +1055,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         key={comment._id.$oid} 
                                         className="bg-background p-4 rounded-lg cursor-pointer hover:bg-background-dark transition-colors"
                                         onClick={() => comment.post_id && handleCommentClick(comment.post_id)}
+                                        title="Click to view this comment"
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <h3 className="text-text-primary font-medium">
@@ -1071,6 +1096,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             onVoteUpdate={handleVoteUpdate}
                                             onClick={() => handlePostClick(post)}
                                             hideDate={true}
+                                            title="Click to view this post"
                                         />
                                         <div className="text-right">
                                             <button

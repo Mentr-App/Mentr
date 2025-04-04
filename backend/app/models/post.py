@@ -18,27 +18,28 @@ class Post:
         post = mongo.db.posts.aggregate([
             {"$match": {"_id": ObjectId(post_id)}},
             {"$lookup": {
-                "from": "users",  # Join with 'users' collection
-                "localField": "author_id",  # Field in 'comments'
-                "foreignField": "_id",  # Corresponding field in 'users'
+                "from": "users",
+                "localField": "author_id",
+                "foreignField": "_id",
                 "as": "author"
             }},
-            {"$unwind": {"path": "$author", "preserveNullAndEmptyArrays": True}},  # Convert author array to object
+            {"$unwind": {"path": "$author", "preserveNullAndEmptyArrays": True}},
             {
                 "$project": {
-                    "_id": 1,  # Keep post ID
+                    "_id": 1,
                     "title": 1,
-                    "content": 1,  # Keep content
+                    "content": 1,
                     "image_url": 1,
-                    "created_at": 1,  # Keep timestamp
+                    "created_at": 1,
                     "upvotes": 1,
                     "downvotes": 1,
                     "comments": 1,
                     "views": 1,
                     "votes": 1,
+                    "anonymous": 1,  # ✅ include anonymous in response
                     "author": {
                         "$cond": {
-                            "if": {"$gt": ["$author._id", None]},  # If author exists, keep it
+                            "if": {"$gt": ["$author._id", None]},
                             "then": {
                                 "_id": "$author._id",
                                 "userType": "$author.userType",
@@ -48,7 +49,7 @@ class Post:
                                 "company": "$author.company",
                                 "industry": "$author.industry"
                             },
-                            "else": None  # If author does not exist, set to None (removes field)
+                            "else": None
                         }
                     }
                 }
@@ -68,29 +69,35 @@ class Post:
             post["views"] = result["views"] if result else post.get("views", 0) + 1
         
         post["created_at"] = post["created_at"].isoformat() if "created_at" in post else None
-        author = post.get("author", None)
-        if author:
-            if author["profile_picture"]:
-                author["profile_picture_url"] = img_handler.get(author["profile_picture"])
-                del author["profile_picture"]
+
+        # ✅ Handle anonymous author display
+        if post.get("anonymous", False):
+            author = Util.get_anonymous_author_object()
         else:
-            author = Util.get_deleted_author_object()
+            author = post.get("author", None)
+            if author:
+                if author.get("profile_picture"):
+                    author["profile_picture_url"] = img_handler.get(author["profile_picture"])
+                    del author["profile_picture"]
+            else:
+                author = Util.get_deleted_author_object()
+
         post["author"] = author
 
-        if "image_url" in post and post["image_url"]:
-            post["image_url"] = img_handler.get(post["image_url"].split('?')[0])  # Get fresh signed URL
-        
-        
+        if post.get("image_url"):
+            post["image_url"] = img_handler.get(post["image_url"].split('?')[0])
+
         return post
 
     @staticmethod
-    def create_post(author_id, title, content, image_url=None):
+    def create_post(author_id, title, content, image_url=None, anonymous=False):
         """Insert a new post into the database."""
         post_data = {
             "author_id": ObjectId(author_id),
             "title": title,
             "content": content,
             "image_url": image_url,
+            "anonymous": anonymous,  # ✅ store in DB
             "created_at": datetime.now(),
             "upvotes": 0,
             "downvotes": 0,
@@ -99,12 +106,11 @@ class Post:
         post_id = mongo.db.posts.insert_one(post_data).inserted_id
         return str(post_id)
 
-
     @staticmethod
     def get_total_posts():
         """Get the total number of posts in the database."""
         return mongo.db.posts.count_documents({})
-    
+
     @staticmethod
     def edit_post(post_id, content):
         mongo.db.posts.update_one(
@@ -117,7 +123,6 @@ class Post:
         post = Post.view_post(post_id, inc_view=False)
         return post if post else None
 
-    
     @staticmethod
     def delete_post(post_id):
         mongo.db.posts.update_one(
@@ -132,9 +137,7 @@ class Post:
 
     @staticmethod
     def get_posts_by_author(username):
-        """
-        Retrieves all posts by a specific author from the database
-        """
+        """Retrieves all posts by a specific author."""
         try:
             author = mongo.db.users.find_one(
                 {"username": username},
@@ -142,28 +145,29 @@ class Post:
             )
             if not author:
                 author = {'_id': 'deleted', 'username': 'Anonymous'}
-            
-            posts_cursor = mongo.db.posts.find({"author_id": ObjectId(author["_id"])})
-            
+
+            posts_cursor = mongo.db.posts.find({
+                "author_id": ObjectId(author["_id"]),
+                "anonymous": {"$ne": True}  # ✅ Filter out anonymous posts
+            })
+
             posts = []
             for post in posts_cursor:
                 post['_id'] = str(post['_id'])
                 post['author_id'] = str(post['author_id'])
                 post['author'] = str(author["username"])
-                
+
                 if 'created_at' in post and isinstance(post['created_at'], datetime):
                     post['created_at'] = post['created_at'].isoformat()
                 if 'image_url' in post and post['image_url']:
                     post['image_url'] = img_handler.get(post['image_url'].split('?')[0])
                 posts.append(post)
-            
+
             json_posts = json.loads(
                 json_util.dumps(posts, json_options=json_util.RELAXED_JSON_OPTIONS)
             )
-            print(posts)
-            print(json_posts)
             return json_posts
-            
+
         except Exception as e:
             print(f"Error fetching posts by author: {e}")
             return []
@@ -185,4 +189,3 @@ class Post:
         if not user:
             return None
         return user
-
