@@ -1027,6 +1027,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         currentVoteType={null}
                                         onVoteUpdate={handleVoteUpdate}
                                         onClick={() => handlePostClick(post)}
+                                        hideDate={true}
                                     />
                                 ))}
                             </div>
