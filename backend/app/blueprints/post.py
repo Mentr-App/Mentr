@@ -204,6 +204,10 @@ def add_comment(post_id):
         
         if not content:
             return {"message": "Comment content cannot be empty"}, 400
+        
+        post = mongo.db.posts.find_one({"_id": post_id})
+        if not post:
+            return {"message": "Post cannot be found"}, 404
             
         comment = Comment.add_comment(post_id, user_id, content, anonymous)
         
