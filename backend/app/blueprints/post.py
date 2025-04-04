@@ -200,11 +200,12 @@ def add_comment(post_id):
     try:
         user_id = get_jwt_identity()
         content = request.json.get("content")
+        anonymous = request.json.get("anonymous", False)
         
         if not content:
             return {"message": "Comment content cannot be empty"}, 400
             
-        comment = Comment.add_comment(post_id, user_id, content)
+        comment = Comment.add_comment(post_id, user_id, content, anonymous)
         
         if not comment:
             return {"message": "Failed to add comment"}, 500

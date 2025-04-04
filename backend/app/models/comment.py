@@ -23,6 +23,7 @@ class Comment:
                     "post_id": 1,  # Keep post ID
                     "content": 1,  # Keep content
                     "created_at": 1,  # Keep timestamp
+                    "anonymous": 1,  # Keep anonymous flag
                     "author": {
                         "$cond": {
                             "if": {"$gt": ["$author._id", None]},  # If author exists, keep it
@@ -84,12 +85,13 @@ class Comment:
         return comment
 
     @staticmethod
-    def add_comment(post_id, user_id, content):
+    def add_comment(post_id, user_id, content, anonymous):
         comment_data = {
             "author_id": ObjectId(user_id),
             "post_id": ObjectId(post_id),
             "content": content,
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
+            "anonymous": anonymous
         }
         
         comment_id = mongo.db.comments.insert_one(comment_data).inserted_id
@@ -126,6 +128,7 @@ class Comment:
                     "post_id": 1,  # Keep post ID
                     "content": 1,  # Keep content
                     "created_at": 1,  # Keep timestamp
+                    "anonymous": 1,  # Keep anonymous status
                     "author": {
                         "$cond": {
                             "if": {"$gt": ["$author._id", None]},  # If author exists, keep it
@@ -167,35 +170,54 @@ class Comment:
     @staticmethod
     def get_comments_by_author(username):
         """
-        Retrieves all comments by a specific author from the database
+        Retrieves all non-anonymous comments by a specific author from the database
         """
         try:
             author = mongo.db.users.find_one(
                 {"username": username},
-                {"username": 1, "_id": 1}
+                {"username": 1, "_id": 1, "userType": 1, "major": 1, "company": 1, "industry": 1}
             )
             if not author:
-                author = {'_id': 'deleted', 'username': 'Anonymous'}
-            
+                return []
+
             comments_cursor = mongo.db.comments.find({
                 "author_id": ObjectId(author["_id"])
             })
-            
+
             comments = []
             for comment in comments_cursor:
+                is_anonymous = comment.get('anonymous', False)
+
+                if is_anonymous:
+                    # Skip anonymous comments — we don't show these in the profile
+                    continue
+
                 formatted_comment = {
                     '_id': str(comment.get('_id', '')),
                     'content': comment['content'],
-                    'author': author['username'],
-                    'author_id': {'$oid': author["_id"]},
-                    'created_at': comment['created_at']['$date'].isoformat() if isinstance(comment['created_at'], dict) else comment['created_at'].isoformat(),
+                    'author': {
+                        '_id': {'$oid': str(author['_id'])},
+                        'username': author['username'],
+                        'userType': author.get('userType'),
+                        'major': author.get('major'),
+                        'company': author.get('company'),
+                        'industry': author.get('industry')
+                    },
+                    'anonymous': False,
+                    'author_id': {'$oid': str(author["_id"])},
+                    'created_at': (
+                        comment['created_at']['$date'].isoformat()
+                        if isinstance(comment['created_at'], dict)
+                        else comment['created_at'].isoformat()
+                    ),
                     'post_id': str(comment['post_id'])
                 }
+
                 comments.append(formatted_comment)
+
             comments.sort(key=lambda x: x['created_at'], reverse=True)
-            
             return comments
-            
+
         except Exception as e:
             print(f"Error fetching comments by author: {e}")
             return []

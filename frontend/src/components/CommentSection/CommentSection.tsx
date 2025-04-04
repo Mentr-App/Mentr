@@ -20,6 +20,7 @@ interface CommentInputProps {
 
 const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) => {
     const [comment, setComment] = useState<string>("");
+    const [anonymous, setAnonymous] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const { isAuthenticated, setIsPopupVisible } = useAuth();
 
@@ -44,7 +45,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                body: JSON.stringify({ content: comment }),
+                body: JSON.stringify({ content: comment, anonymous }),
             });
 
             if (!response.ok) {
@@ -53,7 +54,8 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
 
             const data = await response.json();
             onCommentAdded(data.comment);
-            setComment(""); // Clear the input after submitting
+            setComment("");
+            setAnonymous(false);
         } catch (error) {
             console.error("Error submitting comment:", error);
         } finally {
@@ -68,23 +70,35 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
                 onChange={handleCommentChange}
                 placeholder='Write a comment...'
                 disabled={isSubmitting}
-                className={`p-3 ${
-                    comment.trim() ? "mb-10" : "mb-0"
-                } mb-10 border focus:outline-none border-secondary rounded-md resize-none bg-secondary text-white`}
+                className={`p-3 mb-2 border focus:outline-none border-secondary rounded-md resize-none bg-secondary text-white`}
                 rows={4}
             />
-            {comment.trim() && (
-                <button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    title="Post comment"
-                    className='absolute bottom-2 right-4 px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark disabled:opacity-50'>
-                    {isSubmitting ? "Posting..." : "Post Comment"}
-                </button>
-            )}
+
+            <div className="flex justify-between items-center mt-2 mb-3">
+                <label className="text-sm text-white flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={anonymous}
+                        onChange={(e) => setAnonymous(e.target.checked)}
+                        className="form-checkbox text-primary"
+                    />
+                    Post anonymously
+                </label>
+
+                {comment.trim() && (
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        title="Post comment"
+                        className='px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark disabled:opacity-50'>
+                        {isSubmitting ? "Posting..." : "Post Comment"}
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
+
 
 interface CommentListProps {
     postId: string;

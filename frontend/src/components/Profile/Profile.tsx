@@ -263,7 +263,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 const sortedComments = [...data].sort((a, b) => 
                     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
                 );
-                setUserComments(sortedComments || []);
+                setUserComments((sortedComments || []).filter(comment => !comment.anonymous));
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to fetch user comments');
             } finally {
@@ -1027,7 +1027,6 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         currentVoteType={null}
                                         onVoteUpdate={handleVoteUpdate}
                                         onClick={() => handlePostClick(post)}
-                                        title="Click to view this post"
                                     />
                                 ))}
                             </div>
@@ -1096,7 +1095,6 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             onVoteUpdate={handleVoteUpdate}
                                             onClick={() => handlePostClick(post)}
                                             hideDate={true}
-                                            title="Click to view this post"
                                         />
                                         <div className="text-right">
                                             <button

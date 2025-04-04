@@ -27,9 +27,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
     const userId = localStorage.getItem("userId")
 
     const handleEditSubmit = async () => {
-        console.log("editText", editText)
-        if ((!isAuthenticated) || (editText === localComment.content) ||
-            (editText === "") || (!localComment) || (!comment)) {
+        if (!isAuthenticated || editText === localComment.content || editText === "" || !localComment || !comment) {
             return
         }
 
@@ -55,12 +53,11 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
                 setIsEditing(false)
             }
         } catch (error) {
-            console.error("Error editting comment:", error)
+            console.error("Error editing comment:", error)
         }
     }
 
     const handleDelete = async () => {
-        console.log("Deleting comment...");
         const access_token = localStorage.getItem("access_token")
         if (!access_token) {
             return
@@ -82,7 +79,6 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
             }
 
             const data = await response.json()
-            console.log(data.comment)
             setLocalComment(data.comment)
         } catch (error) {
             console.error("Failed to delete comment:", error);
@@ -90,10 +86,8 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
     };
 
     const checkAuthorship = () => {
-        if (userId) {
-            if (userId === comment.author?._id.$oid) {
-                setIsAuthor(true)
-            }
+        if (userId && comment.author?._id?.$oid) {
+            setIsAuthor(userId === comment.author._id.$oid)
         }
     }
 
@@ -107,47 +101,59 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
             className='relative bg-secondary p-4 rounded-lg'>
             <div className='flex justify-between'>
                 <div className='flex flex-row'>
-                    <ProfilePicture profilePicture={localComment.profile_picture_url} userId={localComment.author?._id.$oid} />
-                    <div className='flex flex-col'>
-                        <span className='font-semibold text-white'>
-                            {localComment.author?.username}
-                        </span>
-                        {localComment.author?.userType === "Mentee"
-                            ?
-                            <span className='text-xs text-gray-500'>Student • {localComment.author.major}</span>
-                            :
-                            <span className='text-xs text-gray-500'>{localComment.author?.company} • {localComment.author?.industry}</span>
-                        }
-                    </div>
+                    {!localComment.anonymous ? (
+                        <>
+                            <ProfilePicture
+                                profilePicture={localComment.profile_picture_url}
+                                userId={localComment.author?._id.$oid}
+                            />
+                            <div className='flex flex-col ml-2'>
+                                <span className='font-semibold text-white'>
+                                    {localComment.author?.username}
+                                </span>
+                                {localComment.author?.userType === "Mentee" ? (
+                                    <span className='text-xs text-gray-500'>Student • {localComment.author.major}</span>
+                                ) : (
+                                    <span className='text-xs text-gray-500'>{localComment.author?.company} • {localComment.author?.industry}</span>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <ProfilePicture
+                                profilePicture={DEFAULT_PROFILE_PICTURE}
+                                userId={"anonymous"}
+                            />
+                            <div className='flex flex-col ml-2'>
+                                <span className='font-semibold text-white'>Anonymous User</span>
+                            </div>
+                        </>
+                    )}                    
                 </div>
                 <span className='text-gray-400 text-sm'>
                     {getRelativeTime(localComment.created_at)}
                 </span>
             </div>
-            {
-                isEditing
-                    ?
-                    <TextEditor
-                        editText={editText}
-                        setEditText={setEditText}
-                        setIsEditing={setIsEditing}
-                        handleEditSubmit={handleEditSubmit}
-                    />
-                    :
-                    <div className='flex justify-between'>
-                        <p className='text-white ml-14 mt-2'>{localComment.content}</p>
-                        {
-                            isAuthor && (
-                                <button
-                                    className='text-gray-400 text-xl hover:text-white'
-                                    onClick={() => setIsDropdownVisible(!isDropdownVisible)}
-                                    title="Toggle comment options">
-                                    ...
-                                </button>
-                            )
-                        }
-                    </div>
-            }
+            {isEditing ? (
+                <TextEditor
+                    editText={editText}
+                    setEditText={setEditText}
+                    setIsEditing={setIsEditing}
+                    handleEditSubmit={handleEditSubmit}
+                />
+            ) : (
+                <div className='flex justify-between'>
+                    <p className='text-white ml-14 mt-2'>{localComment.content}</p>
+                    {isAuthor && (
+                        <button
+                            className='text-gray-400 text-xl hover:text-white'
+                            onClick={() => setIsDropdownVisible(!isDropdownVisible)}
+                            title="Toggle comment options">
+                            ...
+                        </button>
+                    )}
+                </div>
+            )}
             {isDropdownVisible && (
                 <div className="absolute top-[-40] right-0 mt-2 w-40 rounded-lg shadow-lg bg-gray-500 text-sm text-white z-50">
                     <ul>
