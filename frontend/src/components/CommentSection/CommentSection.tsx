@@ -172,7 +172,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
     }, [postId]);
 
     useEffect(()=> {
-        if (postId && blocklistFetched) {
+        if (postId && (!isAuthenticated || blocklistFetched)) {
             fetchComments();
         }
     }, [blocklist])
