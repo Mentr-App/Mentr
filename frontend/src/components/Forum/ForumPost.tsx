@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Post } from "./Forum";
 import { useAuth } from "@/contexts/AuthContext";
-import { getRelativeTime } from "@/lib/timeUtils";
+import { getRelativeTimeUTC } from "@/lib/timeUtils";
 
 interface ForumPostProps {
     post: Post;
@@ -190,7 +190,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                     </div>
                 </div>
                 {!hideDate && (
-                    <span className="text-xs">{getRelativeTime(post.created_at)}</span>
+                    <span className="text-xs">{getRelativeTimeUTC(post.created_at)}</span>
                 )}
             </div>
         </div>
