@@ -86,10 +86,10 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                             color: "var(--text-primary)",
                             borderColor: "var(--border)",
                         }}>
-                        <option value='new'>Newest</option>
+                        <option value='new'>Most Recent</option>
                         <option value='old'>Oldest</option>
-                        <option value='top'>Most Upvoted</option>
-                        <option value='hot'>Hot</option>
+                        <option value='top'>Trending</option>
+                        <option value='hot'>Most Commented</option>
                         <option value='controversial'>Controversial</option>
                     </select>
                 </div>

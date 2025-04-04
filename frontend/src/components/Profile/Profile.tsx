@@ -910,8 +910,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                 }`}
                                             />
                                         </button>
-                                        <p className='text-text-primary'>
-                                            title="Click to toggle two-factor authentication"
+                                        
+                                        <p className='text-text-primary' title="Click to toggle two-factor authentication">
                                             {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
                                         </p>
                                     </div>
