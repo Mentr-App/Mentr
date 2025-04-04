@@ -21,6 +21,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
     const [localComment, setLocalComment] = useState<Comment>(comment)
     const [editText, setEditText] = useState<string>(localComment.content)
     const [isAuthor, setIsAuthor] = useState<boolean>(false)
+    const [isDeleted, setIsDeleted] = useState(false)
     const { isAuthenticated } = useAuth()
     const router = useRouter()
 
@@ -82,8 +83,9 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
             }
 
             const data = await response.json()
-            console.log(data.comment)
-            setLocalComment(data.comment)
+            console.log(data)
+            setIsDeleted(data.comment)
+            
         } catch (error) {
             console.error("Failed to delete comment:", error);
         }
@@ -100,6 +102,10 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, index, getAuthorName
     useEffect(() => {
         checkAuthorship()
     }, [userId])
+
+    if (isDeleted) {
+        return <></>
+    }
 
     return (
         <div
