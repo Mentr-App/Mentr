@@ -36,6 +36,30 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     const userId = localStorage.getItem("userId");
     const router = useRouter();
 
+    const handleSavePost = async () => {
+        if (!isAuthenticated || !userId || !post?._id?.$oid) {
+            setIsPopupVisible(true);
+            return;
+        }
+    
+        try {
+            const response = await fetch("http://localhost:8000/saved_post/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ userId, postId: post._id.$oid }),
+            });
+    
+            if (response.ok) {
+            } else {
+                throw new Error("Save failed");
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const fetchBlocklist = async () => {
         if (!isAuthenticated) return;
         
@@ -327,8 +351,14 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                                     {userId === post.author?._id.$oid && (
                                         <DeleteButton onDelete={handleDelete} setIsDropdownVisible={setIsDropdownVisible}/>
                                     )}
-                                    <li className="px-4 py-2 cursor-pointer hover:bg-foreground">
-                                        Save Post
+                                    <li
+                                        className="px-4 py-2 cursor-pointer hover:bg-foreground"
+                                        onClick={() => {
+                                            handleSavePost();
+                                            setIsDropdownVisible(false);
+                                        }}
+                                        >
+                                            Save Post
                                     </li>
                                 </ul>
                             </div>

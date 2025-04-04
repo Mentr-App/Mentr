@@ -13,6 +13,7 @@ interface ForumPostProps {
         newDownvotes: number
     ) => void;
     onClick: () => void;
+    hideDate?: boolean;
 }
 
 const ForumPost: React.FC<ForumPostProps> = ({
@@ -20,6 +21,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
     currentVoteType,
     onVoteUpdate,
     onClick,
+    hideDate = false,
 }) => {
     const { isAuthenticated, setIsPopupVisible } = useAuth();
     const [upvotes, setUpvotes] = useState<number>(post.upvotes || 0);
@@ -32,7 +34,6 @@ const ForumPost: React.FC<ForumPostProps> = ({
         voteType: "up" | "down"
     ) => {
         event.stopPropagation();
-
         handleVote(voteType);
     };
 
@@ -106,9 +107,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                             <svg
                                 xmlns='http://www.w3.org/2000/svg'
                                 viewBox='0 0 24 24'
-                                fill={
-                                    currentVoteType === "down" ? "currentColor" : "none"
-                                }
+                                fill={currentVoteType === "down" ? "currentColor" : "none"}
                                 stroke='currentColor'
                                 className='w-4 h-4'
                                 strokeWidth={currentVoteType === "down" ? "0" : "2"}>
@@ -116,7 +115,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
                             </svg>
                             <span>{downvotes}</span>
                         </button>
-                        
+
                         {/* Comment Count Icon */}
                         <div className='flex items-center space-x-1 px-2 py-1 text-gray-400'>
                             <svg
@@ -136,7 +135,9 @@ const ForumPost: React.FC<ForumPostProps> = ({
                         </div>
                     </div>
                 </div>
-                <span className="text-xs">{getRelativeTime(post.created_at)}</span>
+                {!hideDate && (
+                    <span className="text-xs">{getRelativeTime(post.created_at)}</span>
+                )}
             </div>
         </div>
     );
