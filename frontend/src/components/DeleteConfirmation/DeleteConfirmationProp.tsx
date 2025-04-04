@@ -3,9 +3,10 @@ import { Dispatch, SetStateAction, useState } from "react";
 interface DeleteButtonProps {
     onDelete: () => void;
     setIsDropdownVisible: Dispatch<SetStateAction<boolean>>;
+    title?: string;
 }
 
-export default function DeleteButton({ onDelete, setIsDropdownVisible }: DeleteButtonProps) {
+export default function DeleteButton({ onDelete, setIsDropdownVisible, title }: DeleteButtonProps) {
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
     return (
@@ -15,11 +16,12 @@ export default function DeleteButton({ onDelete, setIsDropdownVisible }: DeleteB
                     setIsOpen(true)
                 }} 
                 className="px-4 py-2 cursor-pointer hover:bg-foreground"
+                title={title} // Apply tooltip here
             >
                 Delete
             </li>
 
-            {isOpen && <DeleteConfirmationPopup onConfirm={()=> {
+            {isOpen && <DeleteConfirmationPopup onConfirm={() => {
                 onDelete()
                 setIsDropdownVisible(false)
             }} 
@@ -46,12 +48,14 @@ function DeleteConfirmationPopup({ onConfirm, onCancel }: DeleteConfirmationPopu
                     <button 
                         onClick={onCancel}
                         className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                        title="Cancel deletion"
                     >
                         Cancel
                     </button>
                     <button 
                         onClick={() => { onConfirm(); onCancel(); }}
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                        title="Confirm deletion"
                     >
                         Delete
                     </button>

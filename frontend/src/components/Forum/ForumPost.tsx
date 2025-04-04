@@ -14,6 +14,7 @@ interface ForumPostProps {
     ) => void;
     onClick: () => void;
     hideDate?: boolean;
+    title?: string;
 }
 
 const ForumPost: React.FC<ForumPostProps> = ({

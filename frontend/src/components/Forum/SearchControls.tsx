@@ -38,6 +38,7 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                     </label>
                     <select
                         id='posts-per-page'
+                        title="Change number of posts per page"
                         value={postsPerPage}
                         onChange={handlePostsPerPageChange}
                         disabled={isSearching}
@@ -59,7 +60,7 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                     </select>
                 </div>
 
-                {/* Sort By Dropdown - new component */}
+                {/* Sort By Dropdown */}
                 <div className='flex items-center'>
                     <label
                         htmlFor='sort-by'
@@ -71,6 +72,7 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                     </label>
                     <select
                         id='sort-by'
+                        title="Sort posts by selected criteria"
                         value={sortBy}
                         onChange={handleSortChange}
                         disabled={isSearching}
@@ -102,6 +104,7 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                 }}>
                 <input
                     type='text'
+                    title="Search posts by title or content"
                     placeholder='Search posts'
                     value={searchQuery}
                     onChange={handleSearchChange}
@@ -115,6 +118,7 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                     viewBox='0 0 24 24'
                     stroke='currentColor'
                     style={{ color: "var(--primary)" }}>
+                    <title>Search icon</title>
                     <path
                         strokeLinecap='round'
                         strokeLinejoin='round'
@@ -129,6 +133,7 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                 {/* Grid Button */}
                 <button
                     onClick={() => setIsGridView(true)}
+                    title="Switch to grid view"
                     className={`toggle-button ${
                         isGridView ? "toggle-button-active" : "toggle-button-inactive"
                     }`}>
@@ -141,6 +146,7 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                 {/* List Button */}
                 <button
                     onClick={() => setIsGridView(false)}
+                    title="Switch to list view"
                     className={`toggle-button ${
                         !isGridView ? "toggle-button-active" : "toggle-button-inactive"
                     }`}>

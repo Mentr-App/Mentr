@@ -77,6 +77,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
                 <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
+                    title="Post comment"
                     className='absolute bottom-2 right-4 px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark disabled:opacity-50'>
                     {isSubmitting ? "Posting..." : "Post Comment"}
                 </button>

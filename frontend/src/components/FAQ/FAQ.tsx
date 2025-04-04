@@ -43,25 +43,25 @@ const FAQ: React.FC = () => {
     };
 
     const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
-            event.preventDefault();
-            setSubmittingFeedback(true);
-    
-            try {
-                const response = await fetch("/api/feedback", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ feedback }),
-                });
-    
-                if (!response.ok) throw new Error("Failed to submit feedback");
-                setRevealThank(true);
-            } catch (error: any) {
-                alert(error.message || "An unknown error occurred");
-            } finally {
-                setSubmittingFeedback(false);
-                setFeedback("");
-            }
-        };
+        event.preventDefault();
+        setSubmittingFeedback(true);
+
+        try {
+            const response = await fetch("/api/feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ feedback }),
+            });
+
+            if (!response.ok) throw new Error("Failed to submit feedback");
+            setRevealThank(true);
+        } catch (error: any) {
+            alert(error.message || "An unknown error occurred");
+        } finally {
+            setSubmittingFeedback(false);
+            setFeedback("");
+        }
+    };
 
     const handleFeedbackChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setFeedback(event.target.value);
@@ -77,6 +77,7 @@ const FAQ: React.FC = () => {
                     {questionsAnswers.map((qa, index) => (
                         <div key={index}>
                             <button
+                                title="Click to expand or collapse"
                                 onClick={() => handleToggle(index)}
                                 className={`w-full text-left py-4 px-4 text-lg font-bold rounded text-[#EC6333] transition-colors duration-300 ${
                                     activeIndex === index ? "bg-[#3C454D]" : "bg-[#2C353D]"
@@ -105,11 +106,14 @@ const FAQ: React.FC = () => {
                             className="w-full p-3 border border-border rounded-lg bg-[#2C353D] text-white"
                             rows={4}
                             placeholder="Write your question here..."
+                            title="Type your question here"
                         ></textarea>
                         <button
                             type="submit"
                             className="px-4 py-2 bg-[#EC6333] text-white font-bold rounded-lg hover:bg-accent-hover disabled:opacity-50 transition duration-300"
-                            disabled={submittingFeedback}>
+                            disabled={submittingFeedback}
+                            title="Submit your question"
+                        >
                             {submittingFeedback ? "Submitting..." : "Submit Question"}
                         </button>
                     </form>
@@ -125,10 +129,13 @@ const FAQ: React.FC = () => {
                         Or, Contact Us Directly:
                     </label>
                     <div className="=mt-1">
-                    <Link legacyBehavior href="/contact">
-                        <a className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
-                            Contact Us
-                        </a>
+                        <Link legacyBehavior href="/contact">
+                            <a
+                                className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300"
+                                title="Click to contact us directly"
+                            >
+                                Contact Us
+                            </a>
                         </Link>
                     </div>
                 </div>
@@ -136,4 +143,5 @@ const FAQ: React.FC = () => {
         </div>
     );
 };
+
 export default FAQ;

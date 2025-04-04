@@ -30,7 +30,9 @@ const Pagination: React.FC<PaginationProps> = ({
                     style={{
                         backgroundColor: "var(--secondary)",
                         color: "var(--text-primary)",
-                    }}>
+                    }}
+                    title="Go to previous page"
+                >
                     &lt;
                 </button>
 
@@ -56,7 +58,15 @@ const Pagination: React.FC<PaginationProps> = ({
                                     : "var(--secondary)",
                             color: "var(--text-primary)",
                             cursor: pageNum === "..." ? "default" : "pointer",
-                        }}>
+                        }}
+                        title={
+                            pageNum === "..."
+                                ? "Ellipsis"
+                                : pageNum === currentPage
+                                ? `Current page: ${pageNum}`
+                                : `Go to page ${pageNum}`
+                        }
+                    >
                         {pageNum}
                     </button>
                 ))}
@@ -73,7 +83,9 @@ const Pagination: React.FC<PaginationProps> = ({
                     style={{
                         backgroundColor: "var(--secondary)",
                         color: "var(--text-primary)",
-                    }}>
+                    }}
+                    title="Go to next page"
+                >
                     &gt;
                 </button>
             </div>

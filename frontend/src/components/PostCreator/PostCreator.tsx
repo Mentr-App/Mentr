@@ -98,6 +98,7 @@ const PostCreator: React.FC = () => {
                         id='title'
                         name='title'
                         value={title}
+                        title="Title of the post"
                         onChange={handleInputChange}
                         required
                         className='peer mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -115,6 +116,7 @@ const PostCreator: React.FC = () => {
                     <textarea
                         id='body'
                         name='body'
+                        title="Content of the post"
                         value={content}
                         onChange={handleInputChange}
                         required
@@ -135,6 +137,7 @@ const PostCreator: React.FC = () => {
                         <img
                             src={imagePreview}
                             alt="Preview"
+                            title="Preview of the selected image"
                             className="max-w-full h-auto rounded-lg shadow-sm"
                             style={{ maxHeight: '300px' }}
                         />
@@ -170,6 +173,7 @@ const PostCreator: React.FC = () => {
 
                 <button
                     type='submit'
+                    title="Click to create post"
                     disabled={isSubmitting}
                     className={`w-full py-2 px-4 mt-4 font-medium text-white rounded-md focus:outline-none focus:ring-2 ${
                         isSubmitting ? "bg-gray-400" : "bg-violet-600 hover:bg-violet-700"

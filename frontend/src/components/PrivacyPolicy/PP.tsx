@@ -78,6 +78,7 @@ const PP: React.FC = () => {
         <button
           className="block px-4 py-2 bg-red-600 text-white text-center font-bold rounded-lg hover:bg-red-700 transition duration-300 mb-6"
           onClick={handleRejectTerms}
+          title="Click to reject terms and log out"
         >
           Reject Terms and Log Out
         </button>
@@ -89,7 +90,7 @@ const PP: React.FC = () => {
         </p>
 
         <Link legacyBehavior href="/contact">
-          <a className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
+          <a title="Click to Contact Us" className="block px-4 py-2 bg-[#EC6333] text-white text-center font-bold rounded-lg hover:bg-accent-hover transition duration-300">
             Contact Us
           </a>
         </Link>

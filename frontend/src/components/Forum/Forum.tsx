@@ -430,6 +430,7 @@ const Forum: React.FC = () => {
                                         currentVoteType={userVotes[post._id.$oid]}
                                         onVoteUpdate={handleVoteUpdate}
                                         onClick={() => handlePostClick(post)}
+                                        title="Click to view full post"
                                     />
                                 ))}
                             </div>
