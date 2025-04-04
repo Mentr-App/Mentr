@@ -292,7 +292,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
 
     const handleAuthorClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (post?.author?._id?.$oid && post.author._id.$oid !== "[deleted]") {
+        if (post?.author?._id?.$oid && post.author._id.$oid !== "[deleted]"&& post.author._id.$oid !== "[anonymous]") {
             router.push(`/profile/${post.author._id.$oid}`);
         }
     }
