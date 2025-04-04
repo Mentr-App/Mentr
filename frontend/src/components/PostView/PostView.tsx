@@ -373,7 +373,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
     }
 
     return (
-        <div className="h-[80vh] w-screen m-5 p-6 bg-secondary-light shadow-md rounded-lg overflow-y-scroll overflow-x-hidden flex flex-col">
+        <div className="h-[80vh] w-screen m-5 p-6 bg-secondary-light shadow-md rounded-lg overflow-x-hidden flex flex-col">
             <div className="flex flex-row justify-between">
                 <div className="m-5 break-words max-w-full">
                     <h2 className="text-white text-2xl font-bold mt-4">
