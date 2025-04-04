@@ -4,6 +4,7 @@ import SearchControls from "./SearchControls";
 import Pagination from "./Pagination";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import PinnedSection from "./PinnedSection";
 
 export interface Post {
     _id: IDObject;
@@ -369,7 +370,6 @@ const Forum: React.FC = () => {
                     sortBy={sortBy}
                     handleSortChange={handleSortChange}
                 />
-
                 {searchLoading && (
                     <div className='text-center mt-4'>
                         <div
@@ -407,7 +407,6 @@ const Forum: React.FC = () => {
                 sortBy={sortBy}
                 handleSortChange={handleSortChange}
             />
-
             {searchLoading && (
                 <div className='text-center my-4'>
                     <div

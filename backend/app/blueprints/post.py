@@ -185,7 +185,6 @@ def get_post_comments(post_id):
     """Get all comments for a post."""
     try:
         comments = Comment.get_comments(post_id)
-        print(comments)
         return {"comments": comments}, 200
     except Exception as e:
         print("Error retrieving comments:", str(e))
@@ -223,4 +222,37 @@ def delete_post(post_id):
         return {"message": "Post updated successfully", "post": post}, 200
 
     except Exception as e:
-        print("Error deleting comments:", str(e))
+        print("Error deleting post:", str(e))
+        return {"message": "Error deleting post"}, 500
+
+@post_bp.route("/<post_id>/pin", methods=["POST"])
+@jwt_required()
+def pin_post(post_id):
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return {"message": "user_id not found"}, 404
+        
+        user = Post.pin_post(post_id, user_id)
+        if not user:
+            return {"message": "Failed to pin post"}, 500
+        return {"message": "Post pinned successfully", "user": user}, 200
+    except Exception as e:
+        print("Error pinning post:", str(e))
+        return {"message": "Error pinning post"}, 500
+
+@post_bp.route("/<post_id>/unpin", methods=["POST"])
+@jwt_required()
+def unpin_post(post_id):
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return {"message": "user_id not found"}, 404
+        
+        user = Post.pin_post(post_id, user_id, pin=False)
+        if not user:
+            return {"message": "Failed to unpin post"}, 500
+        return {"message": "Post unpinned successfully", "user": user}, 200
+    except Exception as e:
+        print("Error unpinning post:", str(e))
+        return {"message": "Error unpinning post"}, 500
