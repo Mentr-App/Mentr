@@ -272,13 +272,18 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
 
         try {
             const endpoint = `/api/post/delete/${post._id.$oid}`;
-            await fetch(endpoint, {
+            const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("access_token")}`,
                     "Content-Type": "application/json"
                 }
             });
+
+            if (response.ok) {
+                router.push("/")
+            }
+
         } catch (error) {
             console.error("Error deleting post:", error);
         }

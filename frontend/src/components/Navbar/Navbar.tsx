@@ -73,6 +73,11 @@ const Navbar: React.FC = () => {
         setIsDropdownVisible(false);
     };
 
+    const handleReqFeature = () => {
+        router.push("/requestfeature");
+        setIsDropdownVisible(false);
+    }
+
     const handleAbout = () => {
         router.push("/about");
         setIsDropdownVisible(false);
@@ -195,6 +200,15 @@ const Navbar: React.FC = () => {
                                 title="Click to view FAQ"
                                 onClick={handleFAQ}>
                                 Frequently Asked Questions
+                            </li>
+                            <li
+                                className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                style={{
+                                    color: "var(--text-primary)",
+                                }}
+                                title="Click to request new feature"
+                                onClick={handleReqFeature}>
+                                Request New Feature
                             </li>
                             <li
                                 className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'

@@ -49,7 +49,8 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
             });
 
             if (!response.ok) {
-                throw new Error("Failed to submit comment");
+                console.error("Failed to comment")
+                return
             }
 
             const data = await response.json();

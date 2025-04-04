@@ -22,8 +22,8 @@ def create_post():
         content = request.form.get("content")
         author_id = get_jwt_identity()
         anonymous = request.form.get("anonymous", "false").lower() == "true"
-        if not title or not content:
-            return {"message": "Missing title or content"}, 400
+        if not title:
+            return {"message": "Missing title"}, 400
 
         image_url = None
         filename = None
@@ -204,6 +204,10 @@ def add_comment(post_id):
         
         if not content:
             return {"message": "Comment content cannot be empty"}, 400
+        
+        post = mongo.db.posts.find_one({"_id": post_id})
+        if not post:
+            return {"message": "Post cannot be found"}, 404
             
         comment = Comment.add_comment(post_id, user_id, content, anonymous)
         
@@ -222,7 +226,7 @@ def delete_post(post_id):
         post = Post.delete_post(post_id)
         if not post:
             return {"message": "Failed to delete post"}, 500
-        return {"message": "Post updated successfully", "post": post}, 200
+        return {"message": "Post deleted successfully", "post": post}, 200
 
     except Exception as e:
         print("Error deleting post:", str(e))

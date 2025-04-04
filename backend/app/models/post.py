@@ -125,15 +125,17 @@ class Post:
 
     @staticmethod
     def delete_post(post_id):
-        mongo.db.posts.update_one(
-            {"_id": ObjectId(post_id)},
-            {"$set": {
-                "author_id": None
-            }}
-        )
+        # Convert post_id to ObjectId
+        post_obj_id = ObjectId(post_id)
 
-        post = Post.view_post(post_id, inc_view=False)
-        return post if post else None
+        # Delete the post
+        result = mongo.db.posts.delete_one({"_id": post_obj_id})
+
+        # Delete related comments
+        mongo.db.comments.delete_many({"post_id": post_obj_id})
+
+        # Return success info
+        return result.deleted_count > 0
 
     @staticmethod
     def get_posts_by_author(username):

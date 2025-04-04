@@ -74,15 +74,13 @@ class Comment:
     
     @staticmethod
     def delete_comment(comment_id):
-        mongo.db.comments.update_one(
-            {"_id": ObjectId(comment_id)},
-            {"$set": {
-                "author_id": None
-            }}
+        post_id = Comment.get_comment(comment_id)["post_id"]
+        mongo.db.posts.update_one(
+            {"_id": ObjectId(post_id)},
+            {"$inc": {"comments": -1}}
         )
-
-        comment = Comment.get_comment(comment_id)
-        return comment
+        result = mongo.db.comments.delete_one({"_id": ObjectId(comment_id)})
+        return result.deleted_count > 0
 
     @staticmethod
     def add_comment(post_id, user_id, content, anonymous):
