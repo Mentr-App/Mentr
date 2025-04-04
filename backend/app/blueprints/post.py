@@ -22,8 +22,8 @@ def create_post():
         content = request.form.get("content")
         author_id = get_jwt_identity()
         anonymous = request.form.get("anonymous", "false").lower() == "true"
-        if not title or not content:
-            return {"message": "Missing title or content"}, 400
+        if not title:
+            return {"message": "Missing title"}, 400
 
         image_url = None
         filename = None
