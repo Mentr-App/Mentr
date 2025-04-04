@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRelativeTime } from "@/lib/timeUtils";
 import CommentItem from "./Comment";
-import {Comment, Author} from "../CommonInterfaces/Interfaces"
+import {Comment, Author, ObjectId} from "../CommonInterfaces/Interfaces"
 
 
 // Helper function to get author username
@@ -108,7 +108,23 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const { isAuthenticated } = useAuth();
+    const [blocklist, setBlocklist] = useState<{blocked: string[], blocking: string[]}>({blocked: [], blocking: []});
+    const [blocklistFetched, setBlocklistFetched] = useState<boolean>(false);
+    const dummy_id: ObjectId = {
+        $oid: "123456789"
+    }
 
+    const dummy_author: Author = {
+        _id: dummy_id,
+        username: "[blocked]",
+        userType: "Mentor",
+        profile_picture: "",
+        profile_picture_url: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+        major: "blocked",
+        company: "blocked",
+        industry: "blocked",};
+    
     const fetchComments = async () => {
         try {
             setLoading(true);
@@ -127,15 +143,64 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
             setLoading(false);
         }
     };
+    const fetchBlocklist = async () => {
+        if (!isAuthenticated) return;
+        
+        try {
+            const response = await fetch("/api/profile/getBlockList", {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setBlocklist({
+                    blocked: data.blocked || [],
+                    blocking: data.blocking || []
+                });
+                setBlocklistFetched(true);
+            }
+        } catch (error) {
+            console.error("Error fetching blocklist:", error);
+        }
+    };
 
     useEffect(() => {
-        if (postId) {
+        fetchBlocklist();
+    }, [postId]);
+
+    useEffect(()=> {
+        if (postId && blocklistFetched) {
             fetchComments();
         }
-    }, [postId]);
+    }, [blocklist])
+
 
     const handleCommentAdded = (newComment: Comment) => {
         setComments((prev) => [...prev, newComment]);
+    };
+    const isBlockedComment = (comment: Comment): boolean => {
+        if (!isAuthenticated || !comment.author?._id?.$oid) return false;
+        
+        const authorId = comment.author?._id.$oid;
+        
+        return blocklist.blocked.includes(authorId) || blocklist.blocking.includes(authorId);
+    };
+    
+    const getFilteredFeed = (comment: Comment[]): Comment[] => {
+        return comments.map(comment => {
+            if (isBlockedComment(comment)) {
+                console.log("BIG THINGS")
+                return {
+                    ...comment,
+                    profile_picture_url: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+                    content: "[blocked]",
+                    author: dummy_author
+                };
+            }
+            return comment;
+        });
     };
 
     return (
@@ -152,7 +217,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
                 </div>
             ) : (
                 <div className='space-y-4 mb-6'>
-                    {comments.map((item, index) => (
+                    {getFilteredFeed(comments).map((item, index) => (
                         <CommentItem comment={item} index={index} getAuthorName={getAuthorName}/>
                     ))}
                 </div>
