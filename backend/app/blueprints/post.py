@@ -22,8 +22,8 @@ def create_post():
         content = request.form.get("content")
         author_id = get_jwt_identity()
         anonymous = request.form.get("anonymous", "false").lower() == "true"
-        if not title or not content:
-            return {"message": "Missing title or content"}, 400
+        if not title:
+            return {"message": "Missing title"}, 400
 
         image_url = None
         filename = None
@@ -200,11 +200,12 @@ def add_comment(post_id):
     try:
         user_id = get_jwt_identity()
         content = request.json.get("content")
+        anonymous = request.json.get("anonymous", False)
         
         if not content:
             return {"message": "Comment content cannot be empty"}, 400
             
-        comment = Comment.add_comment(post_id, user_id, content)
+        comment = Comment.add_comment(post_id, user_id, content, anonymous)
         
         if not comment:
             return {"message": "Failed to add comment"}, 500

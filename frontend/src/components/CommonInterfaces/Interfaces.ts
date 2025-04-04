@@ -9,6 +9,7 @@ export interface Comment {
     content: string
     post_id?: string;
     profile_picture_url: string
+    anonymous?: boolean;
 }
 
 export interface Author {

@@ -17,6 +17,7 @@ export interface Post {
     upvotes: number;
     views: number;
     comments?: number;
+    anonymous?: boolean;
 }
 
 export interface AuthorObject {

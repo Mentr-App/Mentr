@@ -125,7 +125,11 @@ const ForumPost: React.FC<ForumPostProps> = ({
             <p className='text-text-secondary mb-4'>{post.content}</p>
             <div className='flex justify-between items-center text-sm text-text-light'>
                 <div className='flex items-center space-x-4'>
-                    <span>{post.author || "[deleted]"}</span>
+                <span>
+                        {post.anonymous
+                            ? "Anonymous User"
+                            : post.author || "[deleted]"}
+                    </span>
                     <div className='flex items-center space-x-2'>
                         <button
                             onClick={(event) => handleButtonClick(event, "up")}

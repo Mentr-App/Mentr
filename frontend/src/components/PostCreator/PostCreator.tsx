@@ -121,7 +121,6 @@ const PostCreator: React.FC = () => {
                         title="Content of the post"
                         value={content}
                         onChange={handleInputChange}
-                        required
                         rows={4}
                         className='peer mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
                     />
@@ -130,7 +129,7 @@ const PostCreator: React.FC = () => {
                         className={`absolute left-4 text-sm text-gray-500 transform transition-all duration-200 peer-focus:text-indigo-600 ${
                             content ? "top-0 text-xs" : "top-2 text-sm"
                         }`}>
-                        Body <span className='text-red-500'>*</span>
+                        Body
                     </label>
                 </div>
 

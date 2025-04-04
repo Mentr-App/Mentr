@@ -297,7 +297,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
 
     const handleAuthorClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (post?.author?._id?.$oid && post.author._id.$oid !== "[deleted]") {
+        if (post?.author?._id?.$oid && post.author._id.$oid !== "[deleted]"&& post.author._id.$oid !== "[anonymous]") {
             router.push(`/profile/${post.author._id.$oid}`);
         }
     }
@@ -360,6 +360,14 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
             <div className="h-[80vh] w-screen m-5 p-6 bg-secondary-light shadow-md rounded-lg overflow-y-scroll overflow-x-hidden flex flex-col items-center justify-center">
                 <h2 className="text-white text-2xl font-bold mb-4">You've been blocked by this user</h2>
                 <p className="text-gray-400">You can't view this content because the user has blocked you.</p>
+                <button
+                    onClick={handleRouteUser}
+                    title="View user profile"
+                    disabled={isUnblocking}
+                    className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors"
+                >
+                    User Profile
+                </button>
             </div>
         );
     }
