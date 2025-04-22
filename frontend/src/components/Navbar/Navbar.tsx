@@ -73,6 +73,11 @@ const Navbar: React.FC = () => {
         setIsDropdownVisible(false);
     };
 
+    const handleChatClick = () => {
+        router.push("/chat");
+        setIsDropdownVisible(false);
+    }
+
     const handleReqFeature = () => {
         router.push("/requestfeature");
         setIsDropdownVisible(false);
@@ -127,6 +132,7 @@ const Navbar: React.FC = () => {
                 </li>
                 <li
                     className='inline-block mx-5 my-2 text-lg cursor-pointer'
+                    onClick={handleChatClick}
                     style={{ color: "var(--text-primary)" }}>
                     <img
                         src={chat_img.src}
