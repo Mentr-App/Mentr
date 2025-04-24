@@ -236,7 +236,6 @@ def addMessage():
 @jwt_required()
 def handle_join_chat(data):
     try:
-        verify_jwt_in_request()
         user_id = get_jwt_identity()
         chat_id = data.get('chat_id')
         if chat_id:
