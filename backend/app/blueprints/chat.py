@@ -1,9 +1,10 @@
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, decode_token, exceptions as jwt_exceptions
 from flask import Blueprint, request, jsonify
 from app.models.chat import Chat
 from app.models.message import Message
 from app.extensions import socketio
-from flask_socketio import join_room
+from flask_socketio import join_room, leave_room
+from app.extensions import jwt
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -231,43 +232,77 @@ def addMessage():
         # Catch any other unexpected errors during request processing
         print(f"Unexpected error in addMessage route: {e}") # Replace with proper logging
         return jsonify({"message": "An unexpected server error occurred."}), 500
+def verify_token(token):
+    try:
+        decoded = decode_token(token)
+        return decoded['sub']
+    except jwt_exceptions.NoAuthorizationError as e:
+        raise jwt_exceptions.NoAuthorizationError(f"Invalid token: {str(e)}")
+
+@socketio.on('connect')
+def handle_connect(auth):
+    #print(auth)
+    try:
+        if not auth or 'token' not in auth:
+            return
+        print(verify_token(auth['token']))
+        print('WebSocket client connected')
+    except jwt_exceptions.NoAuthorizationError as e:
+        print(f"Invalid token: {str(e)}")
+        return
+
+@socketio.on('disconnect')
+def handle_disconnect(auth):
+    try:
+        if not auth or 'token' not in auth:
+            return
+        print(verify_token(auth['token']))
+        print('WebSocket client disconnected')
+    except jwt_exceptions.NoAuthorizationError as e:
+        print(f"Invalid token: {str(e)}")
+        return
+    
 
 @socketio.on('join_chat')
-@jwt_required()
 def handle_join_chat(data):
     try:
-        user_id = get_jwt_identity()
+        user_id =  verify_token(data['token'])
         chat_id = data.get('chat_id')
+        print(f'User {user_id} joining chat {chat_id}')
         if chat_id:
             room = f"chat_{chat_id}"
             join_room(room)
             socketio.emit('user_joined', {'user_id': user_id, 'chat_id': chat_id}, room=room)
     except Exception as e:
+        print(f"Error in join_chat: {e}")
+        socketio.emit('error', {'message': str(e)})
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    try:
+        user_id = verify_token(data['token'])
+        chat_id = data.get('chat_id')
+        content = data.get('content')
+        print(f"send_message: user={user_id}, chat_id={chat_id}, content={content}")
+        if chat_id and content:
+            message = Message.add_message(chat_id, user_id, content)
+            room = f"chat_{chat_id}"
+            print(f"Emitting receive_message to room {room}")
+            socketio.emit('receive_message', {'message':Message.get_message(message)}, room=room)
+    except Exception as e:
+        print(f"Error in send_message: {e}")
         socketio.emit('error', {'message': str(e)})
 
 @socketio.on('leave_chat')
-@jwt_required()
 def handle_leave_chat(data):
     try:
-        user_id = get_jwt_identity()
+        user_id = verify_token(data['token'])
         chat_id = data.get('chat_id')
+        print(f'User {user_id} leaving chat {chat_id}')
         if chat_id:
             room = f"chat_{chat_id}"
             leave_room(room)
             socketio.emit('user_left', {'user_id': user_id, 'chat_id': chat_id}, room=room)
     except Exception as e:
-        socketio.emit('error', {'message': str(e)})
-
-@socketio.on('send_message')
-@jwt_required()
-def handle_send_message(data):
-    try:
-        user_id = get_jwt_identity()
-        chat_id = data.get('chat_id')
-        content = data.get('content')
-        if chat_id and content:
-            message = Message.add_message(chat_id, user_id, content)
-            room = f"chat_{chat_id}"
-            socketio.emit('receive_message', {'message': message}, room=room)
-    except Exception as e:
+        print(f"Error in leave_chat: {e}")
         socketio.emit('error', {'message': str(e)})

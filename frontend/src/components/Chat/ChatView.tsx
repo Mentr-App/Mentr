@@ -7,6 +7,7 @@ import MessageInput from './MessageInput';
 import { Message, Chat } from './types';
 import { fetchMessagesForChat, fetchChatDetails, sendMessage, deleteMessage, editMessage } from './ChatApi';
 import { useChatSocket } from '../../hooks/useChatSocket';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ChatViewProps {
   selectedChatId: string | null;
@@ -19,11 +20,8 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
   const [chatDetails, setChatDetails] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    setToken(typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
-  }, []);
+  const { isAuthenticated } = useAuth();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
   const { sendMessage } = useChatSocket({
     token,
@@ -34,6 +32,7 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
         return [...prev, msg].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       });
     },
+    enabled: isAuthenticated && !!token && !!selectedChatId,
   });
 
   useEffect(() => {
@@ -69,16 +68,7 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
         return;
       }
       const trimmedContent = content.trim();
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage: Message = {
-        _id: tempId,
-        chat_id: selectedChatId,
-        sender_id: userId,
-        content: trimmedContent,
-        timestamp: new Date().toISOString(),
-        isOptimistic: true, // Mark as optimistic
-      };
-      setMessages((prev) => [...prev, optimisticMessage]);
+    
       sendMessage(trimmedContent);
     },
     [selectedChatId, sendMessage]

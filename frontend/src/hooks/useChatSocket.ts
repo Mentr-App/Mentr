@@ -21,15 +21,17 @@ export function useChatSocket({
   const socketRef = useRef<Socket | null>(null);
   const prevChatId = useRef<string | null>(null);
 
+  // Connect/disconnect socket
   useEffect(() => {
     if (!enabled || !token) return;
     if (!socketRef.current) {
-      socketRef.current = io('http://localhost:5000', {
+      socketRef.current = io('http://localhost:8000', {
         transports: ['websocket'],
         auth: { token },
         withCredentials: true,
       });
       socketRef.current.on('receive_message', payload => {
+        console.log('Received message from socket:', payload);
         onReceiveMessage?.(payload.message);
       });
       socketRef.current.on('user_joined', data => {
@@ -42,25 +44,32 @@ export function useChatSocket({
         console.error('Socket error:', err);
       });
     }
-    if (chatId && prevChatId.current !== chatId) {
-      if (prevChatId.current) {
-        socketRef.current.emit('leave_chat', { chat_id: prevChatId.current });
-      }
-      socketRef.current.emit('join_chat', { chat_id: chatId });
-      prevChatId.current = chatId;
-    }
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
     };
-  }, [token, chatId, enabled]);
+  }, [token, enabled]);
+
+  // Handle joining/leaving rooms when chatId changes
+  useEffect(() => {
+    if (!socketRef.current) return;
+    // Leave previous room if needed
+    if (prevChatId.current && prevChatId.current !== chatId) {
+      socketRef.current.emit('leave_chat', { chat_id: prevChatId.current, token });
+    }
+    // Join new room if valid chatId
+    if (chatId) {
+      socketRef.current.emit('join_chat', { chat_id: chatId, token });
+    }
+    prevChatId.current = chatId;
+  }, [chatId, token]);
 
   const sendMessage = useCallback((content: string) => {
     if (!socketRef.current || !chatId) return;
-    socketRef.current.emit('send_message', { chat_id: chatId, content });
-  }, [chatId]);
+    socketRef.current.emit('send_message', { chat_id: chatId, content, token });
+  }, [chatId, token]);
 
   return { sendMessage };
 }
