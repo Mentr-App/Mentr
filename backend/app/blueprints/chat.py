@@ -250,12 +250,10 @@ def handle_join_chat(data):
 @jwt_required()
 def handle_leave_chat(data):
     try:
-        verify_jwt_in_request()
         user_id = get_jwt_identity()
         chat_id = data.get('chat_id')
         if chat_id:
             room = f"chat_{chat_id}"
-            from flask_socketio import leave_room
             leave_room(room)
             socketio.emit('user_left', {'user_id': user_id, 'chat_id': chat_id}, room=room)
     except Exception as e:
@@ -265,12 +263,10 @@ def handle_leave_chat(data):
 @jwt_required()
 def handle_send_message(data):
     try:
-        verify_jwt_in_request()
         user_id = get_jwt_identity()
         chat_id = data.get('chat_id')
         content = data.get('content')
         if chat_id and content:
-            from app.models.message import Message
             message = Message.add_message(chat_id, user_id, content)
             room = f"chat_{chat_id}"
             socketio.emit('receive_message', {'message': message}, room=room)
