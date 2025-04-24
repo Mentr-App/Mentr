@@ -18,15 +18,18 @@ const MessageList: React.FC<MessageListProps> = ({ messages, currentUserId, onDe
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]); // Scroll whenever messages change
 
+  if (!currentUserId) {
+    return <></>
+  }
   return (
     <div className="space-y-4">
       {messages.map((msg) => (
         <MessageItem
-          key={msg.id}
+          key={msg._id}
           message={msg}
-          isOwnMessage={msg.senderId === currentUserId}
-          onDelete={() => onDeleteMessage(msg.id)}
-          onEdit={(newContent) => onEditMessage(msg.id, newContent)} // Pass edit handler
+          isOwnMessage={msg.sender_id === currentUserId}
+          onDelete={() => onDeleteMessage(msg._id)}
+          onEdit={(newContent) => onEditMessage(msg._id, newContent)} // Pass edit handler
         />
       ))}
       {/* Dummy div to help scrolling to the bottom */}

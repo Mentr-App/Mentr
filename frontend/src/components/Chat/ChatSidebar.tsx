@@ -53,6 +53,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             selectedChatId={selectedChatId}
             onSelectChat={onSelectChat}
             onDeleteThread={onDeleteThread}
+            isLoading={false}
+            error={""}
           />
         )}
       </div>

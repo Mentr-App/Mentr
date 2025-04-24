@@ -1,8 +1,9 @@
 from flask_restful import request
 from app.models.user import User
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.database import mongo
+import re # For regular expression matching
 
 user_bp = Blueprint("user", __name__)
 
@@ -43,3 +44,54 @@ def get_user_votes():
     }
     
     return {"votes": votes_map}, 200
+
+@user_bp.route("/users", methods=["GET"])
+@jwt_required() # Ensures the user is logged in
+def get_users():
+    """
+    Searches for users based on a username key provided as a query parameter.
+    Performs a case-insensitive partial match.
+    Returns a list of matching users containing their ID and username.
+    """
+    try:
+        # 1. Get the search key from query parameters (for GET requests)
+        # Example request: GET /users?key=john
+        search_key = request.args.get("key", "").strip() # Use request.args for GET
+
+        # Optional: Add validation for the key length if desired
+        if not search_key:
+            # Return empty list if no key is provided, or you could return an error
+            return jsonify([]), 200
+            # Or return an error:
+            # return jsonify({"msg": "Search key parameter 'key' is required"}), 400
+
+        # 2. Create a case-insensitive regular expression for partial matching
+        # 'i' flag makes it case-insensitive
+        # This will find usernames containing the search_key
+        regex_pattern = re.compile(f".*{re.escape(search_key)}.*", re.IGNORECASE)
+        # Alternative: Starts with search_key
+        # regex_pattern = re.compile(f"^{re.escape(search_key)}", re.IGNORECASE)
+
+        # 3. Query the database
+        # Find users where the 'username' field matches the regex pattern
+        # Project only the necessary fields (_id and username) to avoid sending sensitive data
+        users_cursor = mongo.db.users.find(
+            {"username": regex_pattern},
+            {"_id": 1, "username": 1} # Projection: 1 means include, 0 means exclude
+        )
+
+        # 4. Format the results
+        users_list = []
+        for user in users_cursor:
+            # Convert ObjectId to string for JSON serialization
+            user["_id"] = str(user["_id"])
+            users_list.append(user)
+
+        # 5. Return the JSON response
+        return jsonify(users_list), 200
+
+    except Exception as e:
+        # Basic error handling
+        print(f"Error in /users route: {e}") # Log the error server-side
+        # Return a generic error message to the client
+        return jsonify({"msg": "An error occurred while searching for users."}), 500

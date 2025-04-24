@@ -6,7 +6,7 @@ import ChatSidebar from './ChatSidebar';
 import ChatView from './ChatView';
 import NewChatModal from './NewChatModal'; // Import the new modal
 import { Chat, User } from './types'; // Import User type
-import { findOrCreateChat } from './ChatApi'; // Import new API function
+import { findOrCreateChat, fetchChats } from './ChatApi'; // Import new API function
 
 const ChatComponent: React.FC = () => {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -15,29 +15,39 @@ const ChatComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false); // State for modal visibility
   const [isProcessingNewChat, setIsProcessingNewChat] = useState(false); // State for loading indicator after selection
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId")
+    setUserId(storedUserId)
+  }, [])
 
   // --- Data Fetching ---
   useEffect(() => {
     const loadChats = async () => {
-      // ... (loading logic as before) ...
        setIsLoading(true);
-       setError(null);
+       setError(null); // Reset error state
        try {
-         // const fetchedChats = await fetchChats(); // Assume this fetches existing chats
-         const fetchedChats: Chat[] = await new Promise(resolve => setTimeout(() => resolve([
-             { id: 'chat1', participants: [{ id: 'user2', name: 'Alice Mentee'}], lastMessage: { id: 'msg1', senderId: 'user2', sender: {id: 'user2', name: 'Alice Mentee'}, content: 'Hey there!', timestamp: new Date(Date.now() - 100000) } },
-             { id: 'chat2', participants: [{ id: 'user3', name: 'Bob Mentor'}], lastMessage: { id: 'msg2', senderId: 'currentUser', sender: {id: 'currentUser', name: 'You'}, content: 'Sounds good, let\'s talk tomorrow. asdfadsfdasfdasfdsafdsafdasfdsafdsafdsafdsfasfds', timestamp: new Date(Date.now() - 2000000) } },
-         ]), 1000));
+         // fetchChats now returns Chat[] on success or throws an error
+         const fetchedChats = await fetchChats();
          setChats(fetchedChats);
        } catch (err) {
-         console.error("Failed to fetch chats:", err);
-         setError("Could not load chats.");
+         // Catch block now correctly handles errors thrown from fetchChats
+         console.error("loadChats: Failed to fetch chats:", err);
+         // Set a user-friendly error message based on the error caught
+         if (err instanceof Error) {
+            // You could customize the message further based on err.message
+            setError(`Could not load chats: ${err.message}`);
+         } else {
+            setError("Could not load chats due to an unknown error.");
+         }
+         setChats([]); // Ensure chats is empty on error
        } finally {
          setIsLoading(false);
        }
     };
     loadChats();
-  }, []);
+  }, []); // Empty dependency array ensures it runs once on mount
 
   // --- Event Handlers ---
   const handleSelectChat = useCallback((chatId: string) => {
@@ -61,27 +71,29 @@ const ChatComponent: React.FC = () => {
     handleCloseNewChatModal(); // Close modal immediately
 
     try {
+      const userId = localStorage.getItem("userId")
+
       // 1. Check if a chat with this user already exists locally
       const existingChat = chats.find(chat =>
         chat.participants.length === 2 && // Ensure it's a 1-on-1 chat
-        chat.participants.some(p => p.id === selectedUser.id) &&
-        chat.participants.some(p => p.id === 'currentUser') // Replace 'currentUser' with actual ID
+        chat.participants.some(p => p._id === selectedUser._id) &&
+        chat.participants.some(p => p._id === userId) // Replace 'currentUser' with actual ID
       );
 
       if (existingChat) {
         // 2a. If chat exists, just select it
-        setSelectedChatId(existingChat.id);
-        console.log(`Found existing chat: ${existingChat.id}`);
+        setSelectedChatId(existingChat._id);
+        console.log(`Found existing chat: ${existingChat._id}`);
       } else {
         // 2b. If chat doesn't exist, call API to find/create it
-        console.log(`No local chat found. Calling findOrCreateChat for user ${selectedUser.id}`);
-        const newOrExistingChat = await findOrCreateChat(selectedUser.id);
+        console.log(`No local chat found. Calling findOrCreateChat for user ${selectedUser._id}`);
+        const newOrExistingChat = await findOrCreateChat(selectedUser._id);
 
         // 3. Update local chats state if it's a new chat not already present
         setChats(prevChats => {
              // Check again if the chat returned by API is already in our state
              // (in case it was created between the local check and API response)
-             if (prevChats.some(c => c.id === newOrExistingChat.id)) {
+             if (prevChats.some(c => c._id === newOrExistingChat._id)) {
                  return prevChats;
              }
              // Add the new chat to the beginning of the list
@@ -89,8 +101,8 @@ const ChatComponent: React.FC = () => {
         });
 
         // 4. Select the new/existing chat
-        setSelectedChatId(newOrExistingChat.id);
-        console.log(`Selected new/existing chat: ${newOrExistingChat.id}`);
+        setSelectedChatId(newOrExistingChat._id);
+        console.log(`Selected new/existing chat: ${newOrExistingChat._id}`);
       }
     } catch (err) {
       console.error("Failed to start or find chat:", err);
@@ -109,7 +121,7 @@ const ChatComponent: React.FC = () => {
             try {
                 // await deleteChatForUser(chatId);
                 console.log(`Deleting chat ${chatId} for current user (API call simulation)`);
-                setChats(prev => prev.filter(c => c.id !== chatId));
+                setChats(prev => prev.filter(c => c._id !== chatId));
                 if (selectedChatId === chatId) {
                     setSelectedChatId(null);
                 }
@@ -134,8 +146,9 @@ const ChatComponent: React.FC = () => {
       />
       <ChatView
         key={selectedChatId}
+        chats={chats}
         selectedChatId={selectedChatId}
-        // currentUserId="currentUser"
+        currentUserId={userId}
       />
 
       {/* Render the modal */}
@@ -143,7 +156,7 @@ const ChatComponent: React.FC = () => {
         isOpen={isCreatingChat}
         onClose={handleCloseNewChatModal}
         onUserSelect={handleStartChatWithUser} // Pass the handler
-        // currentUserId="currentUser" // Pass actual current user ID
+        currentUserId={userId} // Pass actual current user ID
       />
 
       {/* Optional: Loading indicator while processing new chat creation */}

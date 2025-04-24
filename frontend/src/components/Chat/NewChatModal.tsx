@@ -50,7 +50,9 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
       try {
         console.log(`Executing search for: "${searchQuery}"`); // Log the query being executed
         const users = await searchUsers(searchQuery);
-        setSearchResults(users.filter(user => user.id !== currentUserId));
+        const userId = localStorage.getItem("userId")
+        console.log(users, userId)
+        setSearchResults(users.filter(user => user._id !== userId));
       } catch (err) {
         console.error("Failed to search users:", err);
         setError("Failed to search users. Please try again.");
@@ -133,7 +135,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
           <ul>
             {searchResults.map((user) => (
               <li
-                key={user.id}
+                key={user._id}
                 onClick={() => handleUserClick(user)}
                 className="flex items-center p-3 hover:bg-[#343b45] cursor-pointer rounded-md transition duration-150 ease-in-out"
               >
