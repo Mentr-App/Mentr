@@ -4,7 +4,7 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from app.database import mongo
 from app.config import config_by_name
-from app.extensions import jwt
+from app.extensions import jwt, socketio
 from app.blueprints import register_blueprints
 from app.mail import init_mail
 from app.image import image_handler
@@ -25,6 +25,5 @@ def create_app(config_name="development"):
     api = Api(app)
     #Register API resources
     register_blueprints(app)
+    socketio.init_app(app, cors_allowed_origins="*")
     return app
-
-    

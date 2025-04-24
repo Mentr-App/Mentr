@@ -2,6 +2,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
 from app.models.chat import Chat
 from app.models.message import Message
+from app.extensions import socketio
+from flask_socketio import join_room
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -229,3 +231,48 @@ def addMessage():
         # Catch any other unexpected errors during request processing
         print(f"Unexpected error in addMessage route: {e}") # Replace with proper logging
         return jsonify({"message": "An unexpected server error occurred."}), 500
+
+@socketio.on('join_chat')
+@jwt_required()
+def handle_join_chat(data):
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+        chat_id = data.get('chat_id')
+        if chat_id:
+            room = f"chat_{chat_id}"
+            join_room(room)
+            socketio.emit('user_joined', {'user_id': user_id, 'chat_id': chat_id}, room=room)
+    except Exception as e:
+        socketio.emit('error', {'message': str(e)})
+
+@socketio.on('leave_chat')
+@jwt_required()
+def handle_leave_chat(data):
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+        chat_id = data.get('chat_id')
+        if chat_id:
+            room = f"chat_{chat_id}"
+            from flask_socketio import leave_room
+            leave_room(room)
+            socketio.emit('user_left', {'user_id': user_id, 'chat_id': chat_id}, room=room)
+    except Exception as e:
+        socketio.emit('error', {'message': str(e)})
+
+@socketio.on('send_message')
+@jwt_required()
+def handle_send_message(data):
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+        chat_id = data.get('chat_id')
+        content = data.get('content')
+        if chat_id and content:
+            from app.models.message import Message
+            message = Message.add_message(chat_id, user_id, content)
+            room = f"chat_{chat_id}"
+            socketio.emit('receive_message', {'message': message}, room=room)
+    except Exception as e:
+        socketio.emit('error', {'message': str(e)})
