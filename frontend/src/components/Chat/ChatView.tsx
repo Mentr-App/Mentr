@@ -5,14 +5,15 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { Message, Chat } from './types';
-// import { fetchMessagesForChat, fetchChatDetails, sendMessage, deleteMessage, editMessage } from '@/lib/chatApi';
+import { fetchMessagesForChat, fetchChatDetails, sendMessage, deleteMessage, editMessage } from './ChatApi';
 
 interface ChatViewProps {
   selectedChatId: string | null;
+  chats: Chat[];
   currentUserId?: string;
 }
 
-const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, currentUserId = "currentUser" }) => {
+const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserId}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatDetails, setChatDetails] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,16 +30,9 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, currentUserId = "cu
       setIsLoading(true);
       setError(null);
       try {
-        // const fetchedMessages = await fetchMessagesForChat(selectedChatId);
+        const fetchedMessages = await fetchMessagesForChat(selectedChatId);
         // const fetchedDetails = await fetchChatDetails(selectedChatId);
-        console.log(`Workspaceing messages for chat ${selectedChatId}`);
-        const fetchedMessages: Message[] = await new Promise(resolve => setTimeout(() => resolve([
-             { id: 'msg1', senderId: 'user2', sender: {id: 'user2', name: 'Alice Mentee'}, content: 'Hey there!', timestamp: new Date(Date.now() - 100000) },
-             { id: 'msg2', senderId: 'currentUser', sender: {id: 'currentUser', name: 'You'}, content: 'Sounds good, let\'s talk tomorrow.', timestamp: new Date(Date.now() - 200000) },
-             { id: 'msg3', senderId: 'user2', sender: {id: 'user2', name: 'Alice Mentee'}, content: 'Great!', timestamp: new Date(Date.now() - 50000) },
-             { id: 'msg4', senderId: 'currentUser', sender: {id: 'currentUser', name: 'You'}, content: 'Perfect.', timestamp: new Date(Date.now() - 10000), isEdited: true},
-        ].filter(m => selectedChatId === 'chat1' ? m.senderId !== 'user3' : m.senderId !== 'user2')
-        ), 500));
+        console.log(`Messages for chat ${selectedChatId}`);
         setMessages(fetchedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
         // setChatDetails(fetchedDetails);
       } catch (err) {
@@ -52,31 +46,63 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, currentUserId = "cu
   }, [selectedChatId]);
 
   const handleSendMessage = useCallback(async (content: string) => {
-    if (!selectedChatId || !content.trim()) return;
+    // Ensure we have necessary info
+    const userId = localStorage.getItem("userId")
+    console.log(userId, selectedChatId, content)
+    if (!selectedChatId || !content.trim() || !userId) {
+        console.warn("handleSendMessage: Missing required data (chatId, content, userId, user).");
+        return;
+    }
+
+    const trimmedContent = content.trim();
+    const tempId = `temp-${Date.now()}`; // Generate temporary ID
+
+    // 1. Optimistic Update: Add message immediately with temporary ID
     const optimisticMessage: Message = {
-      id: `temp-${Date.now()}`, senderId: currentUserId, sender: { id: currentUserId, name: 'You' }, content: content.trim(), timestamp: new Date(),
+      _id: tempId, // Use temp ID
+      chat_id: selectedChatId,
+      sender_id: currentUserId,
+      content: trimmedContent,
+      timestamp: new Date().toISOString(), // Use ISO string for consistency
+      isOptimistic: true, // Mark as optimistic
     };
+
+    // Add to local state
     setMessages(prev => [...prev, optimisticMessage]);
+    setError(null); // Clear previous errors
+
     try {
-      // const sentMessage = await sendMessage(selectedChatId, content.trim());
-       const sentMessage: Message = await new Promise(resolve => setTimeout(() => resolve({ ...optimisticMessage, id: `server-${Date.now()}` }), 300));
-      setMessages(prev => prev.map(msg => msg.id === optimisticMessage.id ? sentMessage : msg));
+      // 2. Call the actual API function
+      // sendMessage now expects the backend to return the full Message object
+      const sentMessage = await sendMessage(selectedChatId, trimmedContent);
+
+      // 3. Replace optimistic message with confirmed message from server
+      setMessages(prev =>
+        prev.map(msg =>
+          msg._id === tempId // Find the optimistic message by temp ID
+            ? { ...sentMessage, isOptimistic: false } // Replace with server data, remove flag
+            : msg
+        )
+      );
     } catch (err) {
-      console.error("Failed to send message:", err); setError("Message failed to send.");
-      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
+      // 4. Handle Error: Revert optimistic update
+      console.error("Failed to send message:", err);
+      setError(err instanceof Error ? err.message : "Message failed to send.");
+      // Remove the optimistic message that failed
+      setMessages(prev => prev.filter(msg => msg._id !== tempId));
     }
   }, [selectedChatId, currentUserId]);
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
-     const messageToDelete = messages.find(msg => msg.id === messageId);
-     if (!messageToDelete || messageToDelete.senderId !== currentUserId) return;
+     const messageToDelete = messages.find(msg => msg._id === messageId);
+     if (!messageToDelete || messageToDelete.sender_id !== currentUserId) return;
     const confirmDelete = window.confirm("Are you sure you want to delete this message? This cannot be undone.");
     if (!confirmDelete) return;
     try {
         // await deleteMessage(messageId);
         console.log(`Deleting message ${messageId} (API call simulation)`);
         await new Promise(resolve => setTimeout(resolve, 300));
-        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+        setMessages(prev => prev.filter(msg => msg._id !== messageId));
          alert("Message deleted.");
     } catch (err) {
         console.error("Failed to delete message:", err); setError("Could not delete message.");
@@ -84,22 +110,28 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, currentUserId = "cu
   }, [messages, currentUserId]);
 
    const handleEditMessage = useCallback(async (messageId: string, newContent: string) => {
-        const messageToEdit = messages.find(msg => msg.id === messageId);
+        const messageToEdit = messages.find(msg => msg._id === messageId);
         if (!messageToEdit || messageToEdit.senderId !== currentUserId) return;
         if (!newContent.trim() || newContent.trim() === messageToEdit.content) return;
         const originalContent = messageToEdit.content;
-        setMessages(prev => prev.map(msg => msg.id === messageId ? { ...msg, content: newContent.trim(), isEdited: true } : msg ));
+        setMessages(prev => prev.map(msg => msg._id === messageId ? { ...msg, content: newContent.trim(), isEdited: true } : msg ));
         try {
             // const updatedMessage = await editMessage(messageId, newContent.trim());
             console.log(`Editing message ${messageId} to "${newContent.trim()}" (API call simulation)`);
              const updatedMessage: Message = await new Promise(resolve => setTimeout(() => resolve({ ...messageToEdit, content: newContent.trim(), isEdited: true, timestamp: new Date() }), 300));
-            setMessages(prev => prev.map(msg => msg.id === messageId ? updatedMessage : msg));
+            setMessages(prev => prev.map(msg => msg._id === messageId ? updatedMessage : msg));
              alert("Message edited.");
         } catch (err) {
             console.error("Failed to edit message:", err); setError("Could not edit message.");
-             setMessages(prev => prev.map(msg => msg.id === messageId ? { ...msg, content: originalContent, isEdited: messageToEdit.isEdited } : msg ));
+             setMessages(prev => prev.map(msg => msg._id === messageId ? { ...msg, content: originalContent, isEdited: messageToEdit.isEdited } : msg ));
         }
     }, [messages, currentUserId]);
+
+    const getOtherParticipantName = (participants: User[]): string => {
+      const currentUserId = localStorage.getItem("userId");
+      const otherParticipant = participants.find(p => p._id !== currentUserId);
+      return otherParticipant?.name || 'Unknown User';
+  };
 
 
   if (!selectedChatId) {
@@ -117,7 +149,7 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, currentUserId = "cu
       {/* Chat Header - Use secondary dark background */}
       <div className="p-4 border-b border-[#343b45] bg-[#262d34]">
         <h2 className="font-semibold text-gray-50">
-            Chat with ... {/* Placeholder */}
+            Chat with {getOtherParticipantName(chats.filter((chat) => chat._id === selectedChatId)[0].participants)}
         </h2>
       </div>
 

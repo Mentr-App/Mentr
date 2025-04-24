@@ -46,7 +46,6 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
      }
   };
 
-
   return (
     <div className={messageContainerClass}>
       <div className={`max-w-xs md:max-w-md lg:max-w-lg px-3 py-2 rounded-lg shadow ${bubbleClass}`}>

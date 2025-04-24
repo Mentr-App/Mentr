@@ -2,6 +2,7 @@
 import React from 'react';
 import { Chat, User } from './types';
 import { formatDistanceToNow } from 'date-fns';
+import ProfilePicture from '../ProfilePicture/ProfilePicture';
 
 interface ChatItemProps {
   chat: Chat;
@@ -10,9 +11,16 @@ interface ChatItemProps {
   onDelete: () => void;
 }
 
-const getOtherParticipantName = (participants: User[], currentUserId: string = "currentUser"): string => {
-    const otherParticipant = participants.find(p => p.id !== currentUserId);
+const getOtherParticipantName = (participants: User[]): string => {
+    const currentUserId = localStorage.getItem("userId");
+    const otherParticipant = participants.find(p => p._id !== currentUserId);
     return otherParticipant?.name || 'Unknown User';
+};
+
+const getOtherParticipantPic = (participants: User[]): string | undefined=> {
+  const currentUserId = localStorage.getItem("userId");
+  const otherParticipant = participants.find(p => p._id !== currentUserId);
+  return otherParticipant?.avatarUrl || undefined;
 };
 
 const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, onSelect, onDelete }) => {
@@ -27,9 +35,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, onSelect, onDelet
     <li className={`${baseClasses} ${selectedClasses}`} onClick={onSelect}>
       {/* Avatar Placeholder */}
       <div className="flex-shrink-0 mr-3">
-        <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-gray-50 font-semibold">
-          {displayName.charAt(0).toUpperCase()}
-        </div>
+        <ProfilePicture userId="anonymous" profilePicture={getOtherParticipantPic(chat.participants)}/>
       </div>
 
       {/* Chat Info */}

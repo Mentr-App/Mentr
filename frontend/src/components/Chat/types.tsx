@@ -1,22 +1,22 @@
 // types.ts
 export interface User {
-    id: string;
+    _id: string;
     name: string;
     avatarUrl?: string;
   }
   
   export interface Message {
-    id: string;
-    senderId: string;
-    sender: User;
+    _id: string;
+    chat_id: string;
+    sender_id: string;
     content: string;
-    timestamp: Date; // Or string
+    timestamp: Date | string; // Or string
+    isOptimistic?: boolean;
     isEdited?: boolean;
   }
   
-  // Renamed from Conversation to Chat
   export interface Chat {
-    id: string;
+    _id: string;
     participants: User[];
     lastMessage?: Message;
     unreadCount?: number;
