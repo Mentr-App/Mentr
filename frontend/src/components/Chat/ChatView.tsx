@@ -6,6 +6,7 @@ import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { Message, Chat } from './types';
 import { fetchMessagesForChat, fetchChatDetails, sendMessage, deleteMessage, editMessage } from './ChatApi';
+import { useChatSocket } from '../../hooks/useChatSocket';
 
 interface ChatViewProps {
   selectedChatId: string | null;
@@ -18,8 +19,23 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
   const [chatDetails, setChatDetails] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  // ... (Data fetching and handlers remain the same) ...
+  useEffect(() => {
+    setToken(typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+  }, []);
+
+  const { sendMessage } = useChatSocket({
+    token,
+    chatId: selectedChatId,
+    onReceiveMessage: (msg) => {
+      setMessages((prev) => {
+        if (msg && prev.some((m) => m._id === msg._id)) return prev;
+        return [...prev, msg].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      });
+    },
+  });
+
   useEffect(() => {
     if (!selectedChatId) {
       setMessages([]);
@@ -45,53 +61,28 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
     loadMessages();
   }, [selectedChatId]);
 
-  const handleSendMessage = useCallback(async (content: string) => {
-    // Ensure we have necessary info
-    const userId = localStorage.getItem("userId")
-    console.log(userId, selectedChatId, content)
-    if (!selectedChatId || !content.trim() || !userId) {
-        console.warn("handleSendMessage: Missing required data (chatId, content, userId, user).");
+  const handleSendMessage = useCallback(
+    (content: string) => {
+      const userId = localStorage.getItem('userId');
+      if (!selectedChatId || !content.trim() || !userId) {
+        console.warn('handleSendMessage: Missing required data (chatId, content, userId, user).');
         return;
-    }
-
-    const trimmedContent = content.trim();
-    const tempId = `temp-${Date.now()}`; // Generate temporary ID
-
-    // 1. Optimistic Update: Add message immediately with temporary ID
-    const optimisticMessage: Message = {
-      _id: tempId, // Use temp ID
-      chat_id: selectedChatId,
-      sender_id: currentUserId,
-      content: trimmedContent,
-      timestamp: new Date().toISOString(), // Use ISO string for consistency
-      isOptimistic: true, // Mark as optimistic
-    };
-
-    // Add to local state
-    setMessages(prev => [...prev, optimisticMessage]);
-    setError(null); // Clear previous errors
-
-    try {
-      // 2. Call the actual API function
-      // sendMessage now expects the backend to return the full Message object
-      const sentMessage = await sendMessage(selectedChatId, trimmedContent);
-
-      // 3. Replace optimistic message with confirmed message from server
-      setMessages(prev =>
-        prev.map(msg =>
-          msg._id === tempId // Find the optimistic message by temp ID
-            ? { ...sentMessage, isOptimistic: false } // Replace with server data, remove flag
-            : msg
-        )
-      );
-    } catch (err) {
-      // 4. Handle Error: Revert optimistic update
-      console.error("Failed to send message:", err);
-      setError(err instanceof Error ? err.message : "Message failed to send.");
-      // Remove the optimistic message that failed
-      setMessages(prev => prev.filter(msg => msg._id !== tempId));
-    }
-  }, [selectedChatId, currentUserId]);
+      }
+      const trimmedContent = content.trim();
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage: Message = {
+        _id: tempId,
+        chat_id: selectedChatId,
+        sender_id: userId,
+        content: trimmedContent,
+        timestamp: new Date().toISOString(),
+        isOptimistic: true, // Mark as optimistic
+      };
+      setMessages((prev) => [...prev, optimisticMessage]);
+      sendMessage(trimmedContent);
+    },
+    [selectedChatId, sendMessage]
+  );
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
      const messageToDelete = messages.find(msg => msg._id === messageId);
@@ -111,7 +102,7 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
 
    const handleEditMessage = useCallback(async (messageId: string, newContent: string) => {
         const messageToEdit = messages.find(msg => msg._id === messageId);
-        if (!messageToEdit || messageToEdit.senderId !== currentUserId) return;
+        if (!messageToEdit || messageToEdit.sender_id !== currentUserId) return;
         if (!newContent.trim() || newContent.trim() === messageToEdit.content) return;
         const originalContent = messageToEdit.content;
         setMessages(prev => prev.map(msg => msg._id === messageId ? { ...msg, content: newContent.trim(), isEdited: true } : msg ));

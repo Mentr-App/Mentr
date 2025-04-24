@@ -135,79 +135,8 @@ export const fetchMessagesForChat = async (
  * @returns A promise that resolves to the newly created Message object returned by the backend.
  * @throws An error if the API call fails or the token is missing.
  */
- export const sendMessage = async (chatId: string, content: string): Promise<Message> => {
-  console.log(`API Call: sendMessage to chat ${chatId} ("${content}")`);
-
-  // 1. Validate inputs
-  if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') {
-    console.error("sendMessage: Invalid chatId provided.");
-    throw new Error("Invalid chat ID provided.");
-  }
-   if (content === null || content === undefined) { // Allow empty string, check for null/undefined
-     console.error("sendMessage: Invalid content provided.");
-     throw new Error("Invalid message content provided.");
-   }
-
-
-  // 2. Get the authentication token (handle SSR)
-  const token = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
-
-  if (!token) {
-    console.error("sendMessage: Auth token not found in localStorage.");
-    throw new Error("Authentication token not found. Please log in.");
-  }
-
-  try {
-    // 3. Define the API endpoint
-    // Assuming a Next.js API route like /api/chat/messages/add
-    const url = '/api/chat/addMessage';
-
-    console.log(`sendMessage: Calling POST ${url}`);
-
-    // 4. Make the authenticated POST request
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      // Send chatId and content in the request body
-      body: JSON.stringify({
-          chatId: chatId.trim(),
-          content: content // Send original content (trimming happened in caller)
-      }),
-    });
-
-    // 5. Handle the response
-    const responseBody = await response.json(); // Assume JSON response
-
-    if (response.ok && response.status === 201) { // Check for 201 Created status
-      console.log("sendMessage: Successfully sent message:", responseBody);
-      // **IMPORTANT**: Assumes the backend returns the *full*, newly created message object
-      // matching the Message interface after successful creation.
-      if (!responseBody || typeof responseBody._id !== 'string' || typeof responseBody.content !== 'string') {
-          throw new Error("API response is not a valid Message object.");
-      }
-      return responseBody as Message;
-    } else {
-      // Handle HTTP errors
-      const errorMsg = responseBody?.message || responseBody?.msg || `Failed to send message: ${response.status} ${response.statusText}`;
-      console.error(`sendMessage: API request failed - Status: ${response.status}`, responseBody);
-      throw new Error(errorMsg);
-    }
-  } catch (error) {
-    // Handle network errors or errors during fetch/JSON parsing
-    console.error("sendMessage: Network or other error occurred:", error);
-     if (error instanceof Error) {
-         if (error.message.includes("API response is not a valid Message object")) {
-             throw error; // Re-throw validation error
-         }
-       // Throw a more generic message for other errors
-       throw new Error(`An error occurred while sending the message: ${error.message}`);
-     } else {
-       throw new Error('An unknown error occurred while sending the message.');
-     }
-  }
+ export const sendMessage = async (_chatId: string, _content: string) => {
+  throw new Error('sendMessage should be handled via WebSocket. Use useChatSocket().sendMessage instead.');
 };
 
 export const deleteMessage = async (messageId: string): Promise<void> => {
