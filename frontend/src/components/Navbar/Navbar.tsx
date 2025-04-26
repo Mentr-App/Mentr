@@ -74,8 +74,12 @@ const Navbar: React.FC = () => {
     };
 
     const handleChatClick = () => {
-        router.push("/chat");
-        setIsDropdownVisible(false);
+        if (isAuthenticated) {
+            router.push("/chat");
+            setIsDropdownVisible(false);
+        } else {
+            setIsPopupVisible(true)
+        }
     }
 
     const handleReqFeature = () => {

@@ -25,7 +25,8 @@ const getOtherParticipantPic = (participants: User[]): string | undefined=> {
 
 const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, onSelect, onDelete }) => {
   const displayName = getOtherParticipantName(chat.participants);
-  const lastMessage = chat.lastMessage;
+  const lastMessage = chat.last_message;
+  const lastMessageAt = chat.last_message_at;
 
   const baseClasses = "flex items-center p-3 hover:bg-[#343b45] cursor-pointer transition duration-150 ease-in-out border-b border-[#262d34] relative group"; // Ensure 'group' is here
   const selectedClasses = isSelected ? "bg-[#343b45]" : "";
@@ -52,7 +53,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, onSelect, onDelet
                  {lastMessage && (
                      // Timestamp - Vertically centered by parent 'items-center'
                      <span className="text-xs text-gray-400 whitespace-nowrap"> {/* Added whitespace-nowrap */}
-                        {formatDistanceToNow(new Date(lastMessage.timestamp), { addSuffix: true })}
+                        {lastMessageAt === undefined ? "" : formatDistanceToNow(new Date(lastMessageAt), { addSuffix: true })}
                      </span>
                  )}
                  {/* Delete Button - Vertically centered. Opacity controlled by parent 'group-hover' */}
@@ -77,8 +78,8 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, isSelected, onSelect, onDelet
 
         {/* Bottom row: Last message preview */}
         {lastMessage ? (
-           <p className="text-sm text-gray-300 truncate mt-1"> {/* Added mt-1 for spacing */}
-               {lastMessage.content}
+           <p className="text-sm text-gray-300 truncate mt-1">
+               {lastMessage}
            </p>
         ) : (
             <p className="text-sm text-gray-400 italic mt-1">No messages yet</p>

@@ -232,7 +232,7 @@ export const fetchChatDetails = async (chatId: string): Promise<Chat> => { // Re
       const frontendUsers: User[] = backendUsers.map(user => ({
         _id: user._id,       // Map _id to id
         name: user.username, // Map username to name
-        // avatarUrl: user.avatarUrl || undefined // Map avatar if available in backend response
+        profile_picture: user.profile_picture || undefined // Map avatar if available in backend response
       }));
 
       return frontendUsers;

@@ -18,7 +18,8 @@ export interface User {
   export interface Chat {
     _id: string;
     participants: User[];
-    lastMessage?: Message;
+    last_message?: string;
+    last_message_at?: string;
     unreadCount?: number;
     // Add other relevant metadata
   }
