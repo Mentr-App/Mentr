@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import { Message, Chat } from './types';
+import { Message, Chat, User } from './types';
 import { fetchMessagesForChat, fetchChatDetails, sendMessage, deleteMessage, editMessage } from './ChatApi';
 import { useChatSocket } from '../../hooks/useChatSocket';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,7 +23,7 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
   const { isAuthenticated } = useAuth();
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
-  const { sendMessage } = useChatSocket({
+  const { sendMessage, editMessage, deleteMessage } = useChatSocket({
     token,
     chatId: selectedChatId,
     onReceiveMessage: (msg) => {
@@ -32,8 +32,27 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
         return [...prev, msg].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       });
     },
+    onEditReceived: (new_msg) => {
+      setMessages(prevMessages => 
+        prevMessages.map(msg =>
+          msg._id === new_msg._id
+            ? new_msg
+            : msg
+        )  
+      )
+    },
+    onDeleteReceived: (deleted_msg) => {
+      setMessages(prevMessages => 
+        prevMessages.filter(msg =>
+          msg._id !== deleted_msg
+        )  
+      )
+    },
     enabled: isAuthenticated && !!token && !!selectedChatId,
   });
+
+
+
 
   useEffect(() => {
     if (!selectedChatId) {
@@ -80,33 +99,68 @@ const ChatView: React.FC<ChatViewProps> = ({ selectedChatId, chats, currentUserI
     const confirmDelete = window.confirm("Are you sure you want to delete this message? This cannot be undone.");
     if (!confirmDelete) return;
     try {
-        // await deleteMessage(messageId);
-        console.log(`Deleting message ${messageId} (API call simulation)`);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        setMessages(prev => prev.filter(msg => msg._id !== messageId));
-         alert("Message deleted.");
+      deleteMessage(messageId)
     } catch (err) {
-        console.error("Failed to delete message:", err); setError("Could not delete message.");
+      console.error("Failed to delete message:", err); setError("Could not delete message.");
     }
   }, [messages, currentUserId]);
 
-   const handleEditMessage = useCallback(async (messageId: string, newContent: string) => {
-        const messageToEdit = messages.find(msg => msg._id === messageId);
-        if (!messageToEdit || messageToEdit.sender_id !== currentUserId) return;
-        if (!newContent.trim() || newContent.trim() === messageToEdit.content) return;
-        const originalContent = messageToEdit.content;
-        setMessages(prev => prev.map(msg => msg._id === messageId ? { ...msg, content: newContent.trim(), isEdited: true } : msg ));
-        try {
-            // const updatedMessage = await editMessage(messageId, newContent.trim());
-            console.log(`Editing message ${messageId} to "${newContent.trim()}" (API call simulation)`);
-             const updatedMessage: Message = await new Promise(resolve => setTimeout(() => resolve({ ...messageToEdit, content: newContent.trim(), isEdited: true, timestamp: new Date() }), 300));
-            setMessages(prev => prev.map(msg => msg._id === messageId ? updatedMessage : msg));
-             alert("Message edited.");
-        } catch (err) {
-            console.error("Failed to edit message:", err); setError("Could not edit message.");
-             setMessages(prev => prev.map(msg => msg._id === messageId ? { ...msg, content: originalContent, isEdited: messageToEdit.isEdited } : msg ));
-        }
-    }, [messages, currentUserId]);
+  const handleEditMessage = useCallback(async (messageId: string, newContent: string) => {
+    const messageToEdit = messages.find(msg => msg._id === messageId);
+
+    // --- Validations ---
+    if (!messageToEdit) return; // Message not found
+    if (!currentUserId || messageToEdit.sender_id !== currentUserId) {
+        setError("You can only edit your own messages.");
+        return; // Not the sender
+    }
+    const trimmedContent = newContent.trim();
+    if (!trimmedContent) {
+        setError("Message content cannot be empty.");
+        return; // Content required
+    }
+    if (trimmedContent === messageToEdit.content) {
+        return; // No actual change
+    }
+    // --- End Validations ---
+
+    const originalContent = messageToEdit.content;
+    const originalIsEdited = messageToEdit.isEdited; // Store original state for rollback
+
+    // Optimistic UI Update: Show the change immediately
+    setMessages(prev =>
+        prev.map(msg =>
+            msg._id === messageId
+                ? { ...msg, content: trimmedContent, isEdited: true } // Apply edit locally
+                : msg
+        )
+    );
+    setError(null); // Clear previous errors
+
+    try {
+        // Call the hook function to emit the 'edit_message' event via WebSocket.
+        // This does not return the updated message directly.
+        editMessage(messageId, trimmedContent);
+
+        // The actual confirmation and final state update will come via the
+        // 'onEditedMessage' callback provided to the useChatSocket hook.
+
+    } catch (err) {
+        // Catch synchronous errors (e.g., during optimistic update).
+        // This does NOT catch async errors from the server response.
+        console.error("Failed to initiate message edit:", err);
+        setError("Could not start message edit process.");
+
+        // Rollback Optimistic Update on sync error
+        setMessages(prev =>
+            prev.map(msg =>
+                msg._id === messageId
+                    ? { ...msg, content: originalContent, isEdited: originalIsEdited } // Revert to original
+                    : msg
+            )
+        );
+    }
+}, [messages, currentUserId, setMessages, setError, editMessage]); // useCallback dependencies
 
     const getOtherParticipantName = (participants: User[]): string => {
       const currentUserId = localStorage.getItem("userId");

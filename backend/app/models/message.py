@@ -100,6 +100,40 @@ class Message:
             return None
 
     @staticmethod
+    def edit_message(chat_id, message_id, content):
+        mongo.db.messages.update_one(
+            {"_id": ObjectId(message_id)},
+            {"$set": {
+                "content": content
+            }}
+        )
+
+        update_result = mongo.db.chats.update_one(
+            {"_id": ObjectId(chat_id)},
+                {"$set": {
+                    "last_message_at": datetime.utcnow(), 
+                    "last_message": "A message was edited"
+                }}
+        )
+
+        return ObjectId(message_id)
+
+    @staticmethod
+    def delete_message(chat_id, message_id):
+        result = mongo.db.messages.delete_one({"_id": ObjectId(message_id)})
+
+        update_result = mongo.db.chats.update_one(
+            {"_id": ObjectId(chat_id)},
+                {"$set": {
+                    "last_message_at": datetime.utcnow(), 
+                    "last_message": "A message was deleted"
+                }}
+        )
+        return result.deleted_count > 0
+
+
+
+    @staticmethod
     def get_messages_for_chat(chat_id: str, limit: int = 50, skip: int = 0):
         """
         Retrieves messages for a specific chat, sorted by timestamp.

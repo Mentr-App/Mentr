@@ -16,7 +16,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
   const router = useRouter();
 
   const handleClick = () => {
-    if (userId !== "[deleted]" && userId !== "[anonymous]" && userId !== "anonymous") {
+    if (userId !== "[deleted]" && userId !== "[anonymous]" && userId !== "anonymous" && userId) {
         router.push(`/profile/${userId}`);
     }
   };

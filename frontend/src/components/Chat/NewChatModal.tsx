@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react'; // Import useRef
 import { User } from './types';
 import { searchUsers } from './ChatApi';
+import ProfilePicture from '../ProfilePicture/ProfilePicture';
 // Removed lodash import
 
 interface NewChatModalProps {
@@ -140,9 +141,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
                 className="flex items-center p-3 hover:bg-[#343b45] cursor-pointer rounded-md transition duration-150 ease-in-out"
               >
                 <div className="flex-shrink-0 mr-3">
-                    <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-gray-50 font-semibold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
-                    </div>
+                  <ProfilePicture profilePicture={user.profile_picture} userId={undefined}/>
                 </div>
                 <span className="text-gray-50">{user.name}</span>
               </li>

@@ -3,6 +3,7 @@ from app.models.user import User
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.database import mongo
+from app.extensions import img_handler
 import re # For regular expression matching
 
 user_bp = Blueprint("user", __name__)
@@ -77,7 +78,7 @@ def get_users():
         # Project only the necessary fields (_id and username) to avoid sending sensitive data
         users_cursor = mongo.db.users.find(
             {"username": regex_pattern},
-            {"_id": 1, "username": 1} # Projection: 1 means include, 0 means exclude
+            {"_id": 1, "username": 1, "profile_picture": 1} # Projection: 1 means include, 0 means exclude
         )
 
         # 4. Format the results
@@ -85,6 +86,8 @@ def get_users():
         for user in users_cursor:
             # Convert ObjectId to string for JSON serialization
             user["_id"] = str(user["_id"])
+            if "profile_picture" in user and user["profile_picture"]:
+                user["profile_picture"] = img_handler.get(user.get("profile_picture"))
             users_list.append(user)
 
         # 5. Return the JSON response

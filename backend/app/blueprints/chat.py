@@ -293,6 +293,40 @@ def handle_send_message(data):
         print(f"Error in send_message: {e}")
         socketio.emit('error', {'message': str(e)})
 
+@socketio.on('edit_message')
+def handle_edit_message(data):
+    try:
+        user_id = verify_token(data['token'])
+        chat_id = data.get('chat_id')
+        content = data.get('content')
+        message_id = data.get('message_id')
+        print(f"edit_message: user={user_id}, chat_id={chat_id}, message_id={message_id}, content={content}")
+        if chat_id and message_id and content:
+            edited_message = Message.edit_message(chat_id, message_id, content)
+            print(edited_message)
+            room = f"chat_{chat_id}"
+            print(f"Emitting receive_edit_message to room {room}")
+            socketio.emit('receive_edit_message', {'message': Message.get_message(edited_message)}, room=room)
+    except Exception as e:
+        print(f"Error in edit_message: {e}")
+        socketio.emit("error", {"message": str(e)})
+
+@socketio.on('delete_message')
+def handle_delete_message(data):
+    try:
+        user_id = verify_token(data['token'])
+        chat_id = data.get('chat_id')
+        message_id = data.get('message_id')
+        print(f"delete_messsage: user={user_id}, chat_id={chat_id}, message_id={message_id}")
+        if chat_id and message_id:
+            Message.delete_message(chat_id, message_id)
+            room = f"chat_{chat_id}"
+            print(f"Emitting receive_delete_message to room {room}")
+            socketio.emit('receive_delete_message', {'message_id': message_id}, room=room)
+    except Exception as e:
+        print(f"Error in delete_message: {e}")
+        socketio.emit("error", {"message": str(e)})
+
 @socketio.on('leave_chat')
 def handle_leave_chat(data):
     try:
