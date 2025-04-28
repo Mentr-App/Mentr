@@ -11,9 +11,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const skip = req.query.skip || 0;
     const limit = req.query.limit || 50;
     const sort_by = req.query.sort_by || "new";
+    const activity = req.query.activity || "undefined"
 
     // Include pagination parameters in the URL
-    const flaskApiUrl = `http://localhost:8000/feed?skip=${skip}&limit=${limit}&sort_by=${sort_by}`;
+    const flaskApiUrl = `http://localhost:8000/feed?skip=${skip}&limit=${limit}&sort_by=${sort_by}&activity=${activity}`;
 
     try {
         const response = await fetch(flaskApiUrl, {

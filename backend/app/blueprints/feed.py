@@ -13,9 +13,12 @@ def get_feed():
     skip = request.args.get('skip', default=0, type=int)
     limit = request.args.get('limit', default=25, type=int)
     sort_by = request.args.get('sort_by', default='new', type=str)
+    activity = request.args.get('activity', default='undefined', type=str)
+    activity = activity if activity != "undefined" else None
+    print("activity", activity)
         
-    feed_result = Feed.get_feed(skip=skip, limit=limit, sort_by=sort_by)
-    total_count = Post.get_total_posts()
+    feed_result = Feed.get_feed(skip=skip, limit=limit, sort_by=sort_by, activity_filter=activity)
+    total_count = Post.get_total_posts(activity)
     
     return {
         "message": "Feed retrieved successfully", 

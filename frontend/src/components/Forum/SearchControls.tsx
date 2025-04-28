@@ -1,5 +1,21 @@
 import React from "react";
 
+// Define available options for the activity dropdown
+// (Make sure these match the values expected by your backend filter)
+const activityOptions = [
+    "Technology",
+    "Healthcare",
+    "Finance",
+    "Education",
+    "Arts & Entertainment",
+    "Retail",
+    "Manufacturing",
+    "Hospitality",
+    "Other"
+];
+
+
+// --- Updated Props Interface ---
 interface SearchControlsProps {
     postsPerPage: number;
     handlePostsPerPageChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -10,6 +26,10 @@ interface SearchControlsProps {
     isSearching: boolean;
     sortBy: string;
     handleSortChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+    // --- Add props for activity filter ---
+    activity: string; // The current selected activity filter value
+    handleActivityChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; // Handler for changes
+    // --- End of added props ---
 }
 
 const SearchControls: React.FC<SearchControlsProps> = ({
@@ -22,15 +42,18 @@ const SearchControls: React.FC<SearchControlsProps> = ({
     isSearching,
     sortBy,
     handleSortChange,
+    activity,
+    handleActivityChange,
 }) => {
     return (
         <div className='flex flex-col md:flex-row justify-between items-center mb-6 gap-4'>
-            <div className='flex items-center gap-4'>
-                {/* Posts Per Page Dropdown */}
+            {/* --- Use flex-wrap for smaller screens --- */}
+            <div className='flex flex-wrap items-center gap-4'>
+                {/* Posts Per Page Dropdown (Existing) */}
                 <div className='flex items-center'>
                     <label
                         htmlFor='posts-per-page'
-                        className={`mr-2 text-sm font-medium ${
+                        className={`mr-2 text-sm font-medium whitespace-nowrap ${ // Added whitespace-nowrap
                             isSearching ? "opacity-50" : ""
                         }`}
                         style={{ color: "var(--text-primary)" }}>
@@ -60,11 +83,11 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                     </select>
                 </div>
 
-                {/* Sort By Dropdown */}
+                {/* Sort By Dropdown (Existing) */}
                 <div className='flex items-center'>
                     <label
                         htmlFor='sort-by'
-                        className={`mr-2 text-sm font-medium ${
+                        className={`mr-2 text-sm font-medium whitespace-nowrap ${ // Added whitespace-nowrap
                             isSearching ? "opacity-50" : ""
                         }`}
                         style={{ color: "var(--text-primary)" }}>
@@ -93,11 +116,50 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                         <option value='controversial'>Controversial</option>
                     </select>
                 </div>
+
+                {/* --- START: Activity Filter Dropdown --- */}
+                <div className='flex items-center'>
+                    <label
+                        htmlFor='activity-filter'
+                        className={`mr-2 text-sm font-medium whitespace-nowrap ${ // Added whitespace-nowrap
+                            isSearching ? "opacity-50" : ""
+                        }`}
+                        style={{ color: "var(--text-primary)" }}>
+                        Activity:
+                    </label>
+                    <select
+                        id='activity-filter'
+                        title="Filter posts by activity"
+                        value={activity}
+                        onChange={handleActivityChange}
+                        disabled={isSearching}
+                        className={`px-3 py-2 rounded-md text-sm shadow-sm ${
+                            isSearching
+                                ? "opacity-50 cursor-not-allowed"
+                                : "cursor-pointer hover:bg-opacity-90"
+                        }`}
+                        style={{
+                            backgroundColor: "var(--secondary)",
+                            color: "var(--text-primary)",
+                            borderColor: "var(--border)",
+                        }}>
+                        {/* Option to clear the filter */}
+                        <option value="">All Activities</option>
+                        {/* Map over the defined options */}
+                        {activityOptions.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                 {/* --- END: Activity Filter Dropdown --- */}
+
             </div>
 
-            {/* Search Box */}
+            {/* Search Box (Existing - Adjusted width constraints for better flexibility) */}
             <div
-                className='flex items-center px-4 py-2 rounded-full w-full md:w-1/2 lg:w-2/5 max-w-md shadow-sm'
+                className='flex items-center px-4 py-2 rounded-full w-full md:w-auto md:min-w-[250px] lg:min-w-[300px] shadow-sm flex-grow md:flex-grow-0' // Adjusted width/grow
                 style={{
                     backgroundColor: "var(--secondary)",
                     border: "1px solid var(--border)",
@@ -105,10 +167,10 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                 <input
                     type='text'
                     title="Search posts by title or content"
-                    placeholder='Search posts'
+                    placeholder='Search posts...' // Added ellipsis
                     value={searchQuery}
                     onChange={handleSearchChange}
-                    className='bg-transparent border-0 outline-none text-base w-full'
+                    className='bg-transparent border-0 outline-none text-base w-full placeholder-[color:var(--text-secondary)]' // Added placeholder color
                     style={{ color: "var(--text-primary)" }}
                 />
                 <svg
@@ -116,20 +178,20 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                     className='h-5 w-5 ml-2 flex-shrink-0'
                     fill='none'
                     viewBox='0 0 24 24'
+                    strokeWidth={1.5} // Slightly thinner stroke
                     stroke='currentColor'
                     style={{ color: "var(--primary)" }}>
                     <title>Search icon</title>
                     <path
                         strokeLinecap='round'
                         strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                        d='M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z' // Updated path for better look
                     />
                 </svg>
             </div>
 
-            {/* Grid/List View Toggle */}
-            <div className='toggle-container shadow-sm'>
+            {/* Grid/List View Toggle (Existing) */}
+            <div className='toggle-container shadow-sm flex-shrink-0'> {/* Added flex-shrink-0 */}
                 {/* Grid Button */}
                 <button
                     onClick={() => setIsGridView(true)}
@@ -138,7 +200,8 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                         isGridView ? "toggle-button-active" : "toggle-button-inactive"
                     }`}>
                     <svg className='toggle-icon' fill='currentColor' viewBox='0 0 20 20'>
-                        <path d='M3 3h4v4H3V3zm0 10h4v4H3v-4zm10-10h4v4h-4V3zm0 10h4v4h-4v-4z' />
+                        {/* Grid Icon Path */}
+                         <path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm1 1v3h3V4H4zm5 0v3h3V4H9zm5 0v3h3V4h-3zM4 9v3h3V9H4zm5 0v3h3V9H9zm5 0v3h3V9h-3zM4 14v3h3v-3H4zm5 0v3h3v-3H9zm5 0v3h3v-3h-3z"/>
                     </svg>
                     <span className='toggle-text'>Grid</span>
                 </button>
@@ -151,11 +214,8 @@ const SearchControls: React.FC<SearchControlsProps> = ({
                         !isGridView ? "toggle-button-active" : "toggle-button-inactive"
                     }`}>
                     <svg className='toggle-icon' fill='currentColor' viewBox='0 0 20 20'>
-                        <path
-                            fillRule='evenodd'
-                            d='M4 5h12v2H4V5zm0 4h12v2H4V9zm0 4h12v2H4v-2z'
-                            clipRule='evenodd'
-                        />
+                        {/* List Icon Path */}
+                         <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd"/>
                     </svg>
                     <span className='toggle-text'>List</span>
                 </button>

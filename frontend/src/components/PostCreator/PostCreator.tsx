@@ -2,6 +2,19 @@ import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
+// Define available options for the dropdown
+const activityOptions = [
+    "Technology",
+    "Healthcare",
+    "Finance",
+    "Education",
+    "Arts & Entertainment",
+    "Retail",
+    "Manufacturing",
+    "Hospitality",
+    "Other"
+];
+
 const PostCreator: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const router = useRouter();
@@ -12,6 +25,7 @@ const PostCreator: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [anonymous, setAnonymous] = useState<boolean>(false);
+    const [activity, setActivity] = useState<string>("");
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -23,6 +37,12 @@ const PostCreator: React.FC = () => {
             setContent(value);
         }
     };
+
+    // --- Add change handler for the new select field ---
+    const handleActivityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setActivity(e.target.value);
+    };
+    // --- End of new handler ---
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -52,6 +72,13 @@ const PostCreator: React.FC = () => {
             formData.append("title", title);
             formData.append("content", content);
             formData.append("anonymous", String(anonymous));
+
+            // --- Append the new activity field to FormData ---
+            if (activity) { // Only append if an activity is selected
+                formData.append("activity", activity);
+            }
+            // --- End of FormData update ---
+
             if (image) {
                 formData.append("image", image);
             }
@@ -132,6 +159,35 @@ const PostCreator: React.FC = () => {
                         Body
                     </label>
                 </div>
+
+                {/* --- START: New Activity/Industry Dropdown --- */}
+                <div className="mb-4">
+                    <label
+                        htmlFor="activity"
+                        className="block text-sm font-medium text-white mb-1" // Adjusted margin
+                    >
+                        Activity/Industry (optional)
+                    </label>
+                    <select
+                        id="activity"
+                        name="activity"
+                        value={activity}
+                        onChange={handleActivityChange}
+                        title="Select the relevant activity or industry"
+                        // Apply consistent styling, adjust background/text color for theme
+                        className="mt-1 block w-full px-3 py-2 bg-gray-500 text-white border border-gray-600 rounded-md shadow-sm focus:outline-none"
+                    >
+                        <option value="" disabled>
+                            Select an activity...
+                        </option>
+                        {activityOptions.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                {/* --- END: New Activity/Industry Dropdown --- */}
 
                 {imagePreview && (
                     <div className="mb-4">
