@@ -36,6 +36,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const isAnonymous = fields.anonymous?.[0] === "true";
         formData.append('anonymous', String(isAnonymous));
 
+        const activity = fields.activity?.[0] || "undefined";
+        console.log(activity)
+        formData.append('activity', activity)
+
         if (files.image && files.image[0]) {
             const file = files.image[0];
             const fileBuffer = await fs.promises.readFile(file.filepath);

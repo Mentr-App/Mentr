@@ -57,6 +57,8 @@ const Forum: React.FC = () => {
     const [allPosts, setAllPosts] = useState<Post[]>([]);
     const [isGridView, setIsGridView] = useState(true);
     const [blocklist, setBlocklist] = useState<Blocklist>({ blocked: [], blocking: [] });
+    const [activity, setActivity] = useState<string>("")
+
 
     const router = useRouter();
 
@@ -119,7 +121,7 @@ const Forum: React.FC = () => {
             pageNumber = 1;
         }
 
-        const endpoint = `/api/feed?skip=${(pageNumber - 1) * postsPerPage}&limit=${postsPerPage}&sort_by=${sortBy}`;
+        const endpoint = `/api/feed?skip=${(pageNumber - 1) * postsPerPage}&limit=${postsPerPage}&sort_by=${sortBy}&activity=${activity}`;
         console.log(endpoint)
         const access_token = localStorage.getItem("access_token");
 
@@ -145,10 +147,14 @@ const Forum: React.FC = () => {
 
             const data = await response.json();
             console.log(data.feed)
+            console.log(data.feed.length)
+            console.log(data.total_count)
 
             if (data.feed.length < postsPerPage) {
+                console.log("setting has more false")
                 setHasMore(false);
             } else {
+                console.log("setting has more true")
                 setHasMore(true);
             }
 
@@ -183,6 +189,12 @@ const Forum: React.FC = () => {
         }
     }, [sortBy]);
 
+    useEffect(() => {
+        if (!isSearching) {
+            loadFeed(true, 1)
+        }
+    }, [activity])
+
     const handlePostsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newValue = parseInt(e.target.value);
         setPostsPerPage(newValue);
@@ -195,6 +207,13 @@ const Forum: React.FC = () => {
         setSortBy(newSortValue);
         setPage(1);
     };
+
+    const handleActivityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newActivityValue = e.target.value;
+        console.log(newActivityValue)
+        setActivity(newActivityValue)
+        setPage(1);
+    }
 
     const handleVoteUpdate = (postId: string, newVoteType: "up" | "down" | null, newUpvotes: number, newDownvotes: number) => {
         setUserVotes((prev) => {
@@ -370,6 +389,8 @@ const Forum: React.FC = () => {
                     isSearching={isSearching}
                     sortBy={sortBy}
                     handleSortChange={handleSortChange}
+                    activity={activity}
+                    handleActivityChange={handleActivityChange}
                 />
                 {searchLoading && (
                     <div className='text-center mt-4'>
@@ -407,6 +428,8 @@ const Forum: React.FC = () => {
                 isSearching={isSearching}
                 sortBy={sortBy}
                 handleSortChange={handleSortChange}
+                activity={activity}
+                handleActivityChange={handleActivityChange}
             />
             {searchLoading && (
                 <div className='text-center my-4'>

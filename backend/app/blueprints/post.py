@@ -22,6 +22,7 @@ def create_post():
         content = request.form.get("content")
         author_id = get_jwt_identity()
         anonymous = request.form.get("anonymous", "false").lower() == "true"
+        activity = request.form.get("activity", "undefined")
         if not title:
             return {"message": "Missing title"}, 400
 
@@ -38,7 +39,7 @@ def create_post():
                 filename = f"post_images/{author_id}_{timestamp}_{file.filename}"
                 img_handler.create(filename, file)
 
-        post_id = Post.create_post(author_id, title, content, filename, anonymous)
+        post_id = Post.create_post(author_id, title, content, filename, anonymous, activity)
 
         return {"message": "Post created successfully", "post_id": post_id}, 201
 

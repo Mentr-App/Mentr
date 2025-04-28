@@ -37,6 +37,7 @@ class Post:
                     "views": 1,
                     "votes": 1,
                     "anonymous": 1,  # ✅ include anonymous in response
+                    "activity": 1,
                     "author": {
                         "$cond": {
                             "if": {"$gt": ["$author._id", None]},
@@ -90,7 +91,7 @@ class Post:
         return post
 
     @staticmethod
-    def create_post(author_id, title, content, image_url=None, anonymous=False):
+    def create_post(author_id, title, content, image_url=None, anonymous=False, activity="undefined"):
         """Insert a new post into the database."""
         post_data = {
             "author_id": ObjectId(author_id),
@@ -101,15 +102,19 @@ class Post:
             "created_at": datetime.now(),
             "upvotes": 0,
             "downvotes": 0,
-            "comments": 0
+            "comments": 0,
+            "activity": activity
         }
         post_id = mongo.db.posts.insert_one(post_data).inserted_id
         return str(post_id)
 
     @staticmethod
-    def get_total_posts():
+    def get_total_posts(activity=None):
         """Get the total number of posts in the database."""
-        return mongo.db.posts.count_documents({})
+        if not activity:
+            return mongo.db.posts.count_documents({})
+        else:
+            return mongo.db.posts.count_documents({"activity": activity})
 
     @staticmethod
     def edit_post(post_id, content):
