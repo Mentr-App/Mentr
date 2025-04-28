@@ -6,7 +6,7 @@ import ChatSidebar from './ChatSidebar';
 import ChatView from './ChatView';
 import NewChatModal from './NewChatModal'; // Import the new modal
 import { Chat, User } from './types'; // Import User type
-import { findOrCreateChat, fetchChats } from './ChatApi'; // Import new API function
+import { findOrCreateChat, fetchChats, deleteChatForUser } from './ChatApi'; // Import new API function
 
 const ChatComponent: React.FC = () => {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -119,9 +119,14 @@ const ChatComponent: React.FC = () => {
         const confirmDelete = window.confirm("Are you sure you want to remove this chat from your view? This cannot be undone for you, but others will still see it.");
         if (confirmDelete) {
             try {
-                // await deleteChatForUser(chatId);
                 console.log(`Deleting chat ${chatId} for current user (API call simulation)`);
-                setChats(prev => prev.filter(c => c._id !== chatId));
+                const chats = await deleteChatForUser(chatId);
+                console.log("chats:",chats)
+                if (chats === undefined) {
+                  return;
+                }
+                setChats(chats)
+                // setChats(prev => prev.filter(c => c._id !== chatId));
                 if (selectedChatId === chatId) {
                     setSelectedChatId(null);
                 }
