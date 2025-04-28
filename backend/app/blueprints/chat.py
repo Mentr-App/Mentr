@@ -232,12 +232,29 @@ def addMessage():
         # Catch any other unexpected errors during request processing
         print(f"Unexpected error in addMessage route: {e}") # Replace with proper logging
         return jsonify({"message": "An unexpected server error occurred."}), 500
+
 def verify_token(token):
     try:
         decoded = decode_token(token)
         return decoded['sub']
     except jwt_exceptions.NoAuthorizationError as e:
         raise jwt_exceptions.NoAuthorizationError(f"Invalid token: {str(e)}")
+
+@chat_bp.route("/deleteChat", methods=["POST"])
+@jwt_required()
+def deleteChat():
+    try:
+        current_user_id = get_jwt_identity()
+        chat_id = request.json.get("chat_id")
+        status = Chat.delete_chat(chat_id, current_user_id)
+        if not status:
+            return {"message": "Error deleting chat"}, 500
+        else:
+            chats = Chat.get_chats(current_user_id)
+            return {"message": "Success deleting chat", "chats": chats}, 200
+    except Exception as e:
+        print("Error deleting chat:", e)
+        return {"message": "Error deleting chat", "error": str(e)}, 500
 
 @socketio.on('connect')
 def handle_connect(auth):

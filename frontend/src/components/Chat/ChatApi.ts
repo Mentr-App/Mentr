@@ -158,12 +158,62 @@ export const editMessage = async (messageId: string, newContent: string): Promis
      return { id: messageId, senderId: 'currentUser', sender: {_id: 'currentUser', name: 'You'}, content: newContent, timestamp: new Date(), isEdited: true };
 };
 
-export const deleteChatForUser = async (chatId: string): Promise<void> => { // Renamed function and parameter
-    console.log(`API Call: deleteChatForUser(${chatId})`); // Updated log
-    // Marks the chat as hidden/archived for the current user
-    // Example: const response = await fetch(`/api/chats/${chatId}/hide`, { method: 'POST' }); // Updated endpoint example
-    // if (!response.ok) throw new Error('Failed to hide chat');
-    await new Promise(resolve => setTimeout(resolve, 400));
+export const deleteChatForUser = async (chatId: string): Promise<Chat[]> => { // Renamed function and parameter
+  const token = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
+
+  if (!token) {
+    console.error("fetchChats: Auth token not found.");
+    throw new Error("Authentication token not found.");
+  }
+
+  if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') {
+    console.error("fetchMessagesForChat: Invalid chatId provided.");
+    throw new Error("Invalid chat ID provided.");
+  }
+
+  try {
+    // 3. Construct the URL with path parameter and optional query parameters
+    // Assuming a Next.js API route like /api/chat/[chatId]
+    const url = `/api/chat/deleteChat`;
+
+    console.log(`fetchMessagesForChat: Fetching from URL: ${url}`);
+
+    // 4. Make the authenticated GET request
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json", // Common practice, though GET has no body
+      },
+      body: JSON.stringify({ chatId: chatId.trim() }),
+    });
+
+    // 5. Handle the response
+    const responseBody = await response.json(); // Assume JSON response
+
+    if (response.ok) {
+      console.log(`fetchMessagesForChat: Successfully fetched messages for chat ${chatId}:`, responseBody);
+      return responseBody.chats
+      // Add validation here if needed to ensure responseBody is Message[]
+    } else {
+      // Handle HTTP errors
+      const errorMsg = responseBody?.message || responseBody?.msg || `Failed to fetch messages: ${response.status} ${response.statusText}`;
+      console.error(`fetchMessagesForChat: API request failed - Status: ${response.status}`, responseBody);
+      throw new Error(errorMsg);
+    }
+  } catch (error) {
+    // Handle network errors or errors during fetch/JSON parsing
+    console.error("fetchMessagesForChat: Network or other error occurred:", error);
+    if (error instanceof Error) {
+        if (error.message.includes("API response is not a valid array")) {
+            throw error; // Re-throw validation error
+        }
+      // Throw a more generic message for other errors
+      throw new Error(`An error occurred while fetching messages: ${error.message}`);
+    } else {
+      throw new Error('An unknown error occurred while fetching messages.');
+    }
+  }
 };
 
 export const fetchChatDetails = async (chatId: string): Promise<Chat> => { // Renamed function

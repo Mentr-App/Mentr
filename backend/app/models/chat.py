@@ -111,6 +111,10 @@ class Chat:
             )
             if existing_chat:
                 chat_id_to_fetch = existing_chat['_id']
+                update_result = mongo.db.chats.update_one(
+                    {"_id": chat_id_to_fetch}, # Filter: Find the chat by its ID
+                    {"$pull": {"deleted_by": user1_oid}} # Update: Remove the user's ObjectId from the 'deleted_by' array
+                )
             else:
                  is_new_chat = True
         except Exception as e:
@@ -174,12 +178,13 @@ class Chat:
             print(f"Error fetching or populating chat document {chat_id_to_fetch}: {e}")
             return None
 
-    # --- MODIFIED get_chats Method ---
     @staticmethod
     def get_chats(user_id: str):
         """
-        Retrieves all chat documents where the given user_id is a participant,
-        sorted by the most recent message time, with participant details populated.
+        Retrieves all chat documents where the given user_id is a participant
+        AND the chat has NOT been marked as deleted by that user.
+        Chats are sorted by the most recent message time, with participant
+        details populated.
 
         Args:
             user_id (str): The string representation of the user's ObjectId.
@@ -195,25 +200,45 @@ class Chat:
             return None # Return None for invalid user ID
 
         try:
-            # 1. Find chats where the user is a participant
+            # 1. Find chats where the user is a participant AND
+            #    the user's ID is NOT in the 'deleted_by' array.
+            #    Use $nin (not in) operator for the deleted_by check.
             chats_cursor = mongo.db.chats.find(
-                {"participants": user_oid}
+                {
+                    "participants": user_oid,
+                    "deleted_by": {"$nin": [user_oid]} # <-- Key change here
+                }
             ).sort("last_message_at", pymongo.DESCENDING)
 
             # Convert cursor to list (contains ObjectIds for participants initially)
             chats_list_raw = list(chats_cursor)
             if not chats_list_raw:
-                return [] # Return empty list if no chats found
+                print(f"No active chats found for user {user_id}")
+                return [] # Return empty list if no relevant chats found
 
-            # 2. Collect all unique participant ObjectIds from all chats
+            print(f"Found {len(chats_list_raw)} raw chat documents for user {user_id} (excluding deleted)")
+
+            # 2. Collect all unique participant ObjectIds from the filtered chats
             all_participant_oids = set()
             for chat in chats_list_raw:
-                all_participant_oids.update(chat.get("participants", []))
+                # Ensure participants field exists and is a list before updating
+                participants = chat.get("participants", [])
+                if isinstance(participants, list):
+                    all_participant_oids.update(participants)
+                else:
+                    print(f"Warning: Chat {chat.get('_id')} has non-list participants field: {participants}")
 
-            # 3. Fetch details for all unique participants (using updated helper)
-            user_details_map = get_user_details(list(all_participant_oids))
-            if not user_details_map and all_participant_oids:
-                 print(f"Warning: Could not fetch details for participants: {all_participant_oids}")
+
+            # 3. Fetch details for all unique participants
+            user_details_map = {}
+            if all_participant_oids: # Only fetch if there are participants
+                # Assuming get_user_details takes a list of ObjectIds
+                user_details_map = get_user_details(list(all_participant_oids))
+                if not user_details_map:
+                    print(f"Warning: Could not fetch details for participants: {all_participant_oids}")
+            else:
+                print("No participants found across fetched chats.")
+
 
             # 4. Populate and format each chat document
             populated_chats_list = []
@@ -221,32 +246,59 @@ class Chat:
                 populated_participants = []
                 participant_oids_in_chat = chat_doc.get("participants", [])
 
+                # Ensure participant_oids_in_chat is iterable
+                if not isinstance(participant_oids_in_chat, list):
+                     print(f"Warning: Skipping participant population for chat {chat_doc.get('_id')} due to non-list participants.")
+                     participant_oids_in_chat = [] # Treat as empty if not a list
+
+
                 for p_oid in participant_oids_in_chat:
+                    if not isinstance(p_oid, ObjectId):
+                        print(f"Warning: Found non-ObjectId participant reference in chat {chat_doc.get('_id')}: {p_oid}. Skipping.")
+                        continue # Skip non-ObjectId entries if they exist
+
                     p_id_str = str(p_oid)
-                    # Use fetched details or a fallback structure for the whole user object
-                    user_info = user_details_map.get(p_id_str, {"id": p_id_str, "name": "Unknown User"})
+                    # Use fetched details or a fallback structure
+                    # Check if p_id_str exists in the map, otherwise provide fallback
+                    user_info = user_details_map.get(p_id_str, {"id": p_id_str, "name": "Unknown User", "error": "Details not found"})
                     populated_participants.append(user_info)
 
                 # Update the chat document
                 chat_doc["participants"] = populated_participants
 
-                # Format other fields for JSON
-                chat_doc["_id"] = str(chat_doc["_id"])
-                if isinstance(chat_doc.get("created_at"), datetime):
-                    chat_doc["created_at"] = chat_doc["created_at"].isoformat() + "Z"
-                if isinstance(chat_doc.get("last_message_at"), datetime):
-                    chat_doc["last_message_at"] = chat_doc["last_message_at"].isoformat() + "Z"
-                elif chat_doc.get("last_message_at") is None:
-                     chat_doc["last_message_at"] = None
+                # Format other fields for JSON safety
+                chat_doc["_id"] = str(chat_doc["_id"]) # Convert ObjectId to string
+
+                # Safely format datetime fields, handling None
+                for field in ["created_at", "last_message_at"]:
+                    timestamp = chat_doc.get(field)
+                    if isinstance(timestamp, datetime):
+                        chat_doc[field] = timestamp.isoformat() + "Z" # Add Z for UTC indication
+                    elif timestamp is None:
+                         chat_doc[field] = None # Explicitly set to None if it was None
+                    # else: leave field as is if it's not datetime or None
 
                 populated_chats_list.append(chat_doc)
 
-            print(f"Found and populated {len(populated_chats_list)} chats for user {user_id}")
+            print(f"Finished populating {len(populated_chats_list)} chats for user {user_id}")
             return populated_chats_list
 
         except Exception as e:
-            print(f"Error retrieving/populating chats for user {user_id}: {e}")
+            # Log the full exception traceback for debugging if possible
+            import traceback
+            print(f"Error retrieving/populating chats for user {user_id}: {e}\n{traceback.format_exc()}")
             return [] # Return empty list on DB or processing error after valid user_id
 
-# --- Example Usage (Illustrative) ---
-# (Example usage remains the same, but the output will now contain more user details)
+    @staticmethod
+    def delete_chat(chat_id, user_id):
+        update_result = mongo.db.chats.update_one(
+            {
+                "_id": ObjectId(chat_id),
+                "participants": ObjectId(user_id)
+            },
+            {
+                "$addToSet": {"deleted_by": ObjectId(user_id)}
+            }
+        )
+
+        return update_result.matched_count == 1
