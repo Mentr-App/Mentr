@@ -103,9 +103,10 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
 
 interface CommentListProps {
     postId: string;
+    postAuthorId: string;
 }
 
-const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
+const CommentSection: React.FC<CommentListProps> = ({ postId, postAuthorId }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -219,7 +220,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId }) => {
             ) : (
                 <div className='space-y-4 mb-6'>
                     {getFilteredFeed(comments).map((item, index) => (
-                        <CommentItem comment={item} index={index} getAuthorName={getAuthorName}/>
+                        <CommentItem comment={item} index={index} getAuthorName={getAuthorName} postAuthorId={postAuthorId}/>
                     ))}
                 </div>
             )}
