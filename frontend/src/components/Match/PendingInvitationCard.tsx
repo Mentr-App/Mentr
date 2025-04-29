@@ -18,9 +18,9 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
 }) => {
   const router = useRouter();
   const [otherUsername, setOtherUsername] = useState("Unknown");
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const currentUserId = localStorage.getItem("userId");
 
-  // Safeguard against malformed data
   if (
     !invitation?.receiver?.$oid ||
     !invitation?.mentor?.$oid ||
@@ -59,13 +59,13 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
       typeof timestamp === "object" && timestamp !== null && "$date" in timestamp
         ? timestamp.$date
         : timestamp;
-  
+
     const date = new Date(isoTime);
     if (isNaN(date.getTime())) {
       console.warn("Invalid date passed to getTimeAgo:", timestamp);
       return "invalid time";
     }
-  
+
     const diff = Date.now() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
@@ -74,7 +74,6 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
     const days = Math.floor(hours / 24);
     return `${days} day${days !== 1 ? "s" : ""} ago`;
   };
-  
 
   const respond = async (action: "accept" | "reject") => {
     try {
@@ -83,7 +82,10 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: invitation._id.$oid, action }),
       });
-      onUpdate(); // trigger reload in parent
+      setConfirmationMessage(action === "accept" ? "Mentorship accepted!" : "Mentorship rejected!");
+      setTimeout(() => {
+        onUpdate();
+      }, 1000); // Wait 1 second before removing
     } catch (err) {
       console.error("Error sending mentorship response:", err);
     }
@@ -107,40 +109,44 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
       </p>
       <p className="text-gray-400 text-sm mt-1">{getTimeAgo(invitation.requestedAt)}</p>
 
-      <div className="mt-3 space-x-2">
-        {isReceiver ? (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                respond("accept");
-              }}
-              className="bg-green-600 text-white px-3 py-1 rounded"
-            >
-              Accept
-            </button>
+      {confirmationMessage ? (
+        <p className="text-[#EC6333] font-semibold mt-3">{confirmationMessage}</p>
+      ) : (
+        <div className="mt-3 space-x-2">
+          {isReceiver ? (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  respond("accept");
+                }}
+                className="bg-green-600 text-white px-3 py-1 rounded"
+              >
+                Accept
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  respond("reject");
+                }}
+                className="bg-red-600 text-white px-3 py-1 rounded"
+              >
+                Reject
+              </button>
+            </>
+          ) : (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 respond("reject");
               }}
-              className="bg-red-600 text-white px-3 py-1 rounded"
+              className="text-white bg-[#EC6333] px-3 py-1 rounded"
             >
-              Reject
+              Cancel Invitation
             </button>
-          </>
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              respond("reject");
-            }}
-            className="text-white bg-[#EC6333] px-3 py-1 rounded"
-          >
-            Cancel Invitation
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
