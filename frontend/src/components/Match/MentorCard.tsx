@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext"; // <-- you missed importing this!
 
 export interface Mentor {
   _id: { $oid: string };
   username: string;
   company: string;
   industry: string;
+  userType?: "Mentor" | "Mentee";
 }
 
 interface MentorCardProps {
@@ -15,43 +17,65 @@ interface MentorCardProps {
 
 const MentorCard: React.FC<MentorCardProps> = ({ mentor, onClick }) => {
   const router = useRouter();
+  const { userType } = useAuth(); // <-- get userType from auth context
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
-  const [role, setRole] = useState<"mentor" | "mentee" | null>(null);
+  const [requestSent, setRequestSent] = useState(false);
+  const [alreadyRequested, setAlreadyRequested] = useState(false);
+
 
   useEffect(() => {
-    const fetchPublicProfile = async () => {
+    const fetchProfilePicture = async () => {
       try {
         const response = await fetch(`/api/profile/getPublicProfile?userID=${mentor._id.$oid}`);
-        if (!response.ok) {
-          console.error("Failed to fetch public profile");
-          return;
-        }
         const data = await response.json();
         setProfilePictureUrl(data.profile_picture || null);
-
-        const userType = data.userType?.toLowerCase(); // Normalize case
-        if (userType === "mentor" || userType === "mentee") {
-          setRole(userType);
-        } else {
-          setRole(null);
-        }
       } catch (error) {
         console.error("Error fetching public profile:", error);
       }
     };
 
-    fetchPublicProfile();
+    fetchProfilePicture();
   }, [mentor._id.$oid]);
 
   const handleProfileClick = () => {
     router.push(`/profile/${mentor._id.$oid}`);
   };
 
-  const handleRequestClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleRequest = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    alert(`Request ${role === "mentor" ? "mentorship" : "menteeship"} sent to ${mentor.username}`);
-    // Call API here if needed
+  
+    const senderId = localStorage.getItem("userId");
+    const senderRole = userType;
+  
+    if (!senderId || !senderRole) {
+      console.error("User not logged in or role missing");
+      return;
+    }
+  
+    try {
+      const res = await fetch("/api/match/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId,
+          receiverId: mentor._id.$oid,
+          senderRole,
+        }),
+      });
+  
+      const data = await res.json();
+  
+      if (data.alreadyExists) {
+        setAlreadyRequested(true);
+        setRequestSent(true);
+      } else if (res.ok) {
+        setRequestSent(true);
+      }
+    } catch (err) {
+      console.error("Error sending mentorship request:", err);
+    }
   };
+  
 
   return (
     <div
@@ -70,17 +94,20 @@ const MentorCard: React.FC<MentorCardProps> = ({ mentor, onClick }) => {
         <div>
           <h3 className="text-lg font-semibold text-white">{mentor.username}</h3>
           <p className="text-sm text-gray-400">{mentor.company} • {mentor.industry}</p>
-          {role && (
-            <>
-              <p className="text-sm text-indigo-300 mt-1 capitalize">Role: {role}</p>
-              <button
-                className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                onClick={handleRequestClick}
-              >
-                Request {role === "mentor" ? "Mentorship" : "Menteeship"}
-              </button>
-            </>
-          )}
+          <p className="text-sm text-indigo-300 mt-1 capitalize">Role: {mentor.userType}</p>
+          {requestSent ? (
+            <p className="block font-bold text-[#EC6333] bg-[#2C353D] rounded mt-2 py-1 px-3">
+                {alreadyRequested ? "Already requested!" : "Match requested!"}
+            </p>
+            ) : (
+            <button
+                className="block font-bold text-[#EC6333] bg-[#2C353D] rounded mt-2 py-1 px-3"
+                onClick={handleRequest}
+            >
+                Request Match
+            </button>
+            )}
+
         </div>
       </div>
     </div>
