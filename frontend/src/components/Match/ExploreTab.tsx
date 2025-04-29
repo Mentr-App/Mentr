@@ -138,7 +138,7 @@ const ExploreTab: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 p-6 h-[88vh] overflow-scroll" style={{ backgroundColor: "var(--background)" }}>
+    <div className="rounded flex-1 p-6 h-[88vh] overflow-scroll" style={{ backgroundColor: "var(--background)" }}>
       <h1 className="text-3xl font-bold text-white mb-6">
         Explore {userType === "Mentor" ? "Mentees" : "Mentors"}
       </h1>

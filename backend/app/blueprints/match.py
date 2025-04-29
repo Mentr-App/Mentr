@@ -2,7 +2,7 @@ from flask import request, Blueprint
 from bson import ObjectId
 from bson.json_util import dumps
 from app.database import mongo
-from datetime import datetime
+from datetime import datetime, timezone
 
 match_bp = Blueprint("match", __name__)
 
@@ -60,11 +60,85 @@ def request_mentorship():
             "receiver": receiver_oid,
             "pending": True,
             "created_at": request.date if hasattr(request, "date") else None,
-            "requestedAt": datetime.now(),
+            "requestedAt": datetime.now(timezone.utc)
         })
 
         return {"message": "Mentorship request sent", "alreadyExists": False}, 200
 
     except Exception as e:
         print(f"Error requesting mentorship: {e}")
+        return {"message": "Internal Server Error", "error": str(e)}, 500
+
+@match_bp.route("/pending", methods=["GET"])
+def get_pending_requests():
+    try:
+        user_id = request.args.get("userId")
+        if not user_id:
+            return {"message": "Missing userId"}, 400
+
+        oid = ObjectId(user_id)
+
+        requests = list(mongo.db.mentorships.find({
+            "pending": True,
+            "$or": [
+                {"mentor": oid},
+                {"mentee": oid}
+            ]
+        }))
+
+        return dumps(requests), 200
+    except Exception as e:
+        print(f"Error fetching pending requests: {e}")
+        return {"message": "Internal Server Error", "error": str(e)}, 500
+
+
+@match_bp.route("/respond", methods=["POST"])
+def respond_to_request():
+    try:
+        data = request.get_json()
+        req_id = data.get("id")
+        action = data.get("action")
+
+        if not req_id or action not in ["accept", "reject"]:
+            return {"message": "Invalid input"}, 400
+
+        if action == "accept":
+            mongo.db.mentorships.update_one(
+                {"_id": ObjectId(req_id)},
+                {
+                    "$set": {
+                        "pending": False,
+                        "created_at": datetime.now(timezone.utc)
+                    }
+                }
+            )
+        elif action == "reject":
+            mongo.db.mentorships.delete_one({"_id": ObjectId(req_id)})
+
+        return {"message": "Success"}, 200
+    except Exception as e:
+        print(f"Error responding to request: {e}")
+        return {"message": "Internal Server Error", "error": str(e)}, 500
+    
+
+@match_bp.route("/current", methods=["GET"])
+def get_current_connections():
+    try:
+        user_id = request.args.get("userId")
+        if not user_id:
+            return {"message": "Missing userId"}, 400
+
+        oid = ObjectId(user_id)
+
+        connections = list(mongo.db.mentorships.find({
+            "pending": False,
+            "$or": [
+                {"mentor": oid},
+                {"mentee": oid}
+            ]
+        }))
+
+        return dumps(connections), 200
+    except Exception as e:
+        print(f"Error fetching current connections: {e}")
         return {"message": "Internal Server Error", "error": str(e)}, 500
