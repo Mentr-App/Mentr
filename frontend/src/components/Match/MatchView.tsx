@@ -31,25 +31,25 @@ const MatchViewPage: React.FC = () => {
         <div className="flex space-x-4 mb-6">
           <button
             onClick={() => setActiveTab('explore')}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'explore' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'explore' ? 'text-white bg-[#EC6333]' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
           >
             Explore
           </button>
           <button
             onClick={() => setActiveTab('connections')}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'connections' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'connections' ? 'text-white bg-[#EC6333]' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
           >
             Current Connections
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'pending' ? 'text-white bg-[#EC6333]' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
           >
             Pending Invitations
           </button>
           <button
             onClick={() => setActiveTab('preferences')}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'preferences' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'preferences' ? 'text-white bg-[#EC6333]' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
           >
             Preferences
           </button>

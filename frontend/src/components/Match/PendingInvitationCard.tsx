@@ -135,7 +135,7 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
               e.stopPropagation();
               respond("reject");
             }}
-            className="bg-yellow-600 text-white px-3 py-1 rounded"
+            className="text-white bg-[#EC6333] px-3 py-1 rounded"
           >
             Cancel Invitation
           </button>

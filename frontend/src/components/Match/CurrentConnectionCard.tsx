@@ -13,8 +13,11 @@ interface CurrentConnectionCardProps {
 const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connection }) => {
   const router = useRouter();
   const [otherUsername, setOtherUsername] = useState("Unknown");
+  const [confirming, setConfirming] = useState(false);
+  const [ended, setEnded] = useState(false);
   const currentUserId = localStorage.getItem("userId");
 
+  const isMentor = currentUserId === connection.mentor.$oid;
   const otherUserId =
     connection.mentor.$oid === currentUserId
       ? connection.mentee.$oid
@@ -30,15 +33,11 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
 
   const getTimeAgo = (timestamp: any) => {
     const isoTime =
-      typeof timestamp === "object" && timestamp !== null && "$date" in timestamp
+      typeof timestamp === "object" && "$date" in timestamp
         ? timestamp.$date
         : timestamp;
-
     const date = new Date(isoTime);
-    if (isNaN(date.getTime())) {
-      console.warn("Invalid date passed to getTimeAgo:", timestamp);
-      return "invalid time";
-    }
+    if (isNaN(date.getTime())) return "invalid time";
 
     const diff = Date.now() - date.getTime();
     const minutes = Math.floor(diff / 60000);
@@ -49,20 +48,20 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
     return `${days} day${days !== 1 ? "s" : ""} ago`;
   };
 
-  const cancelMentorship = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation(); // Prevent profile click
+  const confirmRemoval = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
     try {
       await fetch("/api/match/respond", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: connection._id.$oid,
-          action: "reject", // Use the same reject path to delete it
+          action: "reject", // treat as cancel/terminate
         }),
       });
-      router.refresh(); // Or optionally trigger reload depending on your app
+      setEnded(true);
     } catch (error) {
-      console.error("Error cancelling mentorship:", error);
+      console.error("Failed to end mentorship:", error);
     }
   };
 
@@ -74,16 +73,47 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
       <p className="text-white">
         Connected with <span className="font-semibold">{otherUsername}</span>
       </p>
-      <p className="text-gray-400 text-sm mt-1">{getTimeAgo(connection.created_at)}</p>
+      <p className="text-gray-400 text-sm mt-1">
+        {getTimeAgo(connection.created_at)}
+      </p>
 
-      <div className="mt-3">
-        <button
-          onClick={cancelMentorship}
-          className="bg-yellow-600 text-white px-3 py-1 rounded"
-        >
-          Cancel Mentorship
-        </button>
-      </div>
+      {ended ? (
+        <p className="mt-3 text-[#EC6333] font-semibold">
+          Mentorship ended successfully.
+        </p>
+      ) : isMentor ? (
+        <div className="mt-3">
+          {confirming ? (
+            <div className="space-x-2">
+              <button
+                onClick={confirmRemoval}
+                className="bg-red-600 text-white px-3 py-1 rounded"
+              >
+                Confirm End
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirming(false);
+                }}
+                className="bg-gray-500 text-white px-3 py-1 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirming(true);
+              }}
+              className="text-white bg-[#EC6333] px-3 py-1 rounded"
+            >
+              End Mentorship
+            </button>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 };
