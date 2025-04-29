@@ -320,3 +320,60 @@ def get_pinned():
     except Exception as e:
         print("Error getting pinned posts:", str(e))
         return {"message": "Error getting pinned posts", "error:": str(e)}, 500
+    
+
+@profile_bp.route("/preferences", methods=["GET"])
+@jwt_required()
+def get_preferences():
+    """
+    Fetch the currently saved preferences for the logged-in user.
+    """
+    try:
+        user_id = get_jwt_identity()
+        user = mongo.db.users.find_one({"_id": ObjectId(user_id)}, {"preferences": 1})
+        prefs = user.get("preferences", {})
+        return jsonify({
+            "open_to_connect": prefs.get("open_to_connect", False),
+            "share_info":    prefs.get("share_info", False),
+            "skills":        prefs.get("skills", []),
+        }), 200
+    except Exception as e:
+        print("Error fetching preferences:", e)
+        return {"message": "Error fetching preferences", "error": str(e)}, 500
+
+
+@profile_bp.route("/preferences", methods=["POST"])
+@jwt_required()
+def set_preferences():
+    """
+    Update the user's preferences: open_to_connect, share_info, and list of skills.
+    """
+    try:
+        user_id = get_jwt_identity()
+        body = request.get_json() or {}
+
+        # extract and validate
+        open_to_connect = bool(body.get("open_to_connect", False))
+        share_info      = bool(body.get("share_info", False))
+        skills          = body.get("skills", [])
+        if not isinstance(skills, list) or any(not isinstance(s, str) for s in skills):
+            return {"message": "`skills` must be a list of strings"}, 400
+
+        # write under a "preferences" sub-document
+        result = mongo.db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "preferences.open_to_connect": open_to_connect,
+                "preferences.share_info":      share_info,
+                "preferences.skills":          skills,
+            }}
+        )
+
+        if result.matched_count == 0:
+            return {"message": "User not found"}, 404
+
+        return {"message": "Preferences updated successfully"}, 201
+
+    except Exception as e:
+        print("Error setting preferences:", e)
+        return {"message": "Error setting preferences", "error": str(e)}, 500
