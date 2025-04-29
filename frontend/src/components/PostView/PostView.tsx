@@ -533,7 +533,7 @@ const PostView: React.FC<PostViewProps> = ({ post_id }) => {
                 </div>
             </div>
 
-            <CommentSection postId={post_id} />
+            <CommentSection postId={post_id} postAuthorId={authorProfile ? authorProfile._id.$oid : ""}/>
         </div>
     );
 };
