@@ -6,6 +6,7 @@ interface AuthContextType {
     setIsPopupVisible: (React.Dispatch<React.SetStateAction<boolean>>);
     login: (accessToken: string, refreshToken: string) => void;
     logout: () => void;
+    userType: "Mentor" | "Mentee" | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,6 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false)
+    const [userType, setUserType] = useState<"Mentor" | "Mentee" | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
@@ -79,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     
                 const userData = await response.json()
                 localStorage.setItem("userId", userData._id.$oid)
+                setUserType(userData.userType);
             }
         } catch (error) {
             console.log(error)
@@ -86,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout, isPopupVisible, setIsPopupVisible }}>
+        <AuthContext.Provider value={{ isAuthenticated, login, logout, isPopupVisible, setIsPopupVisible, userType }}>
             {children}
         </AuthContext.Provider>
     );
