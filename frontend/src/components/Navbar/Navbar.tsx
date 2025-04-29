@@ -82,6 +82,15 @@ const Navbar: React.FC = () => {
         }
     }
 
+    const handleMentorClick = () => {
+        if (isAuthenticated) {
+            router.push("/match");
+            setIsDropdownVisible(false);
+        } else {
+            setIsPopupVisible(true)
+        }
+    }
+
     const handleReqFeature = () => {
         router.push("/requestfeature");
         setIsDropdownVisible(false);
@@ -125,6 +134,7 @@ const Navbar: React.FC = () => {
             {/* Navigation Icons */}
             <ul className='flex-1 list-none text-center'>
                 <li
+                    onClick = {handleMentorClick}
                     className='inline-block mx-5 my-2 text-lg cursor-pointer'
                     style={{ color: "var(--text-primary)" }}>
                     <img
