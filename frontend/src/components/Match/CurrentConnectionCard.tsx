@@ -28,14 +28,42 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
       });
   }, [otherUserId]);
 
-  const getTimeAgo = (isoTime: string) => {
-    const diff = Date.now() - new Date(isoTime).getTime();
+  const getTimeAgo = (timestamp: any) => {
+    const isoTime =
+      typeof timestamp === "object" && timestamp !== null && "$date" in timestamp
+        ? timestamp.$date
+        : timestamp;
+
+    const date = new Date(isoTime);
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date passed to getTimeAgo:", timestamp);
+      return "invalid time";
+    }
+
+    const diff = Date.now() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
     const days = Math.floor(hours / 24);
     return `${days} day${days !== 1 ? "s" : ""} ago`;
+  };
+
+  const cancelMentorship = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // Prevent profile click
+    try {
+      await fetch("/api/match/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: connection._id.$oid,
+          action: "reject", // Use the same reject path to delete it
+        }),
+      });
+      router.refresh(); // Or optionally trigger reload depending on your app
+    } catch (error) {
+      console.error("Error cancelling mentorship:", error);
+    }
   };
 
   return (
@@ -46,9 +74,16 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
       <p className="text-white">
         Connected with <span className="font-semibold">{otherUsername}</span>
       </p>
-      <p className="text-gray-400 text-sm mt-1">
-        {getTimeAgo(connection.created_at)}
-      </p>
+      <p className="text-gray-400 text-sm mt-1">{getTimeAgo(connection.created_at)}</p>
+
+      <div className="mt-3">
+        <button
+          onClick={cancelMentorship}
+          className="bg-yellow-600 text-white px-3 py-1 rounded"
+        >
+          Cancel Mentorship
+        </button>
+      </div>
     </div>
   );
 };
