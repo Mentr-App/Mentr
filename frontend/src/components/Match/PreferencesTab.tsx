@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -35,6 +35,28 @@ const PreferencesTab: React.FC = () => {
     );
   };
 
+  // On mount, fetch existing preferences
+  useEffect(() => {
+    const loadPreferences = async () => {
+      const token = localStorage.getItem("access_token");
+      try {
+        const res = await fetch("/api/profile/getPreferences", {
+          headers: token
+            ? { Authorization: `Bearer ${token}` }
+            : {},
+        });
+        if (!res.ok) throw new Error("Failed to load preferences");
+        const data = await res.json();
+        setOpenToConnect(data.open_to_connect);
+        setShareInfo(data.share_info);
+        setSelectedSkills(data.skills || []);
+      } catch (err) {
+        console.error("Error loading preferences:", err);
+      }
+    };
+    loadPreferences();
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
@@ -43,8 +65,8 @@ const PreferencesTab: React.FC = () => {
       const res = await fetch("/api/profile/setPreferences", {
         method: "POST",
         headers: {
-          Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({
           openToConnect,
