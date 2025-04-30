@@ -12,8 +12,8 @@ def get_matchable_users():
         print("Fetching all matchable users...")
         users_cursor = mongo.db.users.find({
             "$or": [
-                {"match": True},
-                {"match": {"$exists": False}}
+                { "preferences.open_to_connect": True },
+                { "preferences": { "$exists": False } }
             ]
         })
 

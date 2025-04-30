@@ -111,7 +111,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         if (res.ok) {
         const data = await res.json();
         const connectedIds = data
-      .map((conn: { mentor: { $oid: any; }; mentee: { $oid: any; }; }) => conn.mentor.$oid === userId ? conn.mentee.$oid : conn.mentor.$oid)
+        .map((conn: { mentor: { $oid: any; }; mentee: { $oid: any; }; }) =>
+        conn.mentor.$oid === userId ? conn.mentee.$oid : conn.mentor.$oid)
         setConnections(connectedIds)
         }
     };
