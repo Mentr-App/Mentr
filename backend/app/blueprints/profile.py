@@ -478,13 +478,12 @@ def get_user_analytics():
         # First, get all the user's comment IDs
         try:
             user_comments = list(
-                mongo.db.comments.find({"author_id": ObjectId(user_id)}, {"_id": 1})
-            )
+        mongo.db.comments.find({"author_id": ObjectId(user_id), "anonymous": False}, {"_id": 1})
+        )
         except Exception:
-            # If conversion fails, try as string
             user_comments = list(
-                mongo.db.comments.find({"author_id": user_id}, {"_id": 1})
-            )
+            mongo.db.comments.find({"author_id": user_id, "anonymous": False}, {"_id": 1})
+        )
 
         comment_ids = [comment["_id"] for comment in user_comments]
 

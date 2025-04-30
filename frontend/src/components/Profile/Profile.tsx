@@ -93,6 +93,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
     const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+
+
     useEffect(() => {
         const fetchAnalytics = async () => {
             if (!profile) return;
@@ -712,7 +714,6 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     // Helper function to safely access localStorage (only on client-side)
     const safelyGetFromLocalStorage = (key: string): string | null => {
         if (typeof window === "undefined") {
-            // We're on the server side
             return null;
         }
 
