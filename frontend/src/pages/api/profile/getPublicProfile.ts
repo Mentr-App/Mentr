@@ -1,9 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "GET") {
         return res.status(405).json({ message: "Method Not Allowed" });
     }
@@ -15,12 +12,15 @@ export default async function handler(
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/profile/public?userID=${userID}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const response = await fetch(
+            `http://localhost:8000/profile/public?userID=${userID}`,
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
 
         const data = await response.json().catch((e) => {
             console.error("Error parsing response:", e);
@@ -46,7 +46,7 @@ export default async function handler(
             profile_picture: data.profile_picture,
             created_at: data.created_at,
             bio: data.bio,
-            interests: data.interests
+            interests: data.interests,
         };
 
         return res.status(200).json(publicProfile);

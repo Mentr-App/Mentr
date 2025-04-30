@@ -1,4 +1,3 @@
-import { ChartNoAxesColumnDecreasing } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -84,7 +83,11 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const { updateProfilePicture } = useProfile();
     const router = useRouter();
 
-    const isOwnProfile = !params?.userID;
+    // Track if this is another user's profile with a ref to prevent overwriting
+    const isPublicProfileRef = useRef<boolean>(!!params?.userID);
+
+    // Change isOwnProfile to a state value that depends on proper verification
+    const [isOwnProfile, setIsOwnProfile] = useState<boolean>(!params?.userID);
     const DEFAULT_PROFILE_PICTURE =
         "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -93,25 +96,33 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
     const [analyticsError, setAnalyticsError] = useState<string | null>(null);
-
-
     useEffect(() => {
         const fetchAnalytics = async () => {
             if (!profile) return;
 
             setAnalyticsLoading(true);
             try {
-                // Get userId from params (for public profile) or from localStorage (for own profile)
-                let userId: string | undefined | null = params?.userID;
-                if (!userId) {
+                // Check if we're logged in
+                const access_token = safelyGetFromLocalStorage("access_token");
+                if (!access_token && !params?.userID) {
+                    // If not logged in and trying to view own profile
+                    throw new Error("Authentication required for profile analytics");
+                }
+
+                // If we're viewing someone else's profile, use their ID from params
+                // Otherwise use our own ID
+                let userId: string | undefined | null = undefined;
+
+                if (params?.userID) {
+                    // Public profile - use the ID from URL params
+                    userId = params.userID;
+                } else {
                     userId = safelyGetFromLocalStorage("userId");
                 }
 
                 if (!userId) {
                     throw new Error("User ID not available");
                 }
-
-                console.log("Fetching analytics for user:", userId);
 
                 const response = await fetch(
                     `/api/profile/getAnalytics?userId=${userId}`
@@ -147,9 +158,10 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 setAnalyticsLoading(false);
             }
         };
-
         fetchAnalytics();
-    }, [profile, params?.userID]);
+
+        // Add isOwnProfile to dependencies to refresh analytics when switching between profiles
+    }, [profile, params?.userID, isOwnProfile]);
 
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
@@ -225,31 +237,74 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     }, [params?.userID, isOwnProfile]);
 
     useEffect(() => {
+        // Reset profile when params change
+        setLoading(true);
+        setProfile(null);
+
+        console.log("Profile params changed:", params);
+        console.log("userID from params:", params?.userID);
+
         const loadProfile = async () => {
             try {
+                console.log("Loading profile with params:", params?.userID);
+
                 let endpoint,
                     headers = {};
-                if (isOwnProfile) {
+
+                // If the URL has a userID parameter, this is a public profile
+                if (params?.userID) {
+                    // This is definitely someone else's profile
+                    endpoint = `/api/profile/getPublicProfile?userID=${params.userID}`;
+                    isPublicProfileRef.current = true;
+                    setIsOwnProfile(false);
+                    console.log("Loading public profile for userID:", params.userID);
+                } else {
+                    // This is the user's own profile - requires login
                     endpoint = "/api/profile/getProfile";
                     const access_token = safelyGetFromLocalStorage("access_token");
+
+                    if (!access_token) {
+                        console.error("No access token available for loading profile");
+                        router.push("/");
+                        throw new Error("You must be logged in to view your profile");
+                    }
+
                     headers = {
                         Authorization: `Bearer ${access_token}`,
                         "Content-Type": "application/json",
                     };
-                } else {
-                    endpoint = `/api/profile/getPublicProfile?userID=${params?.userID}`;
+                    isPublicProfileRef.current = false;
+                    setIsOwnProfile(true);
+                    console.log("Loading own profile");
                 }
-
                 const response = await fetch(endpoint, {
                     method: "GET",
                     headers: headers,
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || "Failed to find user");
+                    console.log("Profile fetch failed with status:", response.status);
+
+                    // Get response as text first to safely handle any response type
+                    const errorText = await response.text();
+                    console.error("Profile fetch error response:", errorText);
+
+                    let errorMessage = "Failed to find user";
+                    try {
+                        // Try to parse as JSON if possible
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        // If not JSON, use the raw text or default message
+                        if (errorText && errorText.trim().length > 0) {
+                            errorMessage = errorText;
+                        }
+                    }
+
+                    throw new Error(errorMessage);
                 }
                 const userData = await response.json();
+                // console.log("Profile data received:", userData);
 
                 let profilePictureUrl = null;
                 if (isOwnProfile) {
@@ -272,6 +327,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     }
                 } else {
                     profilePictureUrl = userData.profile_picture;
+                    // console.log("Using public profile picture:", profilePictureUrl);
                 }
 
                 const profileData: ProfileData = {
@@ -294,7 +350,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 };
                 setProfile(profileData);
 
-                if (isOwnProfile) {
+                // Only set editable fields if this is actually the user's own profile
+                if (!params?.userID) {
                     setEditableUsername(profileData.username);
                     setEditableEmail(profileData.email || "");
                     setEditableUserType(profileData.userType || undefined);
@@ -313,9 +370,11 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 setLoading(false);
             }
         };
-
         loadProfile();
-    }, [params?.userID, isOwnProfile]);
+
+        // Only depend on params?.userID to prevent unnecessary reloads
+        // Remove isOwnProfile from dependencies as it's now derived within the effect
+    }, [params?.userID]);
 
     useEffect(() => {
         const fetchUserPosts = async () => {
@@ -625,9 +684,11 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const handleCommentClick = (postId: string) => {
         router.push(`/post/${postId}`);
     };
-
     const handleBlockUser = async () => {
-        if (!params?.userID) return;
+        if (!params?.userID) {
+            console.error("Cannot block: No user ID in params");
+            return;
+        }
 
         const isConfirmed = window.confirm(
             `Are you sure you want to block ${profile?.username}? You won't be able to see their posts or comments.`
@@ -638,8 +699,15 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         }
 
         try {
+            const access_token = safelyGetFromLocalStorage("access_token");
+            if (!access_token) {
+                alert("You must be logged in to block a user");
+                return;
+            }
+
             const endpoint = "/api/profile/addToBlocklist";
-            const access_token = localStorage.getItem("access_token");
+            console.log("Blocking user:", params.userID);
+
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
@@ -665,13 +733,22 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
             );
         }
     };
-
     const handleUnblockUser = async () => {
-        if (!params?.userID) return;
+        if (!params?.userID) {
+            console.error("Cannot unblock: No user ID in params");
+            return;
+        }
 
         try {
+            const access_token = safelyGetFromLocalStorage("access_token");
+            if (!access_token) {
+                alert("You must be logged in to unblock a user");
+                return;
+            }
+
             const endpoint = "/api/profile/removeFromBlocklist";
-            const access_token = localStorage.getItem("access_token");
+            console.log("Unblocking user:", params.userID);
+
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
@@ -698,17 +775,47 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         }
     };
 
-    // Add useEffect to check for localStorage safely after component mounts (client-side only)
+    useEffect(() => {
+        console.log("Profile component state:", {
+            isPublicProfile: isPublicProfileRef.current,
+            hasParams: !!params?.userID,
+            paramsUserID: params?.userID,
+            isOwnProfileState: isOwnProfile,
+            profileUsername: profile?.username,
+        });
+    }, [params?.userID, isOwnProfile, profile?.username]); // Add useEffect to check for localStorage safely after component mounts (client-side only)
     useEffect(() => {
         // This code will only run in the browser after component mounts
-        try {
-            const accessToken = localStorage.getItem("access_token");
-            setIsLoggedIn(accessToken !== null);
-        } catch (error) {
-            // Handle the error if localStorage is not available
-            console.error("Error accessing localStorage:", error);
-            setIsLoggedIn(false);
-        }
+        const accessToken = safelyGetFromLocalStorage("access_token");
+        setIsLoggedIn(accessToken !== null);
+    }, []);
+
+    // Add a useEffect to check login status
+
+    useEffect(() => {
+        const checkLoginStatus = () => {
+            const accessToken = safelyGetFromLocalStorage("access_token");
+            const userId = safelyGetFromLocalStorage("userId");
+            setIsLoggedIn(!!accessToken && !!userId);
+
+            console.log("Login status check:", {
+                accessToken: !!accessToken,
+                userId: !!userId,
+                isLoggedIn: !!accessToken && !!userId,
+            });
+        };
+
+        checkLoginStatus();
+
+        // Listen for storage events to update login status if it changes in another tab
+        const handleStorageChange = () => {
+            checkLoginStatus();
+        };
+
+        window.addEventListener("storage", handleStorageChange);
+        return () => {
+            window.removeEventListener("storage", handleStorageChange);
+        };
     }, []);
 
     // Helper function to safely access localStorage (only on client-side)
@@ -724,62 +831,92 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
             return null;
         }
     };
-
     if (!isOwnProfile && !checkingBlockStatus) {
-        if (blocklist.blocked.includes(params?.userID || "")) {
-            return (
-                <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
-                    <h1 className='text-2xl font-bold text-text-primary mb-4'>
-                        You've blocked this user
-                    </h1>
-                    <p className='text-text-secondary mb-6'>
-                        You won't see any content from this user while they're blocked.
-                    </p>
-                    <button
-                        onClick={handleUnblockUser}
-                        className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'>
-                        Unblock User
-                    </button>
-                </div>
-            );
-        }
+        // Only do block checks if the user is logged in
+        if (isLoggedIn) {
+            if (blocklist.blocked.includes(params?.userID || "")) {
+                return (
+                    <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
+                        <h1 className='text-2xl font-bold text-text-primary mb-4'>
+                            You've blocked this user
+                        </h1>
+                        <p className='text-text-secondary mb-6'>
+                            You won't see any content from this user while they're
+                            blocked.
+                        </p>
+                        <button
+                            onClick={handleUnblockUser}
+                            className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'>
+                            Unblock User
+                        </button>
+                    </div>
+                );
+            }
 
-        if (blocklist.blocking.includes(params?.userID || "")) {
-            return (
-                <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
-                    <h1 className='text-2xl font-bold text-text-primary mb-4'>
-                        You've been blocked by this user
-                    </h1>
-                    <p className='text-text-secondary'>
-                        You can't view this profile because the user has blocked you.
-                    </p>
-                </div>
-            );
+            if (blocklist.blocking.includes(params?.userID || "")) {
+                return (
+                    <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
+                        <h1 className='text-2xl font-bold text-text-primary mb-4'>
+                            You've been blocked by this user
+                        </h1>
+                        <p className='text-text-secondary'>
+                            You can't view this profile because the user has blocked you.
+                        </p>
+                    </div>
+                );
+            }
         }
     }
-
     if (loading)
         return (
-            <div className='flex justify-center items-center h-64'>
-                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
+            <div className='flex flex-col justify-center items-center h-64'>
+                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4'></div>
+                <p className='text-text-secondary'>Loading profile information...</p>
             </div>
         );
 
-    if (error) return <div className='text-red-500 text-center p-4'>Error: {error}</div>;
+    if (error)
+        return (
+            <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
+                <h1 className='text-2xl font-bold text-red-500 mb-4'>
+                    Error Loading Profile
+                </h1>
+                <p className='text-text-secondary mb-6'>{error}</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'>
+                    Try Again
+                </button>
+            </div>
+        );
 
     if (!profile)
         return (
-            <div className='text-text-secondary text-center p-4'>Profile not found</div>
+            <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
+                <h1 className='text-2xl font-bold text-text-primary mb-4'>
+                    Profile Not Found
+                </h1>
+                <p className='text-text-secondary mb-6'>
+                    The profile you're looking for couldn't be found.
+                </p>
+                <button
+                    onClick={() => router.push("/")}
+                    className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'>
+                    Go Home
+                </button>
+            </div>
         );
 
     return (
         <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto'>
             <div className='flex items-center justify-between mb-6 h-[42px]'>
                 <h1 className='text-2xl font-bold text-text-primary'>
-                    {isOwnProfile ? "Profile Settings" : `${profile.username}'s Profile`}
+                    {!params?.userID
+                        ? "Profile Settings"
+                        : `${profile.username}'s Profile`}
                 </h1>
                 <div className='flex gap-2'>
-                    {!isOwnProfile && isLoggedIn && (
+                    {params?.userID && isLoggedIn && (
                         <button
                             onClick={handleBlockUser}
                             title='Click to block this user'
@@ -787,7 +924,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                             Block
                         </button>
                     )}
-                    {isOwnProfile && activeTab === "profile" && (
+                    {!params?.userID && activeTab === "profile" && (
                         <div className='w-[120px]'>
                             <button
                                 title='Click to modify your profile'
@@ -803,18 +940,30 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     )}
                 </div>
             </div>
-
             <div className='flex flex-col items-center mb-4'>
                 <div className='relative w-32 h-32 mb-4'>
                     <div className='relative w-32 h-32'>
-                        <Image
-                            src={profile.profile_picture || DEFAULT_PROFILE_PICTURE}
-                            alt='Profile'
-                            className='rounded-full object-cover'
-                            fill
-                            sizes='128px'
-                            priority
-                        />
+                        {/* Use the ProfilePicture component for better navigation */}
+                        {
+                            <Image
+                                src={profile.profile_picture || DEFAULT_PROFILE_PICTURE}
+                                alt='Profile'
+                                className='rounded-full object-cover'
+                                fill
+                                sizes='128px'
+                                priority
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{ cursor: "pointer" }}
+                            />
+                            // ) : (
+                            //     <div className='w-32 h-32'>
+                            //         <ProfilePicture
+                            //             profilePicture={profile.profile_picture}
+                            //             userId={params?.userID}
+                            //             size={32}
+                            //         />
+                            //     </div>
+                        }
                     </div>
                 </div>
 
@@ -881,7 +1030,6 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     </button>
                 </div>
             </div>
-
             <div className='space-y-4'>
                 {activeTab === "profile" && (
                     <div className='bg-foreground p-4 rounded'>
@@ -1305,7 +1453,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                             analytics={analytics}
                             isLoading={analyticsLoading}
                             error={analyticsError}
-                            isOwnProfile={isOwnProfile}
+                            isOwnProfile={!params?.userID}
                         />
                     </div>
                 )}
