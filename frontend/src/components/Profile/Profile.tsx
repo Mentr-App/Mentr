@@ -92,12 +92,14 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
     const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
-    const [analyticsError, setAnalyticsError] = useState<string | null>(null);    useEffect(() => {
+    const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+    useEffect(() => {
         const fetchAnalytics = async () => {
             if (!profile) return;
 
             setAnalyticsLoading(true);
-            try {                // Get userId from params (for public profile) or from localStorage (for own profile)
+            try {
+                // Get userId from params (for public profile) or from localStorage (for own profile)
                 let userId: string | undefined | null = params?.userID;
                 if (!userId) {
                     userId = safelyGetFromLocalStorage("userId");
@@ -151,7 +153,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         if (!editableEmail || editableEmail.length == 0) {
             setEditableTwoFactorEnabled(false);
         }
-    }, [editableEmail]);    useEffect(() => {
+    }, [editableEmail]);
+    useEffect(() => {
         const fetchSavedPosts = async () => {
             if (activeTab !== "savedposts" || !profile) return;
 
@@ -161,7 +164,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     console.error("User ID not available for fetching saved posts");
                     return;
                 }
-                
+
                 const response = await fetch(
                     `http://localhost:8000/saved_post/get/?userId=${userId}`,
                     {
@@ -182,7 +185,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         };
 
         fetchSavedPosts();
-    }, [activeTab, profile]);    useEffect(() => {
+    }, [activeTab, profile]);
+    useEffect(() => {
         const fetchBlocklist = async () => {
             if (isOwnProfile) {
                 setCheckingBlockStatus(false);
@@ -222,7 +226,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         const loadProfile = async () => {
             try {
                 let endpoint,
-                    headers = {};                if (isOwnProfile) {
+                    headers = {};
+                if (isOwnProfile) {
                     endpoint = "/api/profile/getProfile";
                     const access_token = safelyGetFromLocalStorage("access_token");
                     headers = {
@@ -244,7 +249,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 }
                 const userData = await response.json();
 
-                let profilePictureUrl = null;                if (isOwnProfile) {
+                let profilePictureUrl = null;
+                if (isOwnProfile) {
                     const pictureResponse = await fetch(
                         "/api/profile/getProfilePicture",
                         {
@@ -412,7 +418,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
             });
         }
 
-        try {            const endpoint = "/api/profile/setProfile";
+        try {
+            const endpoint = "/api/profile/setProfile";
             const access_token = safelyGetFromLocalStorage("access_token");
             const payload = {
                 username: editableUsername,
@@ -460,7 +467,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
         if (!isConfirmed) {
             return;
-        }        try {
+        }
+        try {
             const endpoint = "/api/profile/deleteProfile";
             const access_token = safelyGetFromLocalStorage("access_token");
             const response = await fetch(endpoint, {
@@ -483,7 +491,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         router.push("/");
     };
 
-    const handleUnlinkSocialMedia = async (field: keyof ProfileData) => {        try {
+    const handleUnlinkSocialMedia = async (field: keyof ProfileData) => {
+        try {
             const endpoint = "/api/profile/setProfile";
             const access_token = safelyGetFromLocalStorage("access_token");
             const payload = {
@@ -544,7 +553,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
         const file = event.target.files[0];
         const formData = new FormData();
-        formData.append("file", file);        try {
+        formData.append("file", file);
+        try {
             const access_token = safelyGetFromLocalStorage("access_token");
             const response = await fetch("/api/profile/uploadProfilePicture", {
                 method: "POST",
@@ -701,11 +711,11 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
     // Helper function to safely access localStorage (only on client-side)
     const safelyGetFromLocalStorage = (key: string): string | null => {
-        if (typeof window === 'undefined') {
+        if (typeof window === "undefined") {
             // We're on the server side
             return null;
         }
-        
+
         try {
             return localStorage.getItem(key);
         } catch (e) {
@@ -1398,7 +1408,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                         <div className='text-right'>
                                             <button
                                                 className='text-sm text-red-500 hover:text-red-700 underline'
-                                                onClick={async (e) => {                                                    e.stopPropagation();
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
                                                     try {
                                                         const userId =
                                                             safelyGetFromLocalStorage(
@@ -1411,7 +1422,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                                 headers: {
                                                                     "Content-Type":
                                                                         "application/json",
-                                                                },                                                                body: JSON.stringify({
+                                                                },
+                                                                body: JSON.stringify({
                                                                     userId: safelyGetFromLocalStorage(
                                                                         "userId"
                                                                     ),
