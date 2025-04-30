@@ -101,6 +101,14 @@ def respond_to_request():
 
         if not req_id or action not in ["accept", "reject"]:
             return {"message": "Invalid input"}, 400
+            
+        # Get the mentorship details to know which users are involved
+        mentorship = mongo.db.mentorships.find_one({"_id": ObjectId(req_id)})
+        if not mentorship:
+            return {"message": "Mentorship not found"}, 404
+            
+        mentor_id = mentorship.get("mentor")
+        mentee_id = mentorship.get("mentee")
 
         if action == "accept":
             mongo.db.mentorships.update_one(

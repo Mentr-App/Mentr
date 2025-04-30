@@ -461,17 +461,21 @@ def get_user_analytics():
             # If conversion fails, try as string
             comment_count = mongo.db.comments.count_documents(
                 {"author_id": user_id, "anonymous": False}
-            )
-
-        # Count connections - safely convert to ObjectId
+            )        # Count connections - safely convert to ObjectId
         try:
-            connection_count = mongo.db.connections.count_documents(
-                {"$or": [{"mentor": ObjectId(user_id)}, {"mentee": ObjectId(user_id)}]}
+            connection_count = mongo.db.mentorships.count_documents(
+                {
+                    "pending": False,  # Only count active mentorships, not pending requests
+                    "$or": [{"mentor": ObjectId(user_id)}, {"mentee": ObjectId(user_id)}]
+                }
             )
         except Exception:
             # If conversion fails, try as string
-            connection_count = mongo.db.connections.count_documents(
-                {"$or": [{"mentor": user_id}, {"mentee": user_id}]}
+            connection_count = mongo.db.mentorships.count_documents(
+                {
+                    "pending": False,  # Only count active mentorships, not pending requests
+                    "$or": [{"mentor": user_id}, {"mentee": user_id}]
+                }
             )
 
         # Calculate helpfulness rating
