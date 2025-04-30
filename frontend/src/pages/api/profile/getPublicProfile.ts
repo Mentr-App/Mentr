@@ -37,6 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const publicProfile = {
             username: data.username,
             userType: data.userType,
+            email: data.email,
             major: data.major,
             company: data.company,
             industry: data.industry,

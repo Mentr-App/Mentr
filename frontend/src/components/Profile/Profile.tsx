@@ -81,6 +81,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth();
     const { updateProfilePicture } = useProfile();
+    
     const router = useRouter();
 
     // Track if this is another user's profile with a ref to prevent overwriting
@@ -96,6 +97,47 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
     const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+
+    const [connections, setConnections] = useState<string[]>([]);
+    const [shareInfoEnabled, setShareInfoEnabled] = useState<boolean>(false);
+    const [showContactInfo, setShowContactInfo] = useState<boolean>(false);
+
+    // 1a) fetch your current connections once
+    useEffect(() => {
+    const fetchConnections = async () => {
+        const userId = localStorage.getItem("userId");
+        if (!userId) return;
+        const res = await fetch(`/api/match/current?userId=${userId}`);
+        if (res.ok) {
+        const data = await res.json();
+        const connectedIds = data
+      .map((conn: { mentor: { $oid: any; }; mentee: { $oid: any; }; }) => conn.mentor.$oid === userId ? conn.mentee.$oid : conn.mentor.$oid)
+        setConnections(connectedIds)
+        }
+    };
+    fetchConnections();
+    }, []);
+
+    // 1b) fetch the *viewed user*’s preferences (share_info)
+    useEffect(() => {
+    const loadPrefs = async () => {
+        const token = localStorage.getItem("access_token");
+        // we’ll pass the viewed user’s ID as a query param:
+        const url = params?.userID
+        ? `/api/profile/getPreferences?userId=${params.userID}`
+        : `/api/profile/getPreferences`;
+        const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        console.log(data)
+        setShareInfoEnabled(data.share_info);
+    };
+    if (params?.userID) loadPrefs();
+    }, [params?.userID]);
+
+    
     useEffect(() => {
         const fetchAnalytics = async () => {
             if (!profile) return;
@@ -332,7 +374,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
                 const profileData: ProfileData = {
                     username: userData["username"],
-                    email: isOwnProfile ? userData["email"] : undefined,
+                    email: userData["email"],
                     created_at: isOwnProfile
                         ? userData["created_at"]["$date"]
                         : undefined,
@@ -348,6 +390,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                         : undefined,
                     profile_picture: profilePictureUrl,
                 };
+                console.log(userData["email"])
+                console.log(userData["username"])
                 setProfile(profileData);
 
                 // Only set editable fields if this is actually the user's own profile
@@ -1318,11 +1362,11 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                     </div>
                                 )}
 
-                                <div className='space-y-2'>
+                                {isOwnProfile && <div className='space-y-2'>
                                     <label className='block text-text-light'>
                                         LinkedIn
                                     </label>
-                                    {isOwnProfile && isEditing ? (
+                                    {isEditing ? (
                                         <>
                                             <input
                                                 type='text'
@@ -1360,12 +1404,12 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                 )}
                                         </div>
                                     )}
-                                </div>
-                                <div className='space-y-2'>
+                                </div>}
+                                {isOwnProfile && <div className='space-y-2'>
                                     <label className='block text-text-light'>
                                         Instagram
                                     </label>
-                                    {isOwnProfile && isEditing ? (
+                                    {isEditing ? (
                                         <>
                                             <input
                                                 type='text'
@@ -1403,12 +1447,12 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                 )}
                                         </div>
                                     )}
-                                </div>
-                                <div className='space-y-2'>
+                                </div>}
+                                {isOwnProfile && <div className='space-y-2'>
                                     <label className='block text-text-light'>
                                         Twitter
                                     </label>
-                                    {isOwnProfile && isEditing ? (
+                                    {isEditing ? (
                                         <>
                                             <input
                                                 type='text'
@@ -1446,7 +1490,37 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                                 )}
                                         </div>
                                     )}
-                                </div>
+                                </div>}
+                                {!isOwnProfile && connections.includes(params!.userID!) && shareInfoEnabled && !showContactInfo && (
+                                    <button
+                                        onClick={() => setShowContactInfo(true)}
+                                        className="mb-4 px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors"
+                                    >
+                                        Show contact info
+                                    </button>
+                                )}
+                                {!isOwnProfile && showContactInfo && <div className='flex space-x-6'>
+                                    <div className='w-1/2 space-y-4'>
+                                        
+                                        <div className='space-y-2'>
+                                            <label className='block text-text-light'>Email</label>
+                                            <p className='text-text-primary'>{profile.email || 'Not provided'}</p>
+                                        </div>
+                                        <div className='space-y-2'>
+                                            <label className='block text-text-light'>LinkedIn</label>
+                                            <p className='text-text-primary'>{profile.linkedin || 'Not provided'}</p>
+                                        </div>
+                                        <div className='space-y-2'>
+                                            <label className='block text-text-light'>Instagram</label>
+                                            <p className='text-text-primary'>{profile.instagram || 'Not provided'}</p>
+                                        </div>
+                                        <div className='space-y-2'>
+                                            <label className='block text-text-light'>Twitter</label>
+                                            <p className='text-text-primary'>{profile.twitter || 'Not provided'}</p>
+                                        </div>
+                                    </div>
+                                </div>}
+
                             </div>
                         </div>
                         <ProfileAnalytics

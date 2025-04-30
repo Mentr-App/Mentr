@@ -353,8 +353,11 @@ def get_preferences():
     """
     Fetch the currently saved preferences for the logged-in user.
     """
+    
     try:
-        user_id = get_jwt_identity()
+        user_id = request.args.get("userId")
+        if not user_id:
+            user_id = get_jwt_identity()
         user = mongo.db.users.find_one({"_id": ObjectId(user_id)}, {"preferences": 1})
         prefs = user.get("preferences", {})
         return (

@@ -1,5 +1,6 @@
 // pages/api/profile/getPreferences.ts
 import { NextApiRequest, NextApiResponse } from "next";
+import { use } from "react";
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,10 +15,17 @@ export default async function handler(
   console.log("Request headers:", req.headers);
 
   const authHeader = req.headers.authorization;
+  const { userId } = req.query;
 
   try {
     // Forward to backend preferences endpoint
-    const response = await fetch("http://localhost:8000/profile/preferences", {
+    var endpoint = `http://localhost:8000/profile/preferences`;
+    if (userId) {
+      endpoint += "?userId=";
+      endpoint += userId;
+    }
+    console.log(endpoint)
+    const response = await fetch(endpoint, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
