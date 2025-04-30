@@ -7,7 +7,8 @@ import Image from "next/image";
 import { Post } from "../Forum/Forum";
 import { Comment } from "../CommonInterfaces/Interfaces";
 import ForumPost from "../Forum/ForumPost";
-import { getRelativeTime } from '@/lib/timeUtils'
+import { getRelativeTime } from "@/lib/timeUtils";
+import ProfileAnalytics from "./ProfileAnalytics";
 
 interface ProfileData {
     username: string;
@@ -26,7 +27,19 @@ interface ProfileData {
     profile_picture?: string;
 }
 
-type ProfileTab = 'profile' | 'posts' | 'comments' | 'savedposts';
+// Define the Analytics interface
+interface UserAnalytics {
+    post_count: number;
+    comment_count: number;
+    connection_count: number;
+    helpful_count: number;
+    unhelpful_count: number;
+    total_marks: number;
+    helpfulness_rating: number;
+    is_new_user: boolean;
+}
+
+type ProfileTab = "profile" | "posts" | "comments" | "savedposts";
 
 interface ProfileProps {
     params?: {
@@ -41,21 +54,30 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editableUsername, setEditableUsername] = useState<string>("");
     const [editableEmail, setEditableEmail] = useState<string>("");
-    const [editableUserType, setEditableUserType] = useState<"Mentor" | "Mentee" | undefined>(undefined);
+    const [editableUserType, setEditableUserType] = useState<
+        "Mentor" | "Mentee" | undefined
+    >(undefined);
     const [editableMajor, setEditableMajor] = useState<string>("");
     const [editableCompany, setEditableCompany] = useState<string>("");
     const [editableIndustry, setEditableIndustry] = useState<string>("");
     const [editableLinkedin, setEditableLinkedin] = useState<string>("");
     const [editableInstagram, setEditableInstagram] = useState<string>("");
     const [editableTwitter, setEditableTwitter] = useState<string>("");
-    const [editableTwoFactorEnabled, setEditableTwoFactorEnabled] = useState<boolean>(false);
-    const [validationWarnings, setValidationWarnings] = useState<{ [key: string]: string }>({});
-    const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
+    const [editableTwoFactorEnabled, setEditableTwoFactorEnabled] =
+        useState<boolean>(false);
+    const [validationWarnings, setValidationWarnings] = useState<{
+        [key: string]: string;
+    }>({});
+    const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
     const [userPosts, setUserPosts] = useState<Post[]>([]);
     const [userComments, setUserComments] = useState<Comment[]>([]);
     const [postsLoading, setPostsLoading] = useState(false);
     const [commentsLoading, setCommentsLoading] = useState(false);
-    const [blocklist, setBlocklist] = useState<{blocked: string[], blocking: string[], all_block: string[]}>({blocked: [], blocking: [], all_block: []});
+    const [blocklist, setBlocklist] = useState<{
+        blocked: string[];
+        blocking: string[];
+        all_block: string[];
+    }>({ blocked: [], blocking: [], all_block: [] });
     const [checkingBlockStatus, setCheckingBlockStatus] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth();
@@ -63,44 +85,104 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     const router = useRouter();
 
     const isOwnProfile = !params?.userID;
-    const DEFAULT_PROFILE_PICTURE = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-    const isLoggedIn = localStorage.getItem("access_token") !== null;
+    const DEFAULT_PROFILE_PICTURE =
+        "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [userSavedPosts, setUserSavedPosts] = useState<Post[]>([]);
+
+    const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
+    const [analyticsError, setAnalyticsError] = useState<string | null>(null);    useEffect(() => {
+        const fetchAnalytics = async () => {
+            if (!profile) return;
+
+            setAnalyticsLoading(true);
+            try {                // Get userId from params (for public profile) or from localStorage (for own profile)
+                let userId: string | undefined | null = params?.userID;
+                if (!userId) {
+                    userId = safelyGetFromLocalStorage("userId");
+                }
+
+                if (!userId) {
+                    throw new Error("User ID not available");
+                }
+
+                console.log("Fetching analytics for user:", userId);
+
+                const response = await fetch(
+                    `/api/profile/getAnalytics?userId=${userId}`
+                );
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("API error response:", errorText);
+                    let errorMsg = "Failed to fetch analytics";
+
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMsg = errorData.message || errorMsg;
+                    } catch (e) {
+                        // If it's not valid JSON, use the raw text
+                        errorMsg = errorText || errorMsg;
+                    }
+
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+                console.log("Received analytics data:", data);
+                setAnalytics(data);
+            } catch (error) {
+                console.error("Error fetching analytics:", error);
+                setAnalyticsError(
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to load analytics data"
+                );
+            } finally {
+                setAnalyticsLoading(false);
+            }
+        };
+
+        fetchAnalytics();
+    }, [profile, params?.userID]);
 
     useEffect(() => {
         if (!editableEmail || editableEmail.length == 0) {
             setEditableTwoFactorEnabled(false);
         }
-    }, [editableEmail]);
-
-    useEffect(() => {
+    }, [editableEmail]);    useEffect(() => {
         const fetchSavedPosts = async () => {
-            if (activeTab !== 'savedposts' || !profile) return;
-    
+            if (activeTab !== "savedposts" || !profile) return;
+
             try {
-                const userId = localStorage.getItem("userId");
-                const response = await fetch(`http://localhost:8000/saved_post/get/?userId=${userId}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                    }
-                });
-    
-                if (!response.ok) throw new Error('Failed to fetch saved posts');
+                const userId = safelyGetFromLocalStorage("userId");
+                if (!userId) {
+                    console.error("User ID not available for fetching saved posts");
+                    return;
+                }
                 
+                const response = await fetch(
+                    `http://localhost:8000/saved_post/get/?userId=${userId}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                if (!response.ok) throw new Error("Failed to fetch saved posts");
+
                 const data = await response.json();
                 setUserSavedPosts(data.savedPosts || []);
             } catch (err) {
                 console.error("Error fetching saved posts:", err);
             }
         };
-    
+
         fetchSavedPosts();
-    }, [activeTab, profile]);
-    
-
-
-    useEffect(() => {
+    }, [activeTab, profile]);    useEffect(() => {
         const fetchBlocklist = async () => {
             if (isOwnProfile) {
                 setCheckingBlockStatus(false);
@@ -108,7 +190,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
             }
 
             try {
-                const access_token = localStorage.getItem("access_token");
+                const access_token = safelyGetFromLocalStorage("access_token");
                 if (!access_token) {
                     setCheckingBlockStatus(false);
                     return;
@@ -139,11 +221,10 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                let endpoint, headers = {};
-                
-                if (isOwnProfile) {
+                let endpoint,
+                    headers = {};                if (isOwnProfile) {
                     endpoint = "/api/profile/getProfile";
-                    const access_token = localStorage.getItem("access_token");
+                    const access_token = safelyGetFromLocalStorage("access_token");
                     headers = {
                         Authorization: `Bearer ${access_token}`,
                         "Content-Type": "application/json",
@@ -162,17 +243,21 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     throw new Error(errorData.message || "Failed to find user");
                 }
                 const userData = await response.json();
-                
-                let profilePictureUrl = null;
-                if (isOwnProfile) {
-                    const pictureResponse = await fetch("/api/profile/getProfilePicture", {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                            "Content-Type": "application/json",
-                        },
-                    });
-                    
+
+                let profilePictureUrl = null;                if (isOwnProfile) {
+                    const pictureResponse = await fetch(
+                        "/api/profile/getProfilePicture",
+                        {
+                            method: "GET",
+                            headers: {
+                                Authorization: `Bearer ${safelyGetFromLocalStorage(
+                                    "access_token"
+                                )}`,
+                                "Content-Type": "application/json",
+                            },
+                        }
+                    );
+
                     if (pictureResponse.ok) {
                         const pictureData = await pictureResponse.json();
                         profilePictureUrl = pictureData.profile_picture_url;
@@ -184,7 +269,9 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                 const profileData: ProfileData = {
                     username: userData["username"],
                     email: isOwnProfile ? userData["email"] : undefined,
-                    created_at: isOwnProfile ? userData["created_at"]["$date"] : undefined,
+                    created_at: isOwnProfile
+                        ? userData["created_at"]["$date"]
+                        : undefined,
                     userType: userData["userType"],
                     major: userData["major"],
                     company: userData["company"],
@@ -192,11 +279,13 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     linkedin: userData["linkedin"],
                     instagram: userData["instagram"],
                     twitter: userData["twitter"],
-                    two_factor_enabled: isOwnProfile ? userData["two_factor_enabled"] : undefined,
+                    two_factor_enabled: isOwnProfile
+                        ? userData["two_factor_enabled"]
+                        : undefined,
                     profile_picture: profilePictureUrl,
                 };
                 setProfile(profileData);
-                
+
                 if (isOwnProfile) {
                     setEditableUsername(profileData.username);
                     setEditableEmail(profileData.email || "");
@@ -209,7 +298,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     setEditableTwitter(profileData.twitter || "");
                     setEditableTwoFactorEnabled(profileData.two_factor_enabled || false);
                 }
-                
+
                 setLoading(false);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "An error occurred");
@@ -222,23 +311,29 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
     useEffect(() => {
         const fetchUserPosts = async () => {
-            if (activeTab !== 'posts' || !profile) return;
-            
+            if (activeTab !== "posts" || !profile) return;
+
             try {
                 setPostsLoading(true);
-                const response = await fetch(`/api/profile/getUserPosts?username=${profile.username}`);
+                const response = await fetch(
+                    `/api/profile/getUserPosts?username=${profile.username}`
+                );
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch user posts');
+                    throw new Error("Failed to fetch user posts");
                 }
 
                 const data = await response.json();
-                const sortedPosts = [...data].sort((a, b) => 
-                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                const sortedPosts = [...data].sort(
+                    (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
                 );
                 setUserPosts(sortedPosts || []);
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to fetch user posts');
+                setError(
+                    err instanceof Error ? err.message : "Failed to fetch user posts"
+                );
             } finally {
                 setPostsLoading(false);
             }
@@ -249,23 +344,31 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
     useEffect(() => {
         const fetchUserComments = async () => {
-            if (activeTab !== 'comments' || !profile) return;
-            
+            if (activeTab !== "comments" || !profile) return;
+
             try {
                 setCommentsLoading(true);
-                const response = await fetch(`/api/profile/getUserComments?username=${profile.username}`);
-                
+                const response = await fetch(
+                    `/api/profile/getUserComments?username=${profile.username}`
+                );
+
                 if (!response.ok) {
-                    throw new Error('Failed to fetch user comments');
+                    throw new Error("Failed to fetch user comments");
                 }
 
                 const data = await response.json();
-                const sortedComments = [...data].sort((a, b) => 
-                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                const sortedComments = [...data].sort(
+                    (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
                 );
-                setUserComments((sortedComments || []).filter(comment => !comment.anonymous));
+                setUserComments(
+                    (sortedComments || []).filter((comment) => !comment.anonymous)
+                );
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to fetch user comments');
+                setError(
+                    err instanceof Error ? err.message : "Failed to fetch user comments"
+                );
             } finally {
                 setCommentsLoading(false);
             }
@@ -309,9 +412,8 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
             });
         }
 
-        try {
-            const endpoint = "/api/profile/setProfile";
-            const access_token = localStorage.getItem("access_token");
+        try {            const endpoint = "/api/profile/setProfile";
+            const access_token = safelyGetFromLocalStorage("access_token");
             const payload = {
                 username: editableUsername,
                 email: editableEmail,
@@ -348,18 +450,19 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     };
 
     const handleResetPassword = () => {
-        router.push('/reset_password');
+        router.push("/reset_password");
     };
 
     const handleDeleteAccount = async () => {
-        const isConfirmed = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+        const isConfirmed = window.confirm(
+            "Are you sure you want to delete your account? This action cannot be undone."
+        );
 
         if (!isConfirmed) {
             return;
-        }
-        try {
+        }        try {
             const endpoint = "/api/profile/deleteProfile";
-            const access_token = localStorage.getItem("access_token");
+            const access_token = safelyGetFromLocalStorage("access_token");
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
@@ -380,16 +483,15 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         router.push("/");
     };
 
-    const handleUnlinkSocialMedia = async (field: keyof ProfileData) => {
-        try {
+    const handleUnlinkSocialMedia = async (field: keyof ProfileData) => {        try {
             const endpoint = "/api/profile/setProfile";
-            const access_token = localStorage.getItem("access_token");
+            const access_token = safelyGetFromLocalStorage("access_token");
             const payload = {
-                "email": editableEmail,
-                "instagram": editableInstagram,
-                "linkedin": editableLinkedin,
-                "twitter": editableTwitter,
-                "two_factor_enabled": editableTwoFactorEnabled,
+                email: editableEmail,
+                instagram: editableInstagram,
+                linkedin: editableLinkedin,
+                twitter: editableTwitter,
+                two_factor_enabled: editableTwoFactorEnabled,
             };
             switch (field) {
                 case "email":
@@ -433,28 +535,28 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         }
     };
 
-    const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleProfilePictureUpload = async (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
         if (!event.target.files || event.target.files.length === 0) {
             return;
         }
 
         const file = event.target.files[0];
         const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const access_token = localStorage.getItem("access_token");
-            const response = await fetch('/api/profile/uploadProfilePicture', {
-                method: 'POST',
+        formData.append("file", file);        try {
+            const access_token = safelyGetFromLocalStorage("access_token");
+            const response = await fetch("/api/profile/uploadProfilePicture", {
+                method: "POST",
                 headers: {
-                    'Authorization': `Bearer ${access_token}`,
+                    Authorization: `Bearer ${access_token}`,
                 },
                 body: formData,
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to upload profile picture');
+                throw new Error(errorData.message || "Failed to upload profile picture");
             }
 
             const data = await response.json();
@@ -466,16 +568,22 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     "Content-Type": "application/json",
                 },
             });
-            
+
             if (pictureResponse.ok) {
                 const pictureData = await pictureResponse.json();
-                setProfile(prev => prev ? { ...prev, profile_picture: pictureData.profile_picture_url } : null);
+                setProfile((prev) =>
+                    prev
+                        ? { ...prev, profile_picture: pictureData.profile_picture_url }
+                        : null
+                );
                 updateProfilePicture(pictureData.profile_picture_url);
             }
-            
+
             setError(null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to upload profile picture');
+            setError(
+                err instanceof Error ? err.message : "Failed to upload profile picture"
+            );
         }
     };
 
@@ -483,12 +591,19 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         fileInputRef.current?.click();
     };
 
-    const handleVoteUpdate = (postId: string, voteType: "up" | "down" | null, newUpvotes: number, newDownvotes: number) => {
-        setUserPosts(prev => prev.map(post => 
-            post._id.$oid === postId 
-                ? { ...post, upvotes: newUpvotes, downvotes: newDownvotes } 
-                : post
-        ));
+    const handleVoteUpdate = (
+        postId: string,
+        voteType: "up" | "down" | null,
+        newUpvotes: number,
+        newDownvotes: number
+    ) => {
+        setUserPosts((prev) =>
+            prev.map((post) =>
+                post._id.$oid === postId
+                    ? { ...post, upvotes: newUpvotes, downvotes: newDownvotes }
+                    : post
+            )
+        );
     };
 
     const handlePostClick = (post: Post) => {
@@ -501,13 +616,15 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
     const handleBlockUser = async () => {
         if (!params?.userID) return;
-        
-        const isConfirmed = window.confirm(`Are you sure you want to block ${profile?.username}? You won't be able to see their posts or comments.`);
-        
+
+        const isConfirmed = window.confirm(
+            `Are you sure you want to block ${profile?.username}? You won't be able to see their posts or comments.`
+        );
+
         if (!isConfirmed) {
             return;
         }
-        
+
         try {
             const endpoint = "/api/profile/addToBlocklist";
             const access_token = localStorage.getItem("access_token");
@@ -518,24 +635,28 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    blockedUserID: params.userID
+                    blockedUserID: params.userID,
                 }),
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Failed to block user");
             }
-    
+
             router.push("/");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "An error occurred while blocking the user");
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "An error occurred while blocking the user"
+            );
         }
     };
 
     const handleUnblockUser = async () => {
         if (!params?.userID) return;
-        
+
         try {
             const endpoint = "/api/profile/removeFromBlocklist";
             const access_token = localStorage.getItem("access_token");
@@ -546,7 +667,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    blockedUserID: params.userID
+                    blockedUserID: params.userID,
                 }),
             });
 
@@ -557,37 +678,68 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
             router.push("/");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "An error occurred while unblocking the user");
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "An error occurred while unblocking the user"
+            );
+        }
+    };
+
+    // Add useEffect to check for localStorage safely after component mounts (client-side only)
+    useEffect(() => {
+        // This code will only run in the browser after component mounts
+        try {
+            const accessToken = localStorage.getItem("access_token");
+            setIsLoggedIn(accessToken !== null);
+        } catch (error) {
+            // Handle the error if localStorage is not available
+            console.error("Error accessing localStorage:", error);
+            setIsLoggedIn(false);
+        }
+    }, []);
+
+    // Helper function to safely access localStorage (only on client-side)
+    const safelyGetFromLocalStorage = (key: string): string | null => {
+        if (typeof window === 'undefined') {
+            // We're on the server side
+            return null;
+        }
+        
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            console.error(`Error accessing localStorage for key ${key}:`, e);
+            return null;
         }
     };
 
     if (!isOwnProfile && !checkingBlockStatus) {
         if (blocklist.blocked.includes(params?.userID || "")) {
             return (
-                <div className="bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center">
-                    <h1 className="text-2xl font-bold text-text-primary mb-4">
+                <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
+                    <h1 className='text-2xl font-bold text-text-primary mb-4'>
                         You've blocked this user
                     </h1>
-                    <p className="text-text-secondary mb-6">
+                    <p className='text-text-secondary mb-6'>
                         You won't see any content from this user while they're blocked.
                     </p>
                     <button
                         onClick={handleUnblockUser}
-                        className="px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors"
-                    >
+                        className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors'>
                         Unblock User
                     </button>
                 </div>
             );
         }
-        
+
         if (blocklist.blocking.includes(params?.userID || "")) {
             return (
-                <div className="bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center">
-                    <h1 className="text-2xl font-bold text-text-primary mb-4">
+                <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto text-center'>
+                    <h1 className='text-2xl font-bold text-text-primary mb-4'>
                         You've been blocked by this user
                     </h1>
-                    <p className="text-text-secondary">
+                    <p className='text-text-secondary'>
                         You can't view this profile because the user has blocked you.
                     </p>
                 </div>
@@ -595,205 +747,241 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
         }
     }
 
-    if (loading) return (
-        <div className='flex justify-center items-center h-64'>
-            <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
-        </div>
-    );
+    if (loading)
+        return (
+            <div className='flex justify-center items-center h-64'>
+                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
+            </div>
+        );
 
-    if (error) return (
-        <div className='text-red-500 text-center p-4'>Error: {error}</div>
-    );
+    if (error) return <div className='text-red-500 text-center p-4'>Error: {error}</div>;
 
-    if (!profile) return (
-        <div className='text-text-secondary text-center p-4'>Profile not found</div>
-    );
+    if (!profile)
+        return (
+            <div className='text-text-secondary text-center p-4'>Profile not found</div>
+        );
 
     return (
         <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto'>
             <div className='flex items-center justify-between mb-6 h-[42px]'>
                 <h1 className='text-2xl font-bold text-text-primary'>
-                    {isOwnProfile ? 'Profile Settings' : `${profile.username}'s Profile`}
+                    {isOwnProfile ? "Profile Settings" : `${profile.username}'s Profile`}
                 </h1>
-                <div className="flex gap-2">
+                <div className='flex gap-2'>
                     {!isOwnProfile && isLoggedIn && (
                         <button
                             onClick={handleBlockUser}
-                            title="Click to block this user"
-                            className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'
-                        >
+                            title='Click to block this user'
+                            className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                             Block
                         </button>
                     )}
-                    {isOwnProfile && activeTab === 'profile' && (
+                    {isOwnProfile && activeTab === "profile" && (
                         <div className='w-[120px]'>
                             <button
-                                title="Click to modify your profile"
-                                onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
-                                className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors w-full'
-                            >
+                                title='Click to modify your profile'
+                                onClick={
+                                    isEditing
+                                        ? handleSaveChanges
+                                        : () => setIsEditing(true)
+                                }
+                                className='px-4 py-2 bg-primary text-text-primary rounded hover:bg-primary-dark transition-colors w-full'>
                                 {isEditing ? "Save Changes" : "Edit Profile"}
                             </button>
                         </div>
                     )}
                 </div>
             </div>
-            
-            <div className="flex flex-col items-center mb-4">
-                <div className="relative w-32 h-32 mb-4">
-                    <div className="relative w-32 h-32">
+
+            <div className='flex flex-col items-center mb-4'>
+                <div className='relative w-32 h-32 mb-4'>
+                    <div className='relative w-32 h-32'>
                         <Image
                             src={profile.profile_picture || DEFAULT_PROFILE_PICTURE}
-                            alt="Profile"
-                            className="rounded-full object-cover"
+                            alt='Profile'
+                            className='rounded-full object-cover'
                             fill
-                            sizes="128px"
+                            sizes='128px'
                             priority
                         />
                     </div>
                 </div>
-                
+
                 {isOwnProfile && (
                     <>
                         <input
-                            type="file"
+                            type='file'
                             ref={fileInputRef}
                             onChange={handleProfilePictureUpload}
-                            accept="image/*"
-                            className="hidden"
+                            accept='image/*'
+                            className='hidden'
                         />
                         <button
                             onClick={triggerFileInput}
-                            title="Click to upload a new profile picture"
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors mb-4"
-                        >
-                            {profile?.profile_picture ? 'Change Profile Picture' : 'Add Profile Picture'}
+                            title='Click to upload a new profile picture'
+                            className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors mb-4'>
+                            {profile?.profile_picture
+                                ? "Change Profile Picture"
+                                : "Add Profile Picture"}
                         </button>
                     </>
                 )}
 
-                <div className="flex border-b border-gray-200 w-full mb-4">
+                <div className='flex border-b border-gray-200 w-full mb-4'>
                     <button
                         className={`py-2 px-4 font-medium text-base focus:outline-none ${
-                            activeTab === 'profile' 
-                                ? 'border-b-2 border-primary text-primary' 
-                                : 'text-text-secondary hover:text-text-primary'
+                            activeTab === "profile"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-text-secondary hover:text-text-primary"
                         }`}
-                        title="Click to view your profile"
-                        onClick={() => setActiveTab('profile')}
-                    >
+                        title='Click to view your profile'
+                        onClick={() => setActiveTab("profile")}>
                         Profile
                     </button>
                     <button
                         className={`py-2 px-4 font-medium text-base focus:outline-none ${
-                            activeTab === 'posts' 
-                                ? 'border-b-2 border-primary text-primary' 
-                                : 'text-text-secondary hover:text-text-primary'
+                            activeTab === "posts"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-text-secondary hover:text-text-primary"
                         }`}
-                        onClick={() => setActiveTab('posts')}
-                        title="Click to view your posts"
-                    >
+                        onClick={() => setActiveTab("posts")}
+                        title='Click to view your posts'>
                         Posts
                     </button>
                     <button
                         className={`py-2 px-4 font-medium text-base focus:outline-none ${
-                            activeTab === 'comments' 
-                                ? 'border-b-2 border-primary text-primary' 
-                                : 'text-text-secondary hover:text-text-primary'
+                            activeTab === "comments"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-text-secondary hover:text-text-primary"
                         }`}
-                        onClick={() => setActiveTab('comments')}
-                        title="Click to view your comments"
-                    >
+                        onClick={() => setActiveTab("comments")}
+                        title='Click to view your comments'>
                         Comments
                     </button>
                     <button
                         className={`py-2 px-4 font-medium text-base focus:outline-none ${
-                            activeTab === 'savedposts' 
-                                ? 'border-b-2 border-primary text-primary' 
-                                : 'text-text-secondary hover:text-text-primary'
+                            activeTab === "savedposts"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-text-secondary hover:text-text-primary"
                         }`}
-                        onClick={() => setActiveTab('savedposts')}
-                        title="Click to view your saved posts"
-                    >
+                        onClick={() => setActiveTab("savedposts")}
+                        title='Click to view your saved posts'>
                         Saved Posts
                     </button>
                 </div>
             </div>
 
             <div className='space-y-4'>
-                {activeTab === 'profile' && (
+                {activeTab === "profile" && (
                     <div className='bg-foreground p-4 rounded'>
-                        <h2 className='text-lg font-semibold text-text-primary mb-4'>User Information</h2>
+                        <h2 className='text-lg font-semibold text-text-primary mb-4'>
+                            User Information
+                        </h2>
                         <div className='flex space-x-6'>
                             <div className='w-1/2 space-y-4'>
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>Username</label>
+                                    <label className='block text-text-light'>
+                                        Username
+                                    </label>
                                     {isOwnProfile && isEditing ? (
                                         <input
                                             type='text'
-                                            title="Click to edit your username"
+                                            title='Click to edit your username'
                                             value={editableUsername}
-                                            onChange={(e) => setEditableUsername(e.target.value)}
+                                            onChange={(e) =>
+                                                setEditableUsername(e.target.value)
+                                            }
                                             className='w-full bg-background text-text-primary p-2 rounded'
                                         />
                                     ) : (
-                                        <p className='text-text-primary'>{profile.username}</p>
+                                        <p className='text-text-primary'>
+                                            {profile.username}
+                                        </p>
                                     )}
                                     {isOwnProfile && (
                                         <button
                                             onClick={handleResetPassword}
-                                            title="Click to reset your password"
+                                            title='Click to reset your password'
                                             className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                             Reset Password
                                         </button>
                                     )}
                                 </div>
-                                
+
                                 {!isOwnProfile && (
                                     <>
                                         <div className='space-y-2'>
-                                            <label className='block text-text-light'>User Type</label>
-                                            <p className='text-text-primary'>{profile.userType}</p>
+                                            <label className='block text-text-light'>
+                                                User Type
+                                            </label>
+                                            <p className='text-text-primary'>
+                                                {profile.userType}
+                                            </p>
                                         </div>
-                                        {profile.userType === "Mentee" && profile.major && (
-                                            <div className='space-y-2'>
-                                                <label className='block text-text-light'>Major</label>
-                                                <p className='text-text-primary'>{profile.major}</p>
-                                            </div>
-                                        )}
-                                        {profile.userType === "Mentor" && profile.company && (
-                                            <div className='space-y-2'>
-                                                <label className='block text-text-light'>Company</label>
-                                                <p className='text-text-primary'>{profile.company}</p>
-                                            </div>
-                                        )}
-                                        {profile.userType === "Mentor" && profile.industry && (
-                                            <div className='space-y-2'>
-                                                <label className='block text-text-light'>Industry</label>
-                                                <p className='text-text-primary'>{profile.industry}</p>
-                                            </div>
-                                        )}
+                                        {profile.userType === "Mentee" &&
+                                            profile.major && (
+                                                <div className='space-y-2'>
+                                                    <label className='block text-text-light'>
+                                                        Major
+                                                    </label>
+                                                    <p className='text-text-primary'>
+                                                        {profile.major}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        {profile.userType === "Mentor" &&
+                                            profile.company && (
+                                                <div className='space-y-2'>
+                                                    <label className='block text-text-light'>
+                                                        Company
+                                                    </label>
+                                                    <p className='text-text-primary'>
+                                                        {profile.company}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        {profile.userType === "Mentor" &&
+                                            profile.industry && (
+                                                <div className='space-y-2'>
+                                                    <label className='block text-text-light'>
+                                                        Industry
+                                                    </label>
+                                                    <p className='text-text-primary'>
+                                                        {profile.industry}
+                                                    </p>
+                                                </div>
+                                            )}
                                     </>
                                 )}
 
                                 {isOwnProfile && (
                                     <div className='space-y-2'>
-                                        <label className='block text-text-light'>Email</label>
+                                        <label className='block text-text-light'>
+                                            Email
+                                        </label>
                                         {isEditing ? (
                                             <input
                                                 type='email'
-                                                title="Edit your email"
+                                                title='Edit your email'
                                                 value={editableEmail}
-                                                onChange={(e) => setEditableEmail(e.target.value)}
+                                                onChange={(e) =>
+                                                    setEditableEmail(e.target.value)
+                                                }
                                                 className='w-full bg-background text-text-primary p-2 rounded'
                                             />
                                         ) : (
-                                            <div className="flex items-center gap-2">
-                                                <p className='text-text-primary'>{profile.email}</p>
+                                            <div className='flex items-center gap-2'>
+                                                <p className='text-text-primary'>
+                                                    {profile.email}
+                                                </p>
                                                 {profile.email && (
                                                     <button
-                                                        title="Click to unlink your email"
-                                                        onClick={() => handleUnlinkSocialMedia("email")}
+                                                        title='Click to unlink your email'
+                                                        onClick={() =>
+                                                            handleUnlinkSocialMedia(
+                                                                "email"
+                                                            )
+                                                        }
                                                         className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                                         Unlink
                                                     </button>
@@ -804,14 +992,18 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 )}
                                 {isOwnProfile && profile.created_at && (
                                     <div className='space-y-2'>
-                                        <label className='block text-text-light'>Member Since</label>
+                                        <label className='block text-text-light'>
+                                            Member Since
+                                        </label>
                                         <p className='text-text-primary'>
-                                            {new Date(profile.created_at).toLocaleDateString()}
+                                            {new Date(
+                                                profile.created_at
+                                            ).toLocaleDateString()}
                                         </p>
                                         {isOwnProfile && (
                                             <button
                                                 onClick={handleDeleteAccount}
-                                                title="Click to delete your account"
+                                                title='Click to delete your account'
                                                 className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
                                                 Delete Account
                                             </button>
@@ -823,66 +1015,101 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 {isOwnProfile && (
                                     <>
                                         <div className='space-y-2'>
-                                            <label className='block text-text-light'>User Type</label>
+                                            <label className='block text-text-light'>
+                                                User Type
+                                            </label>
                                             {isEditing ? (
                                                 <select
                                                     value={editableUserType || ""}
-                                                    title="Click to edit your user type"
-                                                    onChange={(e) => setEditableUserType(e.target.value as "Mentor" | "Mentee")}
-                                                    className='w-full bg-background text-text-primary p-2 rounded'
-                                                >
-                                                    <option value="" disabled>Select user type</option>
-                                                    <option value="Mentor">Mentor</option>
-                                                    <option value="Mentee">Mentee</option>
+                                                    title='Click to edit your user type'
+                                                    onChange={(e) =>
+                                                        setEditableUserType(
+                                                            e.target.value as
+                                                                | "Mentor"
+                                                                | "Mentee"
+                                                        )
+                                                    }
+                                                    className='w-full bg-background text-text-primary p-2 rounded'>
+                                                    <option value='' disabled>
+                                                        Select user type
+                                                    </option>
+                                                    <option value='Mentor'>Mentor</option>
+                                                    <option value='Mentee'>Mentee</option>
                                                 </select>
                                             ) : (
-                                                <p className='text-text-primary'>{profile.userType}</p>
+                                                <p className='text-text-primary'>
+                                                    {profile.userType}
+                                                </p>
                                             )}
                                         </div>
                                         {profile.userType === "Mentee" && (
                                             <div className='space-y-2'>
-                                                <label className='block text-text-light'>Major</label>
+                                                <label className='block text-text-light'>
+                                                    Major
+                                                </label>
                                                 {isEditing ? (
                                                     <input
                                                         type='text'
-                                                        title="Click to edit your major"
+                                                        title='Click to edit your major'
                                                         value={editableMajor}
-                                                        onChange={(e) => setEditableMajor(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setEditableMajor(
+                                                                e.target.value
+                                                            )
+                                                        }
                                                         className='w-full bg-background text-text-primary p-2 rounded'
                                                     />
                                                 ) : (
-                                                    <p className='text-text-primary'>{profile.major}</p>
+                                                    <p className='text-text-primary'>
+                                                        {profile.major}
+                                                    </p>
                                                 )}
                                             </div>
                                         )}
                                         {profile.userType === "Mentor" && (
                                             <>
                                                 <div className='space-y-2'>
-                                                    <label className='block text-text-light'>Company</label>
+                                                    <label className='block text-text-light'>
+                                                        Company
+                                                    </label>
                                                     {isEditing ? (
                                                         <input
                                                             type='text'
-                                                            title="Click to edit your company"
+                                                            title='Click to edit your company'
                                                             value={editableCompany}
-                                                            onChange={(e) => setEditableCompany(e.target.value)}
+                                                            onChange={(e) =>
+                                                                setEditableCompany(
+                                                                    e.target.value
+                                                                )
+                                                            }
                                                             className='w-full bg-background text-text-primary p-2 rounded'
                                                         />
                                                     ) : (
-                                                        <p className='text-text-primary'>{profile.company}</p>
+                                                        <p className='text-text-primary'>
+                                                            {profile.company}
+                                                        </p>
                                                     )}
                                                 </div>
                                                 <div className='space-y-2'>
-                                                    <label className='block text-text-light'>Industry</label>
+                                                    <label className='block text-text-light'>
+                                                        Industry
+                                                    </label>
                                                     {isEditing ? (
                                                         <input
                                                             type='text'
-                                                            title="Click to edit your industry"
+                                                            title='Click to edit your industry'
                                                             value={editableIndustry}
-                                                            onChange={(e) => setEditableIndustry(e.target.value)}
+                                                            onChange={(e) =>
+                                                                setEditableIndustry(
+                                                                    e.target.value
+                                                                )
+                                                            }
                                                             className='w-full bg-background text-text-primary p-2 rounded'
                                                         />
                                                     ) : (
-                                                        <p className='text-text-primary'>{profile.industry}</p>
+                                                        <p className='text-text-primary'>
+                                                            {profile.industry}
+                                                        </p>
                                                     )}
                                                 </div>
                                             </>
@@ -892,134 +1119,197 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
 
                                 {isOwnProfile && (
                                     <div className='space-y-2'>
-                                        <label className='block text-text-light'>Two-Factor Authentication</label>
+                                        <label className='block text-text-light'>
+                                            Two-Factor Authentication
+                                        </label>
                                         <button
                                             onClick={(e) => {
                                                 if (isEditing && editableEmail) {
-                                                    setEditableTwoFactorEnabled(!editableTwoFactorEnabled);
+                                                    setEditableTwoFactorEnabled(
+                                                        !editableTwoFactorEnabled
+                                                    );
                                                 }
                                             }}
                                             className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
-                                                editableTwoFactorEnabled ? 'bg-primary' : 'bg-gray-300'
-                                            } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            disabled={!isEditing}
-                                        >
+                                                editableTwoFactorEnabled
+                                                    ? "bg-primary"
+                                                    : "bg-gray-300"
+                                            } ${
+                                                !isEditing
+                                                    ? "opacity-50 cursor-not-allowed"
+                                                    : ""
+                                            }`}
+                                            disabled={!isEditing}>
                                             <span
                                                 className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                                                    editableTwoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+                                                    editableTwoFactorEnabled
+                                                        ? "translate-x-6"
+                                                        : "translate-x-1"
                                                 }`}
                                             />
                                         </button>
-                                        
-                                        <p className='text-text-primary' title="Click to toggle two-factor authentication">
-                                            {editableTwoFactorEnabled ? "Enabled" : "Disabled"}
+
+                                        <p
+                                            className='text-text-primary'
+                                            title='Click to toggle two-factor authentication'>
+                                            {editableTwoFactorEnabled
+                                                ? "Enabled"
+                                                : "Disabled"}
                                         </p>
                                     </div>
                                 )}
 
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>LinkedIn</label>
+                                    <label className='block text-text-light'>
+                                        LinkedIn
+                                    </label>
                                     {isOwnProfile && isEditing ? (
                                         <>
                                             <input
                                                 type='text'
-                                                title="Click to edit your LinkedIn URL"
+                                                title='Click to edit your LinkedIn URL'
                                                 value={editableLinkedin}
-                                                onChange={(e) => setEditableLinkedin(e.target.value)}
+                                                onChange={(e) =>
+                                                    setEditableLinkedin(e.target.value)
+                                                }
                                                 className='w-full bg-background text-text-primary p-2 rounded'
                                             />
                                             {validationWarnings.linkedin && (
-                                                <p className="text-sm text-red-500">{validationWarnings.linkedin}</p>
+                                                <p className='text-sm text-red-500'>
+                                                    {validationWarnings.linkedin}
+                                                </p>
                                             )}
                                         </>
                                     ) : (
-                                        <div className="flex items-center gap-2">
-                                            <p className='text-text-primary'>{profile.linkedin || 'Not provided'}</p>
-                                            {isOwnProfile && profile.linkedin && !isEditing && (
-                                                <button
-                                                    title="Click to unlink your LinkedIn account"
-                                                    onClick={() => handleUnlinkSocialMedia("linkedin")}
-                                                    className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                                    Unlink
-                                                </button>
-                                            )}
+                                        <div className='flex items-center gap-2'>
+                                            <p className='text-text-primary'>
+                                                {profile.linkedin || "Not provided"}
+                                            </p>
+                                            {isOwnProfile &&
+                                                profile.linkedin &&
+                                                !isEditing && (
+                                                    <button
+                                                        title='Click to unlink your LinkedIn account'
+                                                        onClick={() =>
+                                                            handleUnlinkSocialMedia(
+                                                                "linkedin"
+                                                            )
+                                                        }
+                                                        className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                        Unlink
+                                                    </button>
+                                                )}
                                         </div>
                                     )}
                                 </div>
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>Instagram</label>
+                                    <label className='block text-text-light'>
+                                        Instagram
+                                    </label>
                                     {isOwnProfile && isEditing ? (
                                         <>
                                             <input
                                                 type='text'
-                                                title="Click to edit your Instagram URL"
+                                                title='Click to edit your Instagram URL'
                                                 value={editableInstagram}
-                                                onChange={(e) => setEditableInstagram(e.target.value)}
+                                                onChange={(e) =>
+                                                    setEditableInstagram(e.target.value)
+                                                }
                                                 className='w-full bg-background text-text-primary p-2 rounded'
                                             />
                                             {validationWarnings.instagram && (
-                                                <p className="text-sm text-red-500">{validationWarnings.instagram}</p>
+                                                <p className='text-sm text-red-500'>
+                                                    {validationWarnings.instagram}
+                                                </p>
                                             )}
                                         </>
                                     ) : (
-                                        <div className="flex items-center gap-2">
-                                            <p className='text-text-primary'>{profile.instagram || 'Not provided'}</p>
-                                            {isOwnProfile && profile.instagram && !isEditing && (
-                                                <button
-                                                    onClick={() => handleUnlinkSocialMedia("instagram")}
-                                                    title="Click to unlink your Instagram account"
-                                                    className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                                    Unlink
-                                                </button>
-                                            )}
+                                        <div className='flex items-center gap-2'>
+                                            <p className='text-text-primary'>
+                                                {profile.instagram || "Not provided"}
+                                            </p>
+                                            {isOwnProfile &&
+                                                profile.instagram &&
+                                                !isEditing && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleUnlinkSocialMedia(
+                                                                "instagram"
+                                                            )
+                                                        }
+                                                        title='Click to unlink your Instagram account'
+                                                        className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                        Unlink
+                                                    </button>
+                                                )}
                                         </div>
                                     )}
                                 </div>
                                 <div className='space-y-2'>
-                                    <label className='block text-text-light'>Twitter</label>
+                                    <label className='block text-text-light'>
+                                        Twitter
+                                    </label>
                                     {isOwnProfile && isEditing ? (
                                         <>
                                             <input
                                                 type='text'
                                                 value={editableTwitter}
-                                                title="Click to edit your Twitter URL"
-                                                onChange={(e) => setEditableTwitter(e.target.value)}
+                                                title='Click to edit your Twitter URL'
+                                                onChange={(e) =>
+                                                    setEditableTwitter(e.target.value)
+                                                }
                                                 className='w-full bg-background text-text-primary p-2 rounded'
                                             />
                                             {validationWarnings.twitter && (
-                                                <p className="text-sm text-red-500">{validationWarnings.twitter}</p>
+                                                <p className='text-sm text-red-500'>
+                                                    {validationWarnings.twitter}
+                                                </p>
                                             )}
                                         </>
                                     ) : (
-                                        <div className="flex items-center gap-2">
-                                            <p className='text-text-primary'>{profile.twitter || 'Not provided'}</p>
-                                            {isOwnProfile && profile.twitter && !isEditing && (
-                                                <button
-                                                    onClick={() => handleUnlinkSocialMedia("twitter")}
-                                                    title="Click to unlink your Twitter account"
-                                                    className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
-                                                    Unlink
-                                                </button>
-                                            )}
+                                        <div className='flex items-center gap-2'>
+                                            <p className='text-text-primary'>
+                                                {profile.twitter || "Not provided"}
+                                            </p>
+                                            {isOwnProfile &&
+                                                profile.twitter &&
+                                                !isEditing && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleUnlinkSocialMedia(
+                                                                "twitter"
+                                                            )
+                                                        }
+                                                        title='Click to unlink your Twitter account'
+                                                        className='px-4 py-2 bg-[var(--red)] text-text-primary rounded hover:bg-[var(--red-dark)] transition-colors'>
+                                                        Unlink
+                                                    </button>
+                                                )}
                                         </div>
                                     )}
                                 </div>
                             </div>
                         </div>
+                        <ProfileAnalytics
+                            analytics={analytics}
+                            isLoading={analyticsLoading}
+                            error={analyticsError}
+                            isOwnProfile={isOwnProfile}
+                        />
                     </div>
                 )}
 
-                {activeTab === 'posts' && (
+                {activeTab === "posts" && (
                     <div className='bg-foreground p-4 rounded'>
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
-                            {isOwnProfile ? 'Your Posts' : `${profile.username}'s Posts`}
+                            {isOwnProfile ? "Your Posts" : `${profile.username}'s Posts`}
                         </h2>
                         {postsLoading ? (
                             <div className='flex justify-center items-center h-32'>
                                 <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary'></div>
                             </div>
                         ) : userPosts.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className='space-y-4'>
                                 {userPosts.map((post) => (
                                     <ForumPost
                                         key={post._id.$oid}
@@ -1032,64 +1322,72 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center text-text-secondary py-8">
+                            <div className='text-center text-text-secondary py-8'>
                                 <p>No posts to display</p>
                             </div>
                         )}
                     </div>
                 )}
 
-                {activeTab === 'comments' && (
+                {activeTab === "comments" && (
                     <div className='bg-foreground p-4 rounded'>
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
-                            {isOwnProfile ? 'Your Comments' : `${profile.username}'s Comments`}
+                            {isOwnProfile
+                                ? "Your Comments"
+                                : `${profile.username}'s Comments`}
                         </h2>
                         {commentsLoading ? (
                             <div className='flex justify-center items-center h-32'>
                                 <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary'></div>
                             </div>
                         ) : userComments.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className='space-y-4'>
                                 {userComments.map((comment) => (
-                                    <div 
-                                        key={comment._id.$oid} 
-                                        className="bg-background p-4 rounded-lg cursor-pointer hover:bg-background-dark transition-colors"
-                                        onClick={() => comment.post_id && handleCommentClick(comment.post_id)}
-                                        title="Click to view this comment"
-                                    >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h3 className="text-text-primary font-medium">
+                                    <div
+                                        key={comment._id.$oid}
+                                        className='bg-background p-4 rounded-lg cursor-pointer hover:bg-background-dark transition-colors'
+                                        onClick={() =>
+                                            comment.post_id &&
+                                            handleCommentClick(comment.post_id)
+                                        }
+                                        title='Click to view this comment'>
+                                        <div className='flex justify-between items-start mb-2'>
+                                            <h3 className='text-text-primary font-medium'>
                                                 {profile?.username}
                                             </h3>
-                                            <span className="text-xs text-text-secondary">
+                                            <span className='text-xs text-text-secondary'>
                                                 {getRelativeTime(comment.created_at)}
                                             </span>
                                         </div>
-                                        <p className="text-text-primary">{comment.content}</p>
+                                        <p className='text-text-primary'>
+                                            {comment.content}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center text-text-secondary py-8">
+                            <div className='text-center text-text-secondary py-8'>
                                 <p>No comments to display</p>
                             </div>
                         )}
                     </div>
                 )}
 
-                {activeTab === 'savedposts' && (
+                {activeTab === "savedposts" && (
                     <div className='bg-foreground p-4 rounded'>
                         <h2 className='text-lg font-semibold text-text-primary mb-4'>
-                            {isOwnProfile ? 'Your Saved Posts' : `${profile.username}'s Saved Posts`}
+                            {isOwnProfile
+                                ? "Your Saved Posts"
+                                : `${profile.username}'s Saved Posts`}
                         </h2>
                         {postsLoading ? (
                             <div className='flex justify-center items-center h-32'>
                                 <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary'></div>
                             </div>
                         ) : userSavedPosts.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className='space-y-4'>
                                 {userSavedPosts.map((post) => (
-                                    <div key={post._id.$oid} className="space-y-2">
+                                    <div key={post._id.$oid} className='space-y-2'>
                                         <ForumPost
                                             post={post}
                                             currentVoteType={null}
@@ -1097,31 +1395,48 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                             onClick={() => handlePostClick(post)}
                                             hideDate={true}
                                         />
-                                        <div className="text-right">
+                                        <div className='text-right'>
                                             <button
-                                                className="text-sm text-red-500 hover:text-red-700 underline"
-                                                onClick={async (e) => {
-                                                    e.stopPropagation();
+                                                className='text-sm text-red-500 hover:text-red-700 underline'
+                                                onClick={async (e) => {                                                    e.stopPropagation();
                                                     try {
-                                                        const userId = localStorage.getItem("userId");
-                                                        await fetch(`http://localhost:8000/saved_post/unsave/`, {
-                                                            method: "DELETE",
-                                                            headers: {
-                                                              "Content-Type": "application/json",
-                                                            },
-                                                            body: JSON.stringify({
-                                                              userId: localStorage.getItem("userId"),
-                                                              postId: post._id?.$oid || post._id,
-                                                            }),
-                                                          });
-                                                          setUserSavedPosts(prev =>
-                                                            prev.filter(p => (p._id?.$oid || p._id) !== (post._id?.$oid || post._id))
-                                                          );
+                                                        const userId =
+                                                            safelyGetFromLocalStorage(
+                                                                "userId"
+                                                            );
+                                                        await fetch(
+                                                            `http://localhost:8000/saved_post/unsave/`,
+                                                            {
+                                                                method: "DELETE",
+                                                                headers: {
+                                                                    "Content-Type":
+                                                                        "application/json",
+                                                                },                                                                body: JSON.stringify({
+                                                                    userId: safelyGetFromLocalStorage(
+                                                                        "userId"
+                                                                    ),
+                                                                    postId:
+                                                                        post._id?.$oid ||
+                                                                        post._id,
+                                                                }),
+                                                            }
+                                                        );
+                                                        setUserSavedPosts((prev) =>
+                                                            prev.filter(
+                                                                (p) =>
+                                                                    (p._id?.$oid ||
+                                                                        p._id) !==
+                                                                    (post._id?.$oid ||
+                                                                        post._id)
+                                                            )
+                                                        );
                                                     } catch (err) {
-                                                        console.error("Failed to unsave post:", err);
+                                                        console.error(
+                                                            "Failed to unsave post:",
+                                                            err
+                                                        );
                                                     }
-                                                }}
-                                            >
+                                                }}>
                                                 Unsave Post
                                             </button>
                                         </div>
@@ -1129,7 +1444,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center text-text-secondary py-8">
+                            <div className='text-center text-text-secondary py-8'>
                                 <p>No posts to display</p>
                             </div>
                         )}
