@@ -1,15 +1,16 @@
 export interface ObjectId {
-    $oid: string
+    $oid: string;
 }
 
 export interface Comment {
     _id: ObjectId;
     author: Author | null;
     created_at: string;
-    content: string
+    content: string;
     post_id?: string;
-    profile_picture_url: string
+    profile_picture_url: string;
     anonymous?: boolean;
+    user_mark?: "helpful" | "unhelpful" | null;
 }
 
 export interface Author {
@@ -35,4 +36,3 @@ export interface Post {
     views: number;
     author: Author | null;
 }
-

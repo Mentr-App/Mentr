@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRelativeTime } from "@/lib/timeUtils";
 import CommentItem from "./Comment";
-import {Comment, Author, ObjectId} from "../CommonInterfaces/Interfaces"
-
+import { Comment, Author, ObjectId } from "../CommonInterfaces/Interfaces";
 
 // Helper function to get author username
 const getAuthorName = (author: string | Author): string => {
@@ -49,8 +48,8 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
             });
 
             if (!response.ok) {
-                console.error("Failed to comment")
-                return
+                console.error("Failed to comment");
+                return;
             }
 
             const data = await response.json();
@@ -75,13 +74,13 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
                 rows={4}
             />
 
-            <div className="flex justify-between items-center mt-2 mb-3">
-                <label className="text-sm text-white flex items-center gap-2">
+            <div className='flex justify-between items-center mt-2 mb-3'>
+                <label className='text-sm text-white flex items-center gap-2'>
                     <input
-                        type="checkbox"
+                        type='checkbox'
                         checked={anonymous}
                         onChange={(e) => setAnonymous(e.target.checked)}
-                        className="form-checkbox text-primary"
+                        className='form-checkbox text-primary'
                     />
                     Post anonymously
                 </label>
@@ -90,7 +89,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
                     <button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        title="Post comment"
+                        title='Post comment'
                         className='px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark disabled:opacity-50'>
                         {isSubmitting ? "Posting..." : "Post Comment"}
                     </button>
@@ -99,7 +98,6 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId, onCommentAdded }) =
         </div>
     );
 };
-
 
 interface CommentListProps {
     postId: string;
@@ -111,26 +109,41 @@ const CommentSection: React.FC<CommentListProps> = ({ postId, postAuthorId }) =>
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const { isAuthenticated } = useAuth();
-    const [blocklist, setBlocklist] = useState<{blocked: string[], blocking: string[]}>({blocked: [], blocking: []});
+    const [blocklist, setBlocklist] = useState<{ blocked: string[]; blocking: string[] }>(
+        { blocked: [], blocking: [] }
+    );
     const [blocklistFetched, setBlocklistFetched] = useState<boolean>(false);
     const dummy_id: ObjectId = {
-        $oid: "123456789"
-    }
+        $oid: "123456789",
+    };
 
     const dummy_author: Author = {
         _id: dummy_id,
         username: "[blocked]",
         userType: "Mentor",
         profile_picture: "",
-        profile_picture_url: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+        profile_picture_url:
+            "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
         major: "blocked",
         company: "blocked",
-        industry: "blocked",};
-    
+        industry: "blocked",
+    };
     const fetchComments = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/post/${postId}/comments`);
+
+            // Include the auth token if the user is authenticated
+            const headers: HeadersInit = {};
+            if (isAuthenticated) {
+                const token = localStorage.getItem("access_token");
+                if (token) {
+                    headers.Authorization = `Bearer ${token}`;
+                }
+            }
+
+            const response = await fetch(`/api/post/${postId}/comments`, {
+                headers,
+            });
 
             if (!response.ok) {
                 throw new Error("Failed to fetch comments");
@@ -147,7 +160,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId, postAuthorId }) =>
     };
     const fetchBlocklist = async () => {
         if (!isAuthenticated) return;
-        
+
         try {
             const response = await fetch("/api/profile/getBlockList", {
                 headers: {
@@ -159,7 +172,7 @@ const CommentSection: React.FC<CommentListProps> = ({ postId, postAuthorId }) =>
                 const data = await response.json();
                 setBlocklist({
                     blocked: data.blocked || [],
-                    blocking: data.blocking || []
+                    blocking: data.blocking || [],
                 });
                 setBlocklistFetched(true);
             }
@@ -172,33 +185,35 @@ const CommentSection: React.FC<CommentListProps> = ({ postId, postAuthorId }) =>
         fetchBlocklist();
     }, [postId]);
 
-    useEffect(()=> {
+    useEffect(() => {
         if (postId && (!isAuthenticated || blocklistFetched)) {
             fetchComments();
         }
-    }, [blocklist])
-
+    }, [blocklist]);
 
     const handleCommentAdded = (newComment: Comment) => {
         setComments((prev) => [...prev, newComment]);
     };
     const isBlockedComment = (comment: Comment): boolean => {
         if (!isAuthenticated || !comment.author?._id?.$oid) return false;
-        
+
         const authorId = comment.author?._id.$oid;
-        
-        return blocklist.blocked.includes(authorId) || blocklist.blocking.includes(authorId);
+
+        return (
+            blocklist.blocked.includes(authorId) || blocklist.blocking.includes(authorId)
+        );
     };
-    
+
     const getFilteredFeed = (comment: Comment[]): Comment[] => {
-        return comments.map(comment => {
+        return comments.map((comment) => {
             if (isBlockedComment(comment)) {
-                console.log("BIG THINGS")
+                console.log("BIG THINGS");
                 return {
                     ...comment,
-                    profile_picture_url: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+                    profile_picture_url:
+                        "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
                     content: "[blocked]",
-                    author: dummy_author
+                    author: dummy_author,
                 };
             }
             return comment;
@@ -220,7 +235,12 @@ const CommentSection: React.FC<CommentListProps> = ({ postId, postAuthorId }) =>
             ) : (
                 <div className='space-y-4 mb-6'>
                     {getFilteredFeed(comments).map((item, index) => (
-                        <CommentItem comment={item} index={index} getAuthorName={getAuthorName} postAuthorId={postAuthorId}/>
+                        <CommentItem
+                            comment={item}
+                            index={index}
+                            getAuthorName={getAuthorName}
+                            postAuthorId={postAuthorId}
+                        />
                     ))}
                 </div>
             )}

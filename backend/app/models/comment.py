@@ -4,8 +4,8 @@ from app.database import mongo
 from app.extensions import img_handler
 from app.models.util import Util
 
-class Comment:
-    def get_comment(comment_id):
+class Comment:    
+    def get_comment(comment_id, user_id=None):
         comment = mongo.db.comments.aggregate([
             {"$match": {"_id": ObjectId(comment_id)}},  # Match the specific comment
             {
@@ -40,8 +40,7 @@ class Comment:
                         }
                     }
                 }
-            }
-        ])
+            }        ])
 
         comment = list(comment)[0]
         if not comment:
@@ -56,12 +55,22 @@ class Comment:
         else:
             author = Util.get_deleted_author_object()
         comment["author"] = author
-        comment["created_at"] = comment["created_at"].isoformat()
+        comment["created_at"] = comment["created_at"].isoformat()        
+        if user_id:
+            user_mark = mongo.db.comment_marks.find_one({
+                "comment_id": ObjectId(comment_id),
+                "user_id": ObjectId(user_id)
+            })
+            
+            if user_mark:
+                comment["user_mark"] = "helpful" if user_mark["helpful"] else "unhelpful"
+            else:
+                comment["user_mark"] = None
 
         return comment
 
     @staticmethod
-    def edit_comment(comment_id, content):
+    def edit_comment(comment_id, content, user_id=None):
         mongo.db.comments.update_one(
             {"_id": ObjectId(comment_id)},
             {"$set": {
@@ -69,9 +78,8 @@ class Comment:
             }}
         )
 
-        comment = Comment.get_comment(comment_id)
+        comment = Comment.get_comment(comment_id, user_id)
         return comment
-    
     @staticmethod
     def delete_comment(comment_id):
         post_id = Comment.get_comment(comment_id)["post_id"]
@@ -81,6 +89,39 @@ class Comment:
         )
         result = mongo.db.comments.delete_one({"_id": ObjectId(comment_id)})
         return result.deleted_count > 0
+    
+    @staticmethod
+    def mark_comment(comment_id, user_id, helpful):
+        """
+        Marks a comment as helpful or unhelpful.
+        
+        Args:
+            comment_id (str): The ID of the comment to mark
+            user_id (str): The ID of the user marking the comment
+            helpful (bool): True if marking as helpful, False if marking as unhelpful
+            
+        Returns:
+            dict: The updated comment object, or None if the comment doesn't exist
+        """
+        # First remove any existing mark from this user on this comment
+        mongo.db.comment_marks.delete_one({
+            "comment_id": ObjectId(comment_id),
+            "user_id": ObjectId(user_id)
+        })
+        
+        # Then add the new mark
+        mark_data = {
+            "comment_id": ObjectId(comment_id),
+            "user_id": ObjectId(user_id),
+            "helpful": helpful,
+            "created_at": datetime.now()
+        }
+        
+        mongo.db.comment_marks.insert_one(mark_data)
+        
+        # Get the updated comment
+        comment = Comment.get_comment(comment_id, user_id)
+        return comment
 
     @staticmethod
     def add_comment(post_id, user_id, content, anonymous):
@@ -98,16 +139,15 @@ class Comment:
             return None
         
         mongo.db.posts.update_one(
-            {"_id": ObjectId(post_id)},
-            {"$inc": {
+            {"_id": ObjectId(post_id)},            {"$inc": {
                 "comments": 1
             }}
         )
-
+        
         return comment
-
+        
     @staticmethod
-    def get_comments(post_id):
+    def get_comments(post_id, user_id=None):
         comments = mongo.db.comments.aggregate([
             {"$match": {"post_id": ObjectId(post_id)}},  # Filter by post ID
             {"$sort": {"created_at": -1}},  # Sort by time (newest first)
@@ -144,8 +184,7 @@ class Comment:
                     }
                 }
             }
-        ])
-
+        ])        
         if not comments:
             return []
         
@@ -162,6 +201,18 @@ class Comment:
             else:
                 author = Util.get_deleted_author_object()
             comment["author"] = author
+            
+            # Add user mark status if user_id is provided
+            if user_id:
+                user_mark = mongo.db.comment_marks.find_one({
+                    "comment_id": comment["_id"],
+                    "user_id": ObjectId(user_id)
+                })
+                
+                if user_mark:
+                    comment["user_mark"] = "helpful" if user_mark["helpful"] else "unhelpful"
+                else:
+                    comment["user_mark"] = None
                 
         return comments
 
@@ -219,3 +270,36 @@ class Comment:
         except Exception as e:
             print(f"Error fetching comments by author: {e}")
             return []
+
+    @staticmethod
+    def mark_comment(comment_id, user_id, helpful):
+        """
+        Marks a comment as helpful or unhelpful.
+        
+        Args:
+            comment_id (str): The ID of the comment to mark
+            user_id (str): The ID of the user marking the comment
+            helpful (bool): True if marking as helpful, False if marking as unhelpful
+            
+        Returns:
+            dict: The updated comment object, or None if the comment doesn't exist
+        """
+        # First remove any existing mark from this user on this comment
+        mongo.db.comment_marks.delete_one({
+            "comment_id": ObjectId(comment_id),
+            "user_id": ObjectId(user_id)
+        })
+        
+        # Then add the new mark
+        mark_data = {
+            "comment_id": ObjectId(comment_id),
+            "user_id": ObjectId(user_id),
+            "helpful": helpful,
+            "created_at": datetime.now()
+        }
+        mongo.db.comment_marks.insert_one(mark_data)
+        
+        # Get the updated comment with user's mark status
+        comment = Comment.get_comment(comment_id, user_id)
+        
+        return comment

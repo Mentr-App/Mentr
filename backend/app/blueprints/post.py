@@ -187,7 +187,20 @@ def edit_post(post_id):
 def get_post_comments(post_id):
     """Get all comments for a post."""
     try:
-        comments = Comment.get_comments(post_id)
+        # Get user_id from token if available (but don't require auth)
+        user_id = None
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            from flask_jwt_extended import decode_token
+            try:
+                token = auth_header.split(' ')[1]
+                decoded = decode_token(token)
+                user_id = decoded.get('sub')  # 'sub' is where identity is stored
+            except Exception as e:
+                print("Error decoding token:", str(e))
+                # Continue without user_id if token is invalid
+        
+        comments = Comment.get_comments(post_id, user_id)
         return {"comments": comments}, 200
     except Exception as e:
         print("Error retrieving comments:", str(e))
