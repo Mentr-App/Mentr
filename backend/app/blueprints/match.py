@@ -1,29 +1,49 @@
 from flask import request, Blueprint
 from bson import ObjectId
 from bson.json_util import dumps
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.database import mongo
 from datetime import datetime, timezone
 
 match_bp = Blueprint("match", __name__)
 
 @match_bp.route("/get_matches", methods=["GET"])
+@jwt_required()
 def get_matchable_users():
     try:
-        print("Fetching all matchable users...")
-        users_cursor = mongo.db.users.find({
-            "$or": [
-                { "preferences.open_to_connect": True },
-                { "preferences": { "$exists": False } }
-            ]
-        })
+        current_user_id = get_jwt_identity()
+        # Load current user's skills
+        current_user = mongo.db.users.find_one({"_id": ObjectId(current_user_id)})
+        current_skills = []
+        if current_user and isinstance(current_user.get("preferences"), dict):
+            current_skills = current_user["preferences"].get("skills", []) or []
 
+        # Find users who are open to connect or have no preferences
+        query = {
+            "$or": [
+                {"preferences.open_to_connect": True},
+                {"preferences": {"$exists": False}}
+            ]
+        }
+        users_cursor = mongo.db.users.find(query)
         users = list(users_cursor)
+
+        # Compute similarity score and sort
+        def similarity(user):
+            user_skills = []
+            prefs = user.get("preferences")
+            if isinstance(prefs, dict):
+                user_skills = prefs.get("skills", []) or []
+            # count intersection
+            return len(set(current_skills) & set(user_skills))
+
+        users.sort(key=similarity, reverse=True)
+
         return dumps(users), 200
 
     except Exception as e:
         print(f"Error in get_matchable_users: {e}")
         return {"message": "Error retrieving matchable users", "error": str(e)}, 500
-
 @match_bp.route("/request", methods=["POST"])
 def request_mentorship():
     try:

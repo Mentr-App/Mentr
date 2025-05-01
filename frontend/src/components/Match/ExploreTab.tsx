@@ -75,7 +75,16 @@ const ExploreTab: React.FC = () => {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const res = await fetch("/api/match/matchable");
+        console.log("got here fine")
+        const res = await fetch("/api/match/matchable",
+          {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!res.ok) {
           const errorText = await res.text();
@@ -171,3 +180,4 @@ const ExploreTab: React.FC = () => {
 };
 
 export default ExploreTab;
+
