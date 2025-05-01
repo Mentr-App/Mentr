@@ -136,3 +136,11 @@ class User:
     def get_pinned(user_id):
         user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
         return user.get("pinned_posts", None) if user else None
+    
+    @staticmethod
+    def set_verification_code(user, code):
+        mongo.db.users.update_one({'_id': user['_id']}, {'$set': {'verification_code': code}})
+
+    @staticmethod
+    def clear_verification_code(user):
+        mongo.db.users.update_one({'_id': user['_id']}, {'$unset': {'verification_code': ""}})

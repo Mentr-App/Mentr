@@ -63,6 +63,11 @@ const Navbar: React.FC = () => {
         setIsDropdownVisible(false);
     };
 
+    const handleVerify = () => {
+        router.push("/verify");
+        setIsDropdownVisible(false);
+    };
+
     const handleFAQ = () => {
         router.push("/faq");
         setIsDropdownVisible(false);
@@ -211,6 +216,19 @@ const Navbar: React.FC = () => {
                                     onClick={handleUserSettings}>
                                     User Settings
                                 </li>
+                                
+                            )}
+                            {isAuthenticated && (
+                                <li
+                                    className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'
+                                    style={{
+                                        color: "var(--text-primary)",
+                                    }}
+                                    title="Click to verify your profile"
+                                    onClick={handleVerify}>
+                                    Verify Yourself
+                                </li>
+                                
                             )}
                             <li
                                 className='px-4 py-2 cursor-pointer hover:bg-[var(--secondary-light)]'

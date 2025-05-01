@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import VerifiedIcon from "@/components/Icons/VerifiedIcon";
+import UnverifiedIcon from "@/components/Icons/UnverifiedIcon";
 
 interface PendingInvitationCardProps {
     invitation: {
@@ -19,6 +21,7 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
     const router = useRouter();
     const [otherUsername, setOtherUsername] = useState("Unknown");
     const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
+    const [verified, setVerified] = useState(false);
     const currentUserId = localStorage.getItem("userId");
 
     if (
@@ -48,6 +51,7 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
                 if (data?.username) {
                     setOtherUsername(data.username);
                 }
+                setVerified(data.verified || false);
             } catch (err) {
                 console.error("Error fetching public profile:", err);
             }
@@ -76,6 +80,7 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
         const days = Math.floor(hours / 24);
         return `${days} day${days !== 1 ? "s" : ""} ago`;
     };
+
     const respond = async (action: "accept" | "reject") => {
         try {
             await fetch("/api/match/respond", {
@@ -87,20 +92,15 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
                 action === "accept" ? "Mentorship accepted!" : "Mentorship rejected!"
             );
 
-            // If we accepted, refresh analytics for both users to update connection counts
             if (action === "accept") {
                 try {
-                    // Refresh analytics for current user
                     await fetch(`/api/profile/getAnalytics?userId=${currentUserId}`, {
                         method: "GET",
                         headers: {
-                            Authorization: `Bearer ${localStorage.getItem(
-                                "access_token"
-                            )}`,
+                            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
                         },
                     });
 
-                    // Refresh analytics for the other user
                     await fetch(`/api/profile/getAnalytics?userId=${otherUserId}`, {
                         method: "GET",
                     });
@@ -111,7 +111,7 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
 
             setTimeout(() => {
                 onUpdate();
-            }, 1000); // Wait 1 second before removing
+            }, 1000);
         } catch (err) {
             console.error("Error sending mentorship response:", err);
         }
@@ -121,19 +121,30 @@ const PendingInvitationCard: React.FC<PendingInvitationCardProps> = ({
         <div
             onClick={() => router.push(`/profile/${otherUserId}`)}
             className='bg-secondary-light rounded-lg shadow-lg p-6 hover:bg-gray-500 transition duration-300 cursor-pointer'>
-            <p className='text-white'>
-                {isReceiver ? (
-                    <>
-                        <span className='font-semibold'>{otherUsername}</span> invited you
-                        to a mentorship
-                    </>
+            <div className="flex items-center gap-2">
+                <p className='text-white'>
+                    {isReceiver ? (
+                        <>
+                            <span className='font-semibold'>{otherUsername}</span> invited you
+                            to a mentorship
+                        </>
+                    ) : (
+                        <>
+                            You invited <span className='font-semibold'>{otherUsername}</span>{" "}
+                            to a mentorship
+                        </>
+                    )}
+                </p>
+                {verified ? (
+                    <div title="Verified" className="w-4 h-4 text-green-500">
+                        <VerifiedIcon />
+                    </div>
                 ) : (
-                    <>
-                        You invited <span className='font-semibold'>{otherUsername}</span>{" "}
-                        to a mentorship
-                    </>
+                    <div title="Unverified" className="w-4 h-4 text-red-500">
+                        <UnverifiedIcon />
+                    </div>
                 )}
-            </p>
+            </div>
             <p className='text-gray-400 text-sm mt-1'>
                 {getTimeAgo(invitation.requestedAt)}
             </p>

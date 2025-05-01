@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import VerifiedIcon from "@/components/Icons/VerifiedIcon";
+import UnverifiedIcon from "@/components/Icons/UnverifiedIcon";
 
 interface CurrentConnectionCardProps {
     connection: {
@@ -13,6 +15,7 @@ interface CurrentConnectionCardProps {
 const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connection }) => {
     const router = useRouter();
     const [otherUsername, setOtherUsername] = useState("Unknown");
+    const [verified, setVerified] = useState(false);
     const [confirming, setConfirming] = useState(false);
     const [ended, setEnded] = useState(false);
     const currentUserId = localStorage.getItem("userId");
@@ -28,6 +31,7 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
             .then((res) => res.json())
             .then((data) => {
                 if (data.username) setOtherUsername(data.username);
+                setVerified(data.verified || false);
             });
     }, [otherUserId]);
 
@@ -47,22 +51,20 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
         const days = Math.floor(hours / 24);
         return `${days} day${days !== 1 ? "s" : ""} ago`;
     };
+
     const confirmRemoval = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
         try {
-            // End the mentorship
             await fetch("/api/match/respond", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     id: connection._id.$oid,
-                    action: "reject", // treat as cancel/terminate
+                    action: "reject",
                 }),
             });
 
-            // Trigger analytics refresh for both users
             try {
-                // Refresh analytics for current user
                 await fetch(`/api/profile/getAnalytics?userId=${currentUserId}`, {
                     method: "GET",
                     headers: {
@@ -70,7 +72,6 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
                     },
                 });
 
-                // Refresh analytics for the other user
                 await fetch(`/api/profile/getAnalytics?userId=${otherUserId}`, {
                     method: "GET",
                 });
@@ -88,9 +89,20 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
         <div
             onClick={() => router.push(`/profile/${otherUserId}`)}
             className='bg-secondary-light rounded-lg shadow-lg p-6 hover:bg-gray-500 transition duration-300 cursor-pointer'>
-            <p className='text-white'>
-                Connected with <span className='font-semibold'>{otherUsername}</span>
-            </p>
+            <div className="flex items-center gap-2">
+                <p className='text-white'>
+                    Connected with <span className='font-semibold'>{otherUsername}</span>
+                </p>
+                {verified ? (
+                    <div title="Verified" className="w-4 h-4 text-green-500">
+                        <VerifiedIcon />
+                    </div>
+                ) : (
+                    <div title="Unverified" className="w-4 h-4 text-red-500">
+                        <UnverifiedIcon />
+                    </div>
+                )}
+            </div>
             <p className='text-gray-400 text-sm mt-1'>
                 {getTimeAgo(connection.created_at)}
             </p>

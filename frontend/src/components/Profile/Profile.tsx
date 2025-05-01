@@ -8,6 +8,8 @@ import { Comment } from "../CommonInterfaces/Interfaces";
 import ForumPost from "../Forum/ForumPost";
 import { getRelativeTime } from "@/lib/timeUtils";
 import ProfileAnalytics from "./ProfileAnalytics";
+import VerifiedIcon from "@/components/Icons/VerifiedIcon";
+import UnverifiedIcon from "@/components/Icons/UnverifiedIcon";
 
 interface ProfileData {
     username: string;
@@ -24,6 +26,7 @@ interface ProfileData {
     twitter?: string;
     linkedin?: string;
     profile_picture?: string;
+    verified?: boolean;
 }
 
 // Define the Analytics interface
@@ -390,6 +393,7 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
                         ? userData["two_factor_enabled"]
                         : undefined,
                     profile_picture: profilePictureUrl,
+                    verified: userData["verified"] ?? false,
                 };
                 console.log(userData["email"])
                 console.log(userData["username"])
@@ -955,11 +959,24 @@ const Profile: React.FC<ProfileProps> = ({ params }) => {
     return (
         <div className='bg-secondary rounded-lg shadow-lg p-6 max-w-2xl mx-auto'>
             <div className='flex items-center justify-between mb-6 h-[42px]'>
-                <h1 className='text-2xl font-bold text-text-primary'>
-                    {!params?.userID
-                        ? "Profile Settings"
-                        : `${profile.username}'s Profile`}
+            <h1 className='text-2xl font-bold text-text-primary flex items-center gap-2'>
+                {!params?.userID
+                    ? "Profile Settings"
+                    : `${profile.username}'s Profile`}
+                <span
+                    title={profile.verified ? "Verified" : "Unverified"}
+                    className={`inline-block w-4 h-4 ${
+                    profile.verified ? "text-green-500" : "text-red-500"
+                    }`}
+                >
+                    {profile.verified ? (
+                    <VerifiedIcon className="w-4 h-4" />
+                    ) : (
+                    <UnverifiedIcon className="w-4 h-4" />
+                    )}
+                </span>
                 </h1>
+
                 <div className='flex gap-2'>
                     {params?.userID && isLoggedIn && (
                         <button
