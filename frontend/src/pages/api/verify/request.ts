@@ -1,20 +1,27 @@
-// /api/verify/request.ts
+// pages/api/verify/request.ts
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).json({ message: "Method Not Allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method Not Allowed" });
+  }
 
-  const { company, domain } = req.body;
-  if (!company || !domain) return res.status(400).json({ message: "Missing fields" });
+  const token = req.headers.authorization?.split(" ")[1] || req.cookies.access_token;
 
   try {
-    const response = await fetch("http://localhost:8000/verify/company_request", {
+    const response = await fetch("http://localhost:8000/verify/request", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ company, domain }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(req.body),
     });
 
-    const result = await response.json();
+    const contentType = response.headers.get("content-type");
+    const isJson = contentType?.includes("application/json");
+
+    const result = isJson ? await response.json() : { message: await response.text() };
     return res.status(response.status).json(result);
   } catch (err) {
     console.error("Company request error:", err);

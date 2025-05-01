@@ -1,4 +1,3 @@
-// /pages/api/verify/submit.ts
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -6,7 +5,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: "Method Not Allowed" });
 
   const { email, code } = req.body;
-
   if (!email || !code) {
     return res.status(400).json({ message: "Missing email or code" });
   }
@@ -23,8 +21,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       body: JSON.stringify({ email, code }),
     });
 
-    const result = await response.json();
-    return res.status(response.status).json(result);
+    const text = await response.text();
+
+    try {
+      const result = JSON.parse(text);
+      return res.status(response.status).json(result);
+    } catch (parseErr) {
+      console.error("Failed to parse backend response:", text);
+      return res.status(500).json({ message: "Invalid response from backend" });
+    }
   } catch (error) {
     console.error("Verification submit error:", error);
     return res.status(500).json({ message: "Internal Server Error" });

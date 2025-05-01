@@ -22,6 +22,7 @@ const Verification: React.FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [newCompany, setNewCompany] = useState({ company: "", domain: "" });
   const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [requestStatusMessage, setRequestStatusMessage] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
@@ -103,16 +104,51 @@ const Verification: React.FC = () => {
 
   const handleSubmitCompanyRequest = async () => {
     const token = localStorage.getItem("access_token");
-    await fetch("/api/verify/request", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(newCompany),
-    });
-    setRequestSubmitted(true);
-    setNewCompany({ company: "", domain: "" });
+    const companyName = newCompany.company.trim().toLowerCase();
+
+    try {
+      const checkRes = await fetch(
+        `/api/verify/checkCompanyRequest?company=${encodeURIComponent(companyName)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const checkData = await checkRes.json();
+
+      if (checkData.status === "denied") {
+        setRequestStatusMessage(
+          "This company has been denied by administrators. If you have feedback, please reach out to us."
+        );
+        return;
+      } else if (checkData.status === "pending") {
+        setRequestStatusMessage("A request for this company is already under review.");
+        return;
+      }
+
+      const submitRes = await fetch("/api/verify/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newCompany),
+      });
+
+      if (!submitRes.ok) {
+        const err = await submitRes.json();
+        throw new Error(err.message || "Failed to submit request");
+      }
+
+      setRequestSubmitted(true);
+      setRequestStatusMessage("Request submitted successfully!");
+      setNewCompany({ company: "", domain: "" });
+    } catch (err) {
+      console.error("Company request error:", err);
+      setRequestStatusMessage("Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -124,10 +160,7 @@ const Verification: React.FC = () => {
       {selectedItem ? (
         <div className="bg-secondary-light p-4 rounded shadow-md text-white">
           <p className="mb-2 font-semibold">
-            Selected {isMentor ? "Company" : "University"}:{" "}
-            {isMentor
-              ? (selectedItem as Company).company
-              : (selectedItem as University).name}
+            Selected {isMentor ? "Company" : "University"}: {isMentor ? (selectedItem as Company).company : (selectedItem as University).name}
           </p>
 
           <div className="flex items-center space-x-2 mb-4">
@@ -139,10 +172,7 @@ const Verification: React.FC = () => {
               className="px-3 py-2 rounded bg-gray-700 border border-gray-500 text-white w-full"
             />
             <span className="text-white">
-              @
-              {isMentor
-                ? (selectedItem as Company).domain
-                : (selectedItem as University).domains[0]}
+              @{isMentor ? (selectedItem as Company).domain : (selectedItem as University).domains[0]}
             </span>
           </div>
 
@@ -168,15 +198,9 @@ const Verification: React.FC = () => {
               >
                 Submit Code
               </button>
-              {verificationStatus === "success" && (
-                <p className="text-green-400 mt-2">Verification successful!</p>
-              )}
-              {verificationStatus === "error" && (
-                <p className="text-red-400 mt-2">Invalid code. Try again.</p>
-              )}
-              {verificationStatus === null && (
-                <p className="text-yellow-400 mt-2">Check your inbox for the verification code.</p>
-              )}
+              {verificationStatus === "success" && <p className="text-green-400 mt-2">Verification successful!</p>}
+              {verificationStatus === "error" && <p className="text-red-400 mt-2">Invalid code. Try again.</p>}
+              {verificationStatus === null && <p className="text-yellow-400 mt-2">Check your inbox for the verification code.</p>}
             </div>
           )}
         </div>
@@ -193,22 +217,14 @@ const Verification: React.FC = () => {
           <div className="bg-secondary-light rounded-md overflow-y-auto max-h-80 shadow-inner">
             {filteredItems.map((item) => (
               <div
-                key={
-                  isMentor
-                    ? (item as Company).company
-                    : (item as University).name
-                }
+                key={isMentor ? (item as Company).company : (item as University).name}
                 onClick={() => setSelectedItem(item)}
                 className="px-4 py-2 cursor-pointer hover:bg-gray-600 text-white border-b border-gray-700"
               >
-                {isMentor
-                  ? (item as Company).company
-                  : (item as University).name}
+                {isMentor ? (item as Company).company : (item as University).name}
               </div>
             ))}
-            {filteredItems.length === 0 && (
-              <p className="p-4 text-gray-400">No results found.</p>
-            )}
+            {filteredItems.length === 0 && <p className="p-4 text-gray-400">No results found.</p>}
           </div>
         </>
       )}
@@ -216,26 +232,22 @@ const Verification: React.FC = () => {
       {isMentor && (
         <div className="mt-8 border-t border-gray-600 pt-6">
           <h2 className="text-xl text-white font-bold mb-2">Request New Company</h2>
-          {requestSubmitted ? (
-            <p className="text-green-500">Request submitted successfully!</p>
+          {requestStatusMessage ? (
+            <p className="text-sm text-white">{requestStatusMessage}</p>
           ) : (
             <>
               <input
                 type="text"
                 placeholder="Company Name"
                 value={newCompany.company}
-                onChange={(e) =>
-                  setNewCompany({ ...newCompany, company: e.target.value })
-                }
+                onChange={(e) => setNewCompany({ ...newCompany, company: e.target.value })}
                 className="mb-2 w-full px-3 py-2 rounded bg-gray-700 border border-gray-500 text-white"
               />
               <input
                 type="text"
                 placeholder="Company Domain (e.g. company.com)"
                 value={newCompany.domain}
-                onChange={(e) =>
-                  setNewCompany({ ...newCompany, domain: e.target.value })
-                }
+                onChange={(e) => setNewCompany({ ...newCompany, domain: e.target.value })}
                 className="mb-4 w-full px-3 py-2 rounded bg-gray-700 border border-gray-500 text-white"
               />
               <button
