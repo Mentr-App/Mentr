@@ -17,7 +17,7 @@ export default function App({ Component, pageProps }: AppProps) {
                     }}>
                     <Navbar />
                     <div className='flex flex-row'>
-                        <Sidebar />
+                        
                         <Component {...pageProps} />
                     </div>
                 </div>

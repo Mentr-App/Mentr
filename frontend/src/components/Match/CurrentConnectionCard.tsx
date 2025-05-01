@@ -111,7 +111,7 @@ const CurrentConnectionCard: React.FC<CurrentConnectionCardProps> = ({ connectio
                 <p className='mt-3 text-[#EC6333] font-semibold'>
                     Mentorship ended successfully.
                 </p>
-            ) : isMentor ? (
+            ) : isMentor || !isMentor ? (
                 <div className='mt-3'>
                     {confirming ? (
                         <div className='space-x-2'>
