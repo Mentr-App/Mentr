@@ -160,11 +160,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
                                     {localComment.author?.username}
                                 </span>
                                 {localComment.author?.userType === "Mentee" ? (
-                                    <span className='text-xs text-gray-500'>
+                                    <span className='ml-2 text-xs text-gray-500'>
                                         Student • {localComment.author.major}
                                     </span>
                                 ) : (
-                                    <span className='text-xs text-gray-500'>
+                                    <span className='ml-2 text-xs text-gray-500'>
                                         {localComment.author?.company} •{" "}
                                         {localComment.author?.industry}
                                     </span>
